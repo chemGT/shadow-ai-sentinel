@@ -109,15 +109,16 @@
 
 ---
 
-### Phase 4 — API ⏳
+### Phase 4 — API & conformité ✅
 
 | ID | Action | Statut | Notes |
 |----|--------|--------|-------|
-| P4-1 | `GET /policies` | ⏳ | |
-| P4-2 | `POST /telemetry` + validation stricte | ⏳ | |
-| P4-3 | Auth Bearer par tenant | ⏳ | |
-| P4-4 | Rétention 90 j + purge | ⏳ | |
-| P4-5 | Notice employé FR/EN (brouillon) | ⏳ | `compliance_rgpd` |
+| P4-1 | Rate limiting | ✅ | 429 + en-têtes X-RateLimit-* |
+| P4-2 | Rétention 90 j + purge horaire | ✅ | `TELEMETRY_RETENTION_DAYS` |
+| P4-3 | Rejet champs interdits (deep) | ✅ | tests intégration |
+| P4-4 | Logs sans corps requête | ✅ | `safeRequestLog` |
+| P4-5 | Fiche traitement + notices | ✅ | `.ai/compliance/` |
+| P4-6 | Notice 1er lancement extension | ✅ | `first-run-notice.ts` |
 
 ---
 
