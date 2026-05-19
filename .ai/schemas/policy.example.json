@@ -1,0 +1,15 @@
+{
+  "version": "1.0.0",
+  "tenantId": "acme-corp",
+  "updatedAt": "2026-05-19T12:00:00.000Z",
+  "departmentId": "engineering",
+  "emailDomains": ["acme.com", "acme.fr"],
+  "rules": [
+    { "type": "api_key", "action": "block", "enabled": true },
+    { "type": "generic_secret", "action": "block", "enabled": true },
+    { "type": "iban", "action": "redact", "enabled": true },
+    { "type": "internal_ip", "action": "redact", "enabled": true },
+    { "type": "pro_email", "action": "redact", "enabled": true },
+    { "type": "phone", "action": "redact", "enabled": true }
+  ]
+}
