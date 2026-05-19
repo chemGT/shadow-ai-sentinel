@@ -55,14 +55,16 @@ npm ci
 Vérification :
 
 ```bash
-npm run build
 npm test
+npm run test:ci
+npm run build
+npm run ci
 ```
 
 Résultat attendu :
 
 - Build : dossier `dist/` créé sans erreur.
-- Tests : `19 passed`.
+- Tests : `56 passed` (détails : [tests-automatises.md](../docs/tests-automatises.md)).
 
 Mode développement (rebuild automatique) :
 
