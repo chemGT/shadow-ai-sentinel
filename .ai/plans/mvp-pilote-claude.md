@@ -1,7 +1,7 @@
 # Plan MVP — Pilote Claude (Shadow AI Sentinel)
 
 > Document de référence orchestrateur. Dernière mise à jour : 2026-05-19.  
-> Statut : **cadrage validé** — Phases 0–3 terminées (tests manuels + durcissement API Phase 4).  
+> Statut : **cadrage validé** — Phases 0–4 terminées.  
 > Suivi : [SUIVI-ACTIONS.md](../SUIVI-ACTIONS.md) · Install : [guides/INSTALLATION.md](../guides/INSTALLATION.md)
 
 ---
@@ -269,18 +269,21 @@ build/firefox/   → WXT ou web-ext + webextension-polyfill
 
 ---
 
-### Phase 4 — API (Agent: `backend_ops` + `compliance_rgpd` + `security_auditor`)
+### Phase 4 — API & conformité (Agent: `backend_ops` + `compliance_rgpd`) ✅
 
 **Tâches**
 
-- `GET /policies`, `POST /telemetry` + validation schéma strict
-- Auth Bearer, rate limiting, rétention 90 j + purge
-- Fiche traitement + notice employé FR/EN (brouillon juridique)
+- [x] Rate limiting (429)
+- [x] Rétention 90 j + purge périodique
+- [x] Rejet champs interdits (scan récursif)
+- [x] Headers sécurité + logs sans corps
+- [x] Fiche traitement + notices FR/EN (brouillon)
+- [x] Notice premier lancement extension
 
 **Done when**
 
-- Payload avec champ interdit → 400
-- Checklist RGPD technique cochée
+- [x] Payload interdit → 400
+- [x] Checklist RGPD technique (`.ai/compliance/checklist-rgpd-release.md`)
 
 ---
 

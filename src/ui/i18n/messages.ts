@@ -45,3 +45,28 @@ export function modalTitle(locale: Locale): string {
 export function modalClose(locale: Locale): string {
   return locale === 'fr' ? 'Fermer' : 'Close';
 }
+
+export function employeeNoticeTitle(locale: Locale): string {
+  return locale === 'fr' ? 'Protection des données — Shadow AI Sentinel' : 'Data protection — Shadow AI Sentinel';
+}
+
+export function employeeNoticeBody(locale: Locale): string {
+  if (locale === 'fr') {
+    return (
+      'Cette extension analyse localement vos saisies sur Claude.ai pour détecter des données sensibles (clés API, IBAN, etc.). ' +
+      'Le contenu de vos messages n’est jamais envoyé au serveur. ' +
+      'Seules des informations techniques anonymisées sont transmises à votre entreprise (type de règle déclenchée, action block/redact, horodatage). ' +
+      'Contactez votre service sécurité ou DPO pour plus d’informations.'
+    );
+  }
+  return (
+    'This extension locally analyzes what you type on Claude.ai to detect sensitive data (API keys, IBAN, etc.). ' +
+    'Message content is never sent to the server. ' +
+    'Only anonymized technical metadata is sent to your organization (rule type, block/redact action, timestamp). ' +
+    'Contact your security team or DPO for details.'
+  );
+}
+
+export function employeeNoticeAck(locale: Locale): string {
+  return locale === 'fr' ? "J'ai compris" : 'I understand';
+}

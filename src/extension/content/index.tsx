@@ -2,6 +2,7 @@ import { PILOT_LLM_HOST } from '../../core/constants.js';
 import type { ExtensionMessage, Policy } from '../../core/types.js';
 import { getExtensionApi } from '../platform/browser-api.js';
 import { sendMessage } from '../platform/runtime.js';
+import { showFirstRunNoticeIfNeeded } from './first-run-notice.js';
 import { attachClaudeAdapter } from '../sites/claude/adapter.js';
 
 const host = globalThis.location.hostname;
@@ -39,6 +40,7 @@ function bootstrap(): void {
   void loadPolicy()
     .then((loaded) => {
       policy = loaded;
+      void showFirstRunNoticeIfNeeded();
       attachClaudeAdapter({
         getPolicy: () => policy ?? loaded,
       });

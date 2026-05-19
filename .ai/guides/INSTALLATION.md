@@ -3,7 +3,7 @@
 > **Document évolutif** : les sections sont étiquetées par phase. Ne pas appliquer une section marquée « à venir » tant que la phase n’est pas ✅ dans [SUIVI-ACTIONS.md](../SUIVI-ACTIONS.md).
 
 **Dernière mise à jour :** 2026-05-19  
-**Phases disponibles aujourd’hui :** 0–3 (DLP Claude + Options + sync API + file télémétrie)
+**Phases disponibles aujourd’hui :** 0–4 (DLP, Options, API durcie, notice RGPD)
 
 ---
 
@@ -277,6 +277,8 @@ Variables (fichier `.env` à la racine pour Compose) :
 |----------|-------------|
 | `API_KEYS` | `tenantId:apiKey` (virgule pour plusieurs) |
 | `PORT` | Port HTTP (défaut `3000`) |
+| `TELEMETRY_RETENTION_DAYS` | Rétention (défaut `90`) |
+| `RATE_LIMIT_*_PER_MIN` | Limites requêtes/min |
 
 ### Endpoints
 

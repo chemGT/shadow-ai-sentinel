@@ -23,6 +23,7 @@ Un DLP (Data Loss Prevention) ultra-léger sous forme d'extension navigateur B2B
 | `plans/mvp-pilote-claude.md` | Plan MVP détaillé par phases |
 | `SUIVI-ACTIONS.md` | **Suivi des actions** — statuts, journal, checklist pilote |
 | `guides/INSTALLATION.md` | **Guide d'installation** — mis à jour à chaque phase livrée |
+| `compliance/` | Fiche traitement, notices employé, checklist RGPD |
 
 ## Agents IA (`.ai/agents/`)
 

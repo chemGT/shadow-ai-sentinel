@@ -6,7 +6,7 @@
 
 **Dernière mise à jour :** 2026-05-19  
 **Version produit cible :** 0.1.0 (pilote Claude)  
-**Avancement global :** Phase 3 / 7 terminée (~57 %)
+**Avancement global :** Phase 4 / 7 terminée (~71 %)
 
 ---
 
@@ -30,7 +30,7 @@
 | 1 | Moteur regex | ✅ | backend_ops | § Vérifier le moteur (tests) |
 | 2 | Adaptateur Claude (DOM) | ✅ | platform_watcher → ext_dev | § Tester sur Claude |
 | 3 | Policies & offline | ✅ | ext_dev | § Options, § API |
-| 4 | API durcissement prod | ⏳ | backend_ops | rétention, rate limit |
+| 4 | API durcissement prod | ✅ | backend_ops | rate limit, rétention, RGPD |
 | 5 | UX & i18n | ⏳ | ux_writer | § Notice employé (à venir) |
 | 6 | QA & release pilote | ⏳ | qa_tester | § Release pilote (à venir) |
 | 7 | ChatGPT + Gemini | ⏳ | platform_watcher | § Multi-LLM (à venir) |
@@ -48,6 +48,7 @@
 | 2026-05-19 | — | Repo Git privé GitHub `chemGT/shadow-ai-sentinel` — commit initial `f25ea5e` |
 | 2026-05-19 | ext_dev | **Phase 2** : adaptateur Claude, Block/Redact, modale Shadow DOM, i18n FR/EN |
 | 2026-05-19 | ext_dev + backend_ops | **Phase 3** : Options, sync policy, queue télémétrie, API MVP |
+| 2026-05-19 | backend_ops + compliance | **Phase 4** : rate limit, rétention 90j, docs RGPD, notice 1er run |
 
 ---
 
@@ -195,9 +196,9 @@
 
 ## Prochaines actions (priorité)
 
-1. **P2-6** — Tests manuels Claude (Block/Redact + sync Options).
-2. **Phase 4** — Durcissement API (rate limit, rétention 90 j, notice RGPD).
-3. Valider file offline 24 h (test manuel).
+1. **P2-6** — Tests manuels Claude (Block/Redact + notice 1er run).
+2. **Phase 5** — Copy UX modales + onboarding.
+3. Valider file offline 24 h (test manuel P3).
 
 ---
 

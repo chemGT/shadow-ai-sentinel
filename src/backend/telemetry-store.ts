@@ -1,31 +1,52 @@
 import type { TelemetryEvent } from '../core/types.js';
 
-const seenEvents = new Map<string, number>();
-const DEDUPE_TTL_MS = 90 * 24 * 60 * 60 * 1000;
+type StoredMeta = {
+  receivedAt: number;
+  tenantId: string;
+};
 
-function purgeExpired(now: number): void {
-  for (const [id, ts] of seenEvents.entries()) {
-    if (now - ts > DEDUPE_TTL_MS) {
-      seenEvents.delete(id);
-    }
-  }
+const events = new Map<string, StoredMeta>();
+
+export function getRetentionMs(retentionDays: number): number {
+  return retentionDays * 24 * 60 * 60 * 1000;
 }
 
-export function registerEvents(events: TelemetryEvent[]): { accepted: number; duplicates: number } {
+export function purgeExpiredEvents(retentionMs: number): number {
   const now = Date.now();
-  purgeExpired(now);
+  let removed = 0;
+
+  for (const [eventId, meta] of events.entries()) {
+    if (now - meta.receivedAt > retentionMs) {
+      events.delete(eventId);
+      removed += 1;
+    }
+  }
+
+  return removed;
+}
+
+export function registerEvents(
+  incoming: TelemetryEvent[],
+  retentionMs: number,
+): { accepted: number; duplicates: number } {
+  purgeExpiredEvents(retentionMs);
 
   let accepted = 0;
   let duplicates = 0;
+  const now = Date.now();
 
-  for (const event of events) {
-    if (seenEvents.has(event.eventId)) {
+  for (const event of incoming) {
+    if (events.has(event.eventId)) {
       duplicates += 1;
       continue;
     }
-    seenEvents.set(event.eventId, now);
+    events.set(event.eventId, { receivedAt: now, tenantId: event.tenantId });
     accepted += 1;
   }
 
   return { accepted, duplicates };
+}
+
+export function countStoredEvents(): number {
+  return events.size;
 }
