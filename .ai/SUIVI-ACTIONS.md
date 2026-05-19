@@ -49,6 +49,7 @@
 | 2026-05-19 | ext_dev | **Phase 2** : adaptateur Claude, Block/Redact, modale Shadow DOM, i18n FR/EN |
 | 2026-05-19 | ext_dev + backend_ops | **Phase 3** : Options, sync policy, queue télémétrie, API MVP |
 | 2026-05-19 | backend_ops + compliance | **Phase 4** : rate limit, rétention 90j, docs RGPD, notice 1er run |
+| 2026-05-19 | qa_tester | **CI** : GitHub Actions, 56 tests, régression regex, couverture |
 
 ---
 
@@ -136,7 +137,8 @@
 
 | ID | Action | Statut | Notes |
 |----|--------|--------|-------|
-| P6-1 | CI build Chromium | ⏳ | |
+| P6-1 | CI GitHub Actions (tests + build) | ✅ | `.github/workflows/ci.yml` |
+| P6-1b | Suite tests auto (56) + régression regex | ✅ | `docs/tests-automatises.md` |
 | P6-2 | Build Firefox (WXT / web-ext) | ⏳ | |
 | P6-3 | Guide install final | ⏳ | MAJ `INSTALLATION.md` |
 | P6-4 | Soumission XPI Mozilla signé | ⏳ | |

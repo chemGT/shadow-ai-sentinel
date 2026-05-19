@@ -24,6 +24,7 @@ Un DLP (Data Loss Prevention) ultra-léger sous forme d'extension navigateur B2B
 | `SUIVI-ACTIONS.md` | **Suivi des actions** — statuts, journal, checklist pilote |
 | `guides/INSTALLATION.md` | **Guide d'installation** — mis à jour à chaque phase livrée |
 | `compliance/` | Fiche traitement, notices employé, checklist RGPD |
+| `docs/tests-automatises.md` | Suite de tests, commandes, CI |
 
 ## Agents IA (`.ai/agents/`)
 

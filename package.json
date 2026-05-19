@@ -10,7 +10,11 @@
     "backend": "tsx src/backend/server.ts",
     "backend:dev": "tsx watch src/backend/server.ts",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:ci": "vitest run --coverage",
+    "test:regex": "vitest run src/core",
+    "test:api": "vitest run src/backend",
+    "ci": "npm run test:ci && npm run build"
   },
   "keywords": [],
   "author": "",
@@ -31,7 +35,9 @@
     "@types/react-dom": "^19.2.3",
     "@types/supertest": "^7.2.0",
     "@vitejs/plugin-react": "^6.0.2",
+    "@vitest/coverage-v8": "^4.1.6",
     "autoprefixer": "^10.5.0",
+    "happy-dom": "^20.9.0",
     "postcss": "^8.5.14",
     "supertest": "^7.2.2",
     "tailwindcss": "^4.3.0",
