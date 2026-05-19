@@ -1,5 +1,6 @@
 import { PILOT_LLM_HOST } from '../../core/constants.js';
-import type { Policy } from '../../core/types.js';
+import type { ExtensionMessage, Policy } from '../../core/types.js';
+import { getExtensionApi } from '../platform/browser-api.js';
 import { sendMessage } from '../platform/runtime.js';
 import { attachClaudeAdapter } from '../sites/claude/adapter.js';
 
@@ -16,10 +17,24 @@ async function loadPolicy(): Promise<Policy> {
   return response.policy;
 }
 
+function listenPolicyUpdates(): void {
+  const api = getExtensionApi();
+  api.runtime.onMessage.addListener((message: ExtensionMessage) => {
+    if (message.type === 'POLICY_UPDATED' && message.payload) {
+      policy = message.payload as Policy;
+      console.info('[Shadow AI Sentinel] Policy mise à jour', {
+        version: policy.version,
+      });
+    }
+  });
+}
+
 function bootstrap(): void {
   if (!isPilotHost) {
     return;
   }
+
+  listenPolicyUpdates();
 
   void loadPolicy()
     .then((loaded) => {
@@ -27,7 +42,10 @@ function bootstrap(): void {
       attachClaudeAdapter({
         getPolicy: () => policy ?? loaded,
       });
-      console.info('[Shadow AI Sentinel] Content script prêt', { host, policyVersion: loaded.version });
+      console.info('[Shadow AI Sentinel] Content script prêt', {
+        host,
+        policyVersion: loaded.version,
+      });
     })
     .catch((error: unknown) => {
       console.error('[Shadow AI Sentinel] Échec initialisation', error);

@@ -3,11 +3,16 @@
   "name": "Shadow AI Sentinel",
   "version": "0.1.0",
   "description": "DLP local pour LLM publics — pilote Claude",
-  "permissions": ["storage"],
+  "permissions": ["storage", "alarms", "tabs"],
+  "optional_host_permissions": ["http://localhost/*", "https://*/*"],
   "host_permissions": ["*://claude.ai/*"],
   "background": {
     "service_worker": "src/extension/background/index.ts",
     "type": "module"
+  },
+  "options_ui": {
+    "page": "src/extension/options/index.html",
+    "open_in_tab": true
   },
   "content_scripts": [
     {

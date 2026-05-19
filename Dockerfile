@@ -9,6 +9,7 @@ COPY package*.json ./
 RUN npm ci
 
 COPY tsconfig.json ./
+COPY src/core ./src/core
 COPY src/backend ./src/backend
 
 USER appuser

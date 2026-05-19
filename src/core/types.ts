@@ -89,7 +89,8 @@ export type MessageType =
   | 'GET_POLICY'
   | 'POLICY_UPDATED'
   | 'QUEUE_TELEMETRY'
-  | 'FLUSH_TELEMETRY';
+  | 'FLUSH_TELEMETRY'
+  | 'SYNC_POLICY';
 
 export interface ExtensionMessage<T = unknown> {
   type: MessageType;

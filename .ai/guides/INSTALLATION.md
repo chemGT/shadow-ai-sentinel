@@ -3,7 +3,7 @@
 > **Document évolutif** : les sections sont étiquetées par phase. Ne pas appliquer une section marquée « à venir » tant que la phase n’est pas ✅ dans [SUIVI-ACTIONS.md](../SUIVI-ACTIONS.md).
 
 **Dernière mise à jour :** 2026-05-19  
-**Phases disponibles aujourd’hui :** 0, 1, 2 (protection DLP active sur **claude.ai** — validation manuelle recommandée)
+**Phases disponibles aujourd’hui :** 0–3 (DLP Claude + Options + sync API + file télémétrie)
 
 ---
 
@@ -14,8 +14,8 @@
 3. [Build et chargement extension (Chromium)](#3-build-et-chargement-extension-chromium) — Phase 0 ✅  
 4. [Vérifier le moteur de détection](#4-vérifier-le-moteur-de-détection) — Phase 1 ✅  
 5. [Tester sur Claude.ai](#5-tester-sur-claudeai) — Phase 2 ✅  
-6. [Configurer policies et credentials](#6-configurer-policies-et-credentials) — Phase 3 ⏳ *à venir*  
-7. [Installer l’API (Docker)](#7-installer-lapi-docker) — Phase 4 ⏳ *à venir*  
+6. [Configurer policies et credentials](#6-configurer-policies-et-credentials) — Phase 3 ✅
+7. [Installer l’API (Docker)](#7-installer-lapi-docker) — Phase 3 ✅ (endpoints MVP)
 8. [Firefox (XPI signé)](#8-firefox-xpi-signé) — Phase 6 ⏳ *à venir*  
 9. [Release pilote entreprise](#9-release-pilote-entreprise) — Phase 6 ⏳ *à venir*  
 10. [Dépannage](#10-dépannage)
@@ -201,13 +201,29 @@ Console (F12) sur `claude.ai` :
 
 ## 6. Configurer policies et credentials
 
-**⏳ À venir — Phase 3**
+**Disponible : Phase 3 ✅**
 
-Prévu :
+### Ouvrir les options
 
-1. Page **Options** de l’extension (`tenantId`, `apiKey`, `apiBaseUrl`)
-2. Import fichier policy JSON (modèle : `.ai/schemas/policy.example.json`)
-3. Liste `emailDomains` renseignée à l’intégration client
+`chrome://extensions` → Shadow AI Sentinel → **Détails** → **Extension options**  
+(ou clic droit sur l’icône → Options)
+
+### 1. API entreprise
+
+| Champ | Exemple dev |
+|-------|-------------|
+| Tenant ID | `acme-corp` |
+| Clé API | `dev-secret-change-me` (voir `.env.example`) |
+| URL API | `http://localhost:3000` |
+
+Cliquer **Enregistrer** → accepter la permission réseau pour l’URL API.
+
+Puis **Synchroniser la policy** (pull `GET /policies`).
+
+### 2. Policy JSON locale
+
+- **Importer** : coller / éditer le JSON puis **Importer en local**
+- **Exporter** : recharge depuis `chrome.storage`
 
 Exemple policy (référence) :
 
@@ -232,29 +248,49 @@ Exemple policy (référence) :
 
 ## 7. Installer l’API (Docker)
 
-**⏳ À venir — Phase 4** (healthcheck seulement disponible aujourd’hui)
+**Disponible : Phase 3 ✅** (MVP — durcissement prod en Phase 4)
 
-### État actuel (dev local sans Docker)
+### Dev local
 
 ```bash
+cp .env.example .env
+# Éditer API_KEYS=acme-corp:dev-secret-change-me
 npm run backend
-curl http://localhost:3000/health
 ```
 
-Réponse attendue : `{"status":"ok","service":"shadow-ai-sentinel-api"}`
+Vérifications :
 
-### Prévu Phase 4
+```bash
+curl http://localhost:3000/health
+curl -H "Authorization: Bearer dev-secret-change-me" http://localhost:3000/policies
+```
+
+### Docker
 
 ```bash
 docker compose up -d --build
 ```
 
-Variables d’environnement (exemple à documenter en Phase 4) :
+Variables (fichier `.env` à la racine pour Compose) :
 
 | Variable | Description |
 |----------|-------------|
-| `API_AUTH_KEYS` | Clés Bearer par tenant |
-| `TELEMETRY_RETENTION_DAYS` | Défaut `90` |
+| `API_KEYS` | `tenantId:apiKey` (virgule pour plusieurs) |
+| `PORT` | Port HTTP (défaut `3000`) |
+
+### Endpoints
+
+| Méthode | Route | Auth |
+|---------|-------|------|
+| GET | `/health` | Non |
+| GET | `/policies` | Bearer |
+| POST | `/telemetry` | Bearer (max 50 événements) |
+
+### Télémétrie extension
+
+- Événements en file locale si API indisponible
+- Flush auto toutes les **5 min** + bouton **Envoyer télémétrie** dans Options
+- Aucun contenu de prompt transmis
 
 ---
 

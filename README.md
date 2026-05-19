@@ -2,7 +2,7 @@
 
 Extension navigateur **B2B** (Manifest V3) qui agit comme un **DLP** sur les LLM publics : détection **100 % locale** des données sensibles avant envoi, avec modes **Block** ou **Redact**.
 
-**Pilote en cours :** [claude.ai](https://claude.ai) — phases 0–2 livrées (architecture, regex, interception Block/Redact).
+**Pilote en cours :** [claude.ai](https://claude.ai) — phases 0–3 (DLP, Options, sync API, télémétrie offline).
 
 ---
 
@@ -11,9 +11,9 @@ Extension navigateur **B2B** (Manifest V3) qui agit comme un **DLP** sur les LLM
 | Capacité | Statut |
 |----------|--------|
 | Détection locale (clés API, IBAN, IP interne, emails pro, téléphones, secrets) | ✅ Moteur regex |
-| Policies par type (Block / Redact) | ⏳ Phase 3 |
+| Policies par type (Block / Redact) | ✅ Phase 3 |
 | Interception envoi sur Claude | ✅ Phase 2 |
-| API policies + télémétrie anonymisée | ⏳ Phase 4 |
+| API policies + télémétrie anonymisée | ✅ MVP Phase 3 |
 | ChatGPT & Gemini | ⏳ Phase 7 |
 
 **Principe :** aucun contenu de prompt ne quitte le navigateur. La télémétrie serveur ne contient que des métadonnées (type de règle, action, horodatage).

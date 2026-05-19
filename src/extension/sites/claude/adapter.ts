@@ -1,4 +1,5 @@
 import type { Policy } from '../../../core/types.js';
+import { reportDlpAction } from '../../content/telemetry-reporter.js';
 import {
   applyRedactionsToText,
   evaluateGuard,
@@ -68,12 +69,17 @@ function runGuard(
 
   if (decision.kind === 'block') {
     showBlockAlert(decision.match.ruleType);
+    void reportDlpAction(decision.match.ruleType, 'block');
     return false;
   }
 
   const redacted = applyRedactionsToText(text, decision.matches);
   setInputText(input, redacted);
   showRedactToast();
+  const primaryType = decision.matches[0]?.ruleType;
+  if (primaryType) {
+    void reportDlpAction(primaryType, 'redact');
+  }
   return false;
 }
 

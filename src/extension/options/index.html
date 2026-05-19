@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Shadow AI Sentinel — Options</title>
+    <style>
+      :root {
+        font-family: system-ui, sans-serif;
+        color: #111827;
+        background: #f9fafb;
+      }
+      body {
+        max-width: 640px;
+        margin: 0 auto;
+        padding: 24px;
+      }
+      h1 {
+        font-size: 1.25rem;
+        margin: 0 0 8px;
+      }
+      p.hint {
+        color: #6b7280;
+        font-size: 0.875rem;
+        margin: 0 0 24px;
+      }
+      fieldset {
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 20px;
+        background: #fff;
+      }
+      legend {
+        font-weight: 600;
+        padding: 0 4px;
+      }
+      label {
+        display: block;
+        font-size: 0.875rem;
+        margin-bottom: 12px;
+      }
+      input,
+      textarea {
+        width: 100%;
+        margin-top: 4px;
+        padding: 8px 10px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        box-sizing: border-box;
+      }
+      textarea {
+        min-height: 160px;
+        font-family: ui-monospace, monospace;
+      }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      button {
+        border: none;
+        border-radius: 6px;
+        padding: 8px 14px;
+        font-size: 0.875rem;
+        cursor: pointer;
+        background: #111827;
+        color: #fff;
+      }
+      button.secondary {
+        background: #e5e7eb;
+        color: #111827;
+      }
+      #status {
+        margin-top: 16px;
+        font-size: 0.875rem;
+        min-height: 1.25rem;
+      }
+      #status.ok {
+        color: #047857;
+      }
+      #status.error {
+        color: #b91c1c;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Shadow AI Sentinel</h1>
+    <p class="hint">Configuration locale — credentials API et policy DLP.</p>
+
+    <fieldset>
+      <legend>API entreprise</legend>
+      <label>
+        Tenant ID
+        <input id="tenantId" type="text" autocomplete="off" placeholder="acme-corp" />
+      </label>
+      <label>
+        Clé API (Bearer)
+        <input id="apiKey" type="password" autocomplete="off" />
+      </label>
+      <label>
+        URL API
+        <input id="apiBaseUrl" type="url" placeholder="http://localhost:3000" />
+      </label>
+      <div class="actions">
+        <button type="button" id="saveCredentials">Enregistrer</button>
+        <button type="button" id="syncPolicy" class="secondary">Synchroniser la policy</button>
+        <button type="button" id="flushTelemetry" class="secondary">Envoyer télémétrie</button>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Policy JSON</legend>
+      <label>
+        Contenu (import / édition manuelle)
+        <textarea id="policyJson" spellcheck="false"></textarea>
+      </label>
+      <div class="actions">
+        <button type="button" id="importPolicy">Importer en local</button>
+        <button type="button" id="exportPolicy" class="secondary">Exporter depuis le stockage</button>
+      </div>
+    </fieldset>
+
+    <p id="status" role="status"></p>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

@@ -1,7 +1,7 @@
 # Plan MVP — Pilote Claude (Shadow AI Sentinel)
 
 > Document de référence orchestrateur. Dernière mise à jour : 2026-05-19.  
-> Statut : **cadrage validé** — Phases 0–2 terminées (tests manuels Claude à valider).  
+> Statut : **cadrage validé** — Phases 0–3 terminées (tests manuels + durcissement API Phase 4).  
 > Suivi : [SUIVI-ACTIONS.md](../SUIVI-ACTIONS.md) · Install : [guides/INSTALLATION.md](../guides/INSTALLATION.md)
 
 ---
@@ -253,18 +253,19 @@ build/firefox/   → WXT ou web-ext + webextension-polyfill
 
 ---
 
-### Phase 3 — Policies & offline (Agent: `ext_dev`)
+### Phase 3 — Policies & offline (Agent: `ext_dev`) ✅
 
 **Tâches**
 
-- `chrome.storage` / `browser.storage` : policy locale + defaults mixtes
-- Sync `GET /policies` avec Bearer
-- Queue télémétrie : stockage local, flush online, backoff, `eventId` idempotent
-- Page Options : tenantId, apiKey, import/export policy JSON
+- [x] Policy locale + sync `GET /policies` (Bearer)
+- [x] Queue télémétrie + flush (alarms 5 min, backoff)
+- [x] Page Options (credentials, import/export JSON)
+- [x] API MVP `GET /policies`, `POST /telemetry`
+- [ ] Test manuel offline 24 h
 
 **Done when**
 
-- 24 h offline → policy en cache, télémétrie rattrapée sans doublon
+- [ ] 24 h offline → policy en cache, télémétrie rattrapée sans doublon
 
 ---
 

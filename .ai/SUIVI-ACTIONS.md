@@ -6,7 +6,7 @@
 
 **Dernière mise à jour :** 2026-05-19  
 **Version produit cible :** 0.1.0 (pilote Claude)  
-**Avancement global :** Phase 2 / 7 terminée (~43 %)
+**Avancement global :** Phase 3 / 7 terminée (~57 %)
 
 ---
 
@@ -29,8 +29,8 @@
 | 0 | Architecture & contrats | ✅ | architect | § Prérequis, § Extension Chromium (base) |
 | 1 | Moteur regex | ✅ | backend_ops | § Vérifier le moteur (tests) |
 | 2 | Adaptateur Claude (DOM) | ✅ | platform_watcher → ext_dev | § Tester sur Claude |
-| 3 | Policies & offline | ⏳ | ext_dev | § Options & policy JSON (à venir) |
-| 4 | API policies & télémétrie | ⏳ | backend_ops | § API Docker (à venir) |
+| 3 | Policies & offline | ✅ | ext_dev | § Options, § API |
+| 4 | API durcissement prod | ⏳ | backend_ops | rétention, rate limit |
 | 5 | UX & i18n | ⏳ | ux_writer | § Notice employé (à venir) |
 | 6 | QA & release pilote | ⏳ | qa_tester | § Release pilote (à venir) |
 | 7 | ChatGPT + Gemini | ⏳ | platform_watcher | § Multi-LLM (à venir) |
@@ -47,6 +47,7 @@
 | 2026-05-19 | orchestrator | Création `SUIVI-ACTIONS.md` + `guides/INSTALLATION.md` |
 | 2026-05-19 | — | Repo Git privé GitHub `chemGT/shadow-ai-sentinel` — commit initial `f25ea5e` |
 | 2026-05-19 | ext_dev | **Phase 2** : adaptateur Claude, Block/Redact, modale Shadow DOM, i18n FR/EN |
+| 2026-05-19 | ext_dev + backend_ops | **Phase 3** : Options, sync policy, queue télémétrie, API MVP |
 
 ---
 
@@ -95,14 +96,15 @@
 
 ---
 
-### Phase 3 — Policies & offline ⏳
+### Phase 3 — Policies & offline ✅
 
 | ID | Action | Statut | Notes |
 |----|--------|--------|-------|
-| P3-1 | Sync `GET /policies` | ⏳ | Bearer |
-| P3-2 | Page Options (tenant, apiKey, import JSON) | ⏳ | |
-| P3-3 | Queue télémétrie offline | ⏳ | permission `alarms` |
-| P3-4 | Flush online + backoff | ⏳ | ADR 002 |
+| P3-1 | Sync `GET /policies` | ✅ | `policy-sync.ts` |
+| P3-2 | Page Options | ✅ | `options/index.html` |
+| P3-3 | Queue télémétrie offline | ✅ | `telemetry-queue.ts` |
+| P3-4 | Flush + backoff + alarms | ✅ | 5 min / 30 min |
+| P3-5 | API MVP `/policies` `/telemetry` | ✅ | `server.ts` |
 
 ---
 
@@ -193,9 +195,9 @@
 
 ## Prochaines actions (priorité)
 
-1. **P2-6** — Tests manuels sur claude.ai (compte connecté).
-2. **Phase 3** — Options, sync policy, queue télémétrie.
-3. Pousser commit Phase 2 sur GitHub.
+1. **P2-6** — Tests manuels Claude (Block/Redact + sync Options).
+2. **Phase 4** — Durcissement API (rate limit, rétention 90 j, notice RGPD).
+3. Valider file offline 24 h (test manuel).
 
 ---
 
