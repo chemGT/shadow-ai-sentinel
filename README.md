@@ -1,0 +1,105 @@
+# Shadow AI Sentinel
+
+Extension navigateur **B2B** (Manifest V3) qui agit comme un **DLP** sur les LLM publics : détection **100 % locale** des données sensibles avant envoi, avec modes **Block** ou **Redact**.
+
+**Pilote en cours :** [claude.ai](https://claude.ai) — phases 0–1 livrées (architecture + moteur regex). Interception DOM : phase 2.
+
+---
+
+## Fonctionnalités cibles (MVP)
+
+| Capacité | Statut |
+|----------|--------|
+| Détection locale (clés API, IBAN, IP interne, emails pro, téléphones, secrets) | ✅ Moteur regex |
+| Policies par type (Block / Redact) | ⏳ Phase 3 |
+| Interception envoi sur Claude | ⏳ Phase 2 |
+| API policies + télémétrie anonymisée | ⏳ Phase 4 |
+| ChatGPT & Gemini | ⏳ Phase 7 |
+
+**Principe :** aucun contenu de prompt ne quitte le navigateur. La télémétrie serveur ne contient que des métadonnées (type de règle, action, horodatage).
+
+---
+
+## Démarrage rapide
+
+### Prérequis
+
+- Node.js 18+ (20 LTS recommandé)
+- Chrome ou Edge (Chromium)
+
+### Installation
+
+```bash
+git clone git@github.com:chemGT/shadow-ai-sentinel.git
+cd shadow-ai-sentinel
+npm ci
+npm run build
+npm test
+```
+
+### Charger l’extension (développement)
+
+1. `npm run build`
+2. Ouvrir `chrome://extensions` → **Mode développeur** → **Charger l’extension non empaquetée**
+3. Sélectionner le dossier `dist/`
+4. Ouvrir [claude.ai](https://claude.ai) et vérifier les logs console du content script
+
+> La protection DLP sur Claude sera active à partir de la **phase 2**. Voir le guide complet : [.ai/guides/INSTALLATION.md](.ai/guides/INSTALLATION.md)
+
+### API (healthcheck uniquement)
+
+```bash
+npm run backend
+curl http://localhost:3000/health
+```
+
+---
+
+## Scripts npm
+
+| Commande | Description |
+|----------|-------------|
+| `npm run dev` | Vite + rebuild extension (watch) |
+| `npm run build` | Typecheck + build extension → `dist/` |
+| `npm test` | Tests unitaires (moteur de détection) |
+| `npm run backend` | API Express locale (port 3000) |
+| `docker compose up -d` | API conteneurisée (Phase 4+) |
+
+---
+
+## Structure du projet
+
+```
+src/
+├── core/                 # Moteur DLP (regex, policy, validation)
+├── extension/            # MV3 : background, content, platform/
+├── ui/                   # Composants React (modales)
+└── backend/              # API Node.js stateless
+.ai/                      # Plan MVP, suivi, guides, ADR, sécurité
+```
+
+---
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [.ai/guides/INSTALLATION.md](.ai/guides/INSTALLATION.md) | Guide d’installation (mis à jour par phase) |
+| [.ai/SUIVI-ACTIONS.md](.ai/SUIVI-ACTIONS.md) | Suivi des tâches et avancement |
+| [.ai/plans/mvp-pilote-claude.md](.ai/plans/mvp-pilote-claude.md) | Plan MVP détaillé |
+| [.ai/schemas/policy.example.json](.ai/schemas/policy.example.json) | Exemple de policy client |
+
+---
+
+## Stack technique
+
+- **Extension :** TypeScript, React, Vite, [@crxjs/vite-plugin](https://crxjs.dev/)
+- **Manifest :** V3 (service worker module)
+- **Backend :** Express 5, Docker
+- **Tests :** Vitest
+
+---
+
+## Licence
+
+ISC — voir `package.json`.
