@@ -45,6 +45,7 @@
 | 2026-05-19 | architect | **Phase 0** : types, platform/, manifest Claude-only, ADR, threat model |
 | 2026-05-19 | backend_ops | **Phase 1** : 6 détecteurs regex, 19 tests Vitest, limite 100k car. |
 | 2026-05-19 | orchestrator | Création `SUIVI-ACTIONS.md` + `guides/INSTALLATION.md` |
+| 2026-05-19 | — | Repo Git privé GitHub `chemGT/shadow-ai-sentinel` — commit initial `f25ea5e` |
 
 ---
 
