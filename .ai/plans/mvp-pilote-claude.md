@@ -1,7 +1,7 @@
 # Plan MVP — Pilote Claude (Shadow AI Sentinel)
 
 > Document de référence orchestrateur. Dernière mise à jour : 2026-05-19.  
-> Statut : **cadrage validé** — Phases 0–1 terminées.  
+> Statut : **cadrage validé** — Phases 0–2 terminées (tests manuels Claude à valider).  
 > Suivi : [SUIVI-ACTIONS.md](../SUIVI-ACTIONS.md) · Install : [guides/INSTALLATION.md](../guides/INSTALLATION.md)
 
 ---
@@ -62,8 +62,8 @@ Livrer un DLP navigateur B2B opérationnel sur **Claude** (`claude.ai`) : détec
 | Tooling | Vite + CRXJS + React + TS + Vitest + Docker OK |
 | Moteur regex | 6 détecteurs, `npm test` (19 tests) |
 | Content / background | Bootstrap policy + content actif sur `claude.ai` |
-| Interception DOM Claude | ⏳ Phase 2 |
-| `AlertModal` | Existe, non branché (Phase 2) |
+| Interception DOM Claude | ✅ Phase 2 |
+| Modale Block (`SentinelAlert` Shadow DOM) | ✅ Phase 2 |
 | API | `GET /health` seulement (Phase 4) |
 | Manifest | Claude uniquement, permissions minimales |
 
@@ -236,18 +236,20 @@ build/firefox/   → WXT ou web-ext + webextension-polyfill
 
 ---
 
-### Phase 2 — Adaptateur Claude (Agent: `platform_watcher` → `ext_dev`)
+### Phase 2 — Adaptateur Claude (Agent: `platform_watcher` → `ext_dev`) ✅
 
 **Tâches**
 
-- `src/extension/sites/claude/` : extract text, hook submit / Entrée / paste
-- Intégration Block (`AlertModal`) + Redact in-place
-- Shadow DOM pour UI ; i18n FR/EN (`src/ui/i18n/`)
-- Tests manuels Chromium puis Firefox
+- [x] `src/extension/sites/claude/` : sélecteurs, DOM, hooks Entrée + clic Envoyer
+- [x] `evaluateGuard` + Block (`SentinelAlert`) + Redact (`execCommand`)
+- [x] Shadow DOM + i18n FR/EN (`src/ui/i18n/messages.ts`)
+- [x] Tests unitaires `analyze` (4 tests)
+- [ ] Tests manuels matrice sur claude.ai connecté
+- [ ] Firefox (Phase 6)
 
 **Done when**
 
-- Matrice fonctionnelle Claude (voir § Tests) OK sur **les deux** navigateurs
+- [ ] Matrice fonctionnelle Claude OK Chromium (Firefox Phase 6)
 
 ---
 

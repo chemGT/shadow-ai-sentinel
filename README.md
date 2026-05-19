@@ -2,7 +2,7 @@
 
 Extension navigateur **B2B** (Manifest V3) qui agit comme un **DLP** sur les LLM publics : détection **100 % locale** des données sensibles avant envoi, avec modes **Block** ou **Redact**.
 
-**Pilote en cours :** [claude.ai](https://claude.ai) — phases 0–1 livrées (architecture + moteur regex). Interception DOM : phase 2.
+**Pilote en cours :** [claude.ai](https://claude.ai) — phases 0–2 livrées (architecture, regex, interception Block/Redact).
 
 ---
 
@@ -12,7 +12,7 @@ Extension navigateur **B2B** (Manifest V3) qui agit comme un **DLP** sur les LLM
 |----------|--------|
 | Détection locale (clés API, IBAN, IP interne, emails pro, téléphones, secrets) | ✅ Moteur regex |
 | Policies par type (Block / Redact) | ⏳ Phase 3 |
-| Interception envoi sur Claude | ⏳ Phase 2 |
+| Interception envoi sur Claude | ✅ Phase 2 |
 | API policies + télémétrie anonymisée | ⏳ Phase 4 |
 | ChatGPT & Gemini | ⏳ Phase 7 |
 
@@ -44,7 +44,7 @@ npm test
 3. Sélectionner le dossier `dist/`
 4. Ouvrir [claude.ai](https://claude.ai) et vérifier les logs console du content script
 
-> La protection DLP sur Claude sera active à partir de la **phase 2**. Voir le guide complet : [.ai/guides/INSTALLATION.md](.ai/guides/INSTALLATION.md)
+> Voir les scénarios de test sur Claude : [.ai/guides/INSTALLATION.md](.ai/guides/INSTALLATION.md) §5
 
 ### API (healthcheck uniquement)
 

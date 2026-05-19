@@ -3,7 +3,7 @@
 > **Document évolutif** : les sections sont étiquetées par phase. Ne pas appliquer une section marquée « à venir » tant que la phase n’est pas ✅ dans [SUIVI-ACTIONS.md](../SUIVI-ACTIONS.md).
 
 **Dernière mise à jour :** 2026-05-19  
-**Phases disponibles aujourd’hui :** 0, 1 (développement / tests — **pas encore de protection DLP active sur Claude**)
+**Phases disponibles aujourd’hui :** 0, 1, 2 (protection DLP active sur **claude.ai** — validation manuelle recommandée)
 
 ---
 
@@ -13,7 +13,7 @@
 2. [Installation environnement de développement](#2-installation-environnement-de-développement) — Phase 0 ✅  
 3. [Build et chargement extension (Chromium)](#3-build-et-chargement-extension-chromium) — Phase 0 ✅  
 4. [Vérifier le moteur de détection](#4-vérifier-le-moteur-de-détection) — Phase 1 ✅  
-5. [Tester sur Claude.ai](#5-tester-sur-claudeai) — Phase 2 ⏳ *à venir*  
+5. [Tester sur Claude.ai](#5-tester-sur-claudeai) — Phase 2 ✅  
 6. [Configurer policies et credentials](#6-configurer-policies-et-credentials) — Phase 3 ⏳ *à venir*  
 7. [Installer l’API (Docker)](#7-installer-lapi-docker) — Phase 4 ⏳ *à venir*  
 8. [Firefox (XPI signé)](#8-firefox-xpi-signé) — Phase 6 ⏳ *à venir*  
@@ -156,16 +156,46 @@ console.log(detectSensitiveData('IBAN DE89370400440532013000 et jean@acme.com', 
 
 ## 5. Tester sur Claude.ai
 
-**⏳ À venir — Phase 2**
+**Disponible : Phase 2 ✅**
 
-Quand la Phase 2 sera livrée, cette section contiendra :
+### Prérequis
 
-- Scénarios Block (clé API, secret) → modale, envoi bloqué
-- Scénarios Redact (IBAN, IP, email pro, téléphone) → token visible
-- Raccourci Entrée + bouton Envoyer
-- Collage depuis le presse-papiers
+- Extension chargée depuis `dist/` (§3)
+- Compte [claude.ai](https://claude.ai) connecté
+- Nouvelle conversation ouverte
 
-*En attendant : seule la présence du content script en console est normale.*
+### Vérifier l’activation
+
+Console (F12) sur `claude.ai` :
+
+```
+[Shadow AI Sentinel] Adaptateur Claude actif
+[Shadow AI Sentinel] Content script prêt
+```
+
+### Scénarios de test
+
+| # | Saisie (exemple) | Mode policy | Action | Résultat attendu |
+|---|------------------|-------------|--------|------------------|
+| T1 | `AKIAIOSFODNN7EXAMPLE` | Block (défaut) | Entrée ou Envoyer | Modale FR/EN, **pas d’envoi** |
+| T2 | `DE89370400440532013000` | Redact (défaut) | Entrée ou Envoyer | Texte remplacé par `[REDACTED_IBAN]`, toast, pas d’envoi auto |
+| T3 | `192.168.1.42` | Redact | Envoyer | `[REDACTED_INTERNAL_IP]` |
+| T4 | `jean@acme.com` | Redact + `emailDomains` | Envoyer | Match **uniquement** si domaine configuré (Phase 3 import policy) |
+| T5 | `06 12 34 56 78` | Redact | Envoyer | `[REDACTED_PHONE]` |
+| T6 | `Bearer eyJhbGciOiJIUzI1NiJ9.abc.def` | Block (secret) | Envoyer | Modale block |
+
+> **Emails pro (T4)** : par défaut la règle `pro_email` est **désactivée**. Activer via import policy (Phase 3) avec `emailDomains: ["votre-domaine.com"]`.
+
+### Raccourcis testés
+
+- **Entrée** (sans Shift) dans la zone de saisie
+- **Clic** sur le bouton d’envoi
+
+### Si rien ne se passe
+
+1. Recharger l’extension puis la page Claude.
+2. Vérifier que les sélecteurs n’ont pas changé → [.ai/docs/platform-compatibility.md](../docs/platform-compatibility.md).
+3. Ouvrir une issue / mettre à jour `src/extension/sites/claude/selectors.ts`.
 
 ---
 
@@ -283,7 +313,9 @@ npm test
 
 ### Le texte sensible n’est pas bloqué sur Claude
 
-**Comportement normal avant Phase 2.** Le moteur regex fonctionne en tests unitaires mais n’est pas encore branché au DOM.
+1. Vérifier les logs « Adaptateur Claude actif » (sinon §5 dépannage sélecteurs).
+2. `npm run build` + recharger l’extension.
+3. Policy par défaut : `api_key` et `generic_secret` en **block**, autres en **redact**.
 
 ### Docker / API
 
@@ -296,6 +328,7 @@ Phase 4 non livrée : seul `/health` existe. Ne pas attendre `/policies` ou `/te
 | Date | Phase | Modifications |
 |------|-------|----------------|
 | 2026-05-19 | 0–1 | Création : prérequis, build Chromium, tests regex, sections futures |
+| 2026-05-19 | 2 | Tests DLP sur claude.ai, scénarios Block/Redact |
 
 ---
 

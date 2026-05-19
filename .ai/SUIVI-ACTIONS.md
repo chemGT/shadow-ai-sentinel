@@ -6,7 +6,7 @@
 
 **Dernière mise à jour :** 2026-05-19  
 **Version produit cible :** 0.1.0 (pilote Claude)  
-**Avancement global :** Phase 1 / 7 terminée (~29 %)
+**Avancement global :** Phase 2 / 7 terminée (~43 %)
 
 ---
 
@@ -28,7 +28,7 @@
 |-------|----------|--------|-----------------|--------------------------|
 | 0 | Architecture & contrats | ✅ | architect | § Prérequis, § Extension Chromium (base) |
 | 1 | Moteur regex | ✅ | backend_ops | § Vérifier le moteur (tests) |
-| 2 | Adaptateur Claude (DOM) | ⏳ | platform_watcher → ext_dev | § Tester sur Claude (à venir) |
+| 2 | Adaptateur Claude (DOM) | ✅ | platform_watcher → ext_dev | § Tester sur Claude |
 | 3 | Policies & offline | ⏳ | ext_dev | § Options & policy JSON (à venir) |
 | 4 | API policies & télémétrie | ⏳ | backend_ops | § API Docker (à venir) |
 | 5 | UX & i18n | ⏳ | ux_writer | § Notice employé (à venir) |
@@ -46,6 +46,7 @@
 | 2026-05-19 | backend_ops | **Phase 1** : 6 détecteurs regex, 19 tests Vitest, limite 100k car. |
 | 2026-05-19 | orchestrator | Création `SUIVI-ACTIONS.md` + `guides/INSTALLATION.md` |
 | 2026-05-19 | — | Repo Git privé GitHub `chemGT/shadow-ai-sentinel` — commit initial `f25ea5e` |
+| 2026-05-19 | ext_dev | **Phase 2** : adaptateur Claude, Block/Redact, modale Shadow DOM, i18n FR/EN |
 
 ---
 
@@ -81,16 +82,16 @@
 
 ---
 
-### Phase 2 — Adaptateur Claude ⏳
+### Phase 2 — Adaptateur Claude ✅
 
 | ID | Action | Statut | Notes |
 |----|--------|--------|-------|
-| P2-1 | Cartographie sélecteurs DOM Claude | ⏳ | `platform_watcher` |
-| P2-2 | Module `sites/claude/` | ⏳ | extract + hooks submit / Entrée |
-| P2-3 | Branchement `detectSensitiveData` | ⏳ | |
-| P2-4 | Mode Block + `AlertModal` | ⏳ | Shadow DOM |
-| P2-5 | Mode Redact in-place | ⏳ | |
-| P2-6 | Tests manuels matrice F01–F08 | ⏳ | |
+| P2-1 | Cartographie sélecteurs DOM Claude | ✅ | `selectors.ts` + `platform-compatibility.md` |
+| P2-2 | Module `sites/claude/` | ✅ | `adapter.ts`, `dom.ts` |
+| P2-3 | Branchement `detectSensitiveData` | ✅ | `content/analyze.ts` |
+| P2-4 | Mode Block + modale | ✅ | `SentinelAlert` + Shadow DOM |
+| P2-5 | Mode Redact in-place | ✅ | `execCommand` + toast |
+| P2-6 | Tests manuels matrice F01–F08 | ⏳ | À valider sur claude.ai connecté |
 
 ---
 
@@ -192,9 +193,9 @@
 
 ## Prochaines actions (priorité)
 
-1. **P2-1** — Cartographier les sélecteurs Claude (`claude.ai`).
-2. **P2-2 à P2-5** — Implémenter interception + Block/Redact.
-3. Mettre à jour ce document et `INSTALLATION.md` à la fin de la Phase 2.
+1. **P2-6** — Tests manuels sur claude.ai (compte connecté).
+2. **Phase 3** — Options, sync policy, queue télémétrie.
+3. Pousser commit Phase 2 sur GitHub.
 
 ---
 
