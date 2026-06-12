@@ -1,6 +1,8 @@
 import { loadApiKeysFromEnv } from './auth.js';
 import { createApp } from './app.js';
 import { purgeExpiredEvents } from './telemetry-store.js';
+import { getDb } from './db/index.js';
+import { startScheduler } from './jobs/scheduler.js';
 
 const { app, config, retentionMs } = createApp();
 const apiKeys = loadApiKeysFromEnv();
@@ -20,5 +22,13 @@ app.listen(config.port, () => {
   );
   if (apiKeys.size === 0) {
     console.warn('[Shadow AI Sentinel] Aucune clé API — définir API_KEYS ou DEV_TENANT_ID + DEV_API_KEY');
+  }
+
+  try {
+    const db = getDb();
+    startScheduler(db);
+    console.info('[Shadow AI Sentinel] Background jobs démarrés (purge + warmup + dunning)');
+  } catch {
+    console.warn('[Shadow AI Sentinel] DATABASE_URL absent — background jobs désactivés');
   }
 });

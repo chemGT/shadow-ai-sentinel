@@ -13,6 +13,8 @@ export const tenants = pgTable('tenants', {
   slug: text('slug').unique().notNull(),
   name: text('name').notNull(),
   plan: text('plan').notNull().default('trial'),
+  status: text('status').notNull().default('active'),
+  pastDueSince: timestamp('past_due_since', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 

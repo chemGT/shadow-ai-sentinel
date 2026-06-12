@@ -1,6 +1,6 @@
-import { eq, desc, count, gte, and } from 'drizzle-orm';
+import { eq, desc, count, gte, and, lt, lte, isNull, ne } from 'drizzle-orm';
 import type { Db } from './index.js';
-import { policies, telemetryEvents, auditLog } from './schema.js';
+import { policies, telemetryEvents, auditLog, tenants, apiKeys } from './schema.js';
 import type { Policy } from '../../core/types.js';
 
 export type GroupByField = 'ruleType' | 'action' | 'host';
@@ -104,4 +104,72 @@ export async function appendAuditEntry(
   payload?: unknown,
 ): Promise<void> {
   await db.insert(auditLog).values({ tenantId, actor, action, payload });
+}
+
+// --- Jobs ---
+
+export async function getAllTenants(
+  db: Db,
+): Promise<Array<{ id: string; plan: string; status: string }>> {
+  return db.select({ id: tenants.id, plan: tenants.plan, status: tenants.status }).from(tenants);
+}
+
+export async function getActiveTenants(db: Db): Promise<Array<{ id: string }>> {
+  return db
+    .select({ id: tenants.id })
+    .from(tenants)
+    .where(and(ne(tenants.status, 'suspended'), ne(tenants.status, 'canceled')));
+}
+
+export async function deleteTelemetryOlderThan(
+  db: Db,
+  tenantId: string,
+  cutoff: Date,
+): Promise<void> {
+  await db
+    .delete(telemetryEvents)
+    .where(and(eq(telemetryEvents.tenantId, tenantId), lt(telemetryEvents.ts, cutoff)));
+}
+
+export async function getOverdueTenants(
+  db: Db,
+  cutoff: Date,
+): Promise<Array<{ id: string }>> {
+  return db
+    .select({ id: tenants.id })
+    .from(tenants)
+    .where(and(eq(tenants.status, 'past_due'), lte(tenants.pastDueSince, cutoff)));
+}
+
+export async function suspendTenant(db: Db, tenantId: string): Promise<void> {
+  await db
+    .update(tenants)
+    .set({ status: 'suspended' })
+    .where(eq(tenants.id, tenantId));
+}
+
+export async function revokeAllTenantKeys(db: Db, tenantId: string): Promise<number> {
+  const now = new Date();
+  const revoked = await db
+    .update(apiKeys)
+    .set({ revokedAt: now })
+    .where(and(eq(apiKeys.tenantId, tenantId), isNull(apiKeys.revokedAt)))
+    .returning({ id: apiKeys.id });
+  return revoked.length;
+}
+
+export async function getTenantStatus(db: Db, tenantId: string): Promise<string | null> {
+  const rows = await db
+    .select({ status: tenants.status })
+    .from(tenants)
+    .where(eq(tenants.id, tenantId))
+    .limit(1);
+  return rows[0]?.status ?? null;
+}
+
+export async function markTenantPastDue(db: Db, tenantId: string): Promise<void> {
+  await db
+    .update(tenants)
+    .set({ status: 'past_due', pastDueSince: new Date() })
+    .where(and(eq(tenants.id, tenantId), ne(tenants.status, 'suspended')));
 }

@@ -3,6 +3,7 @@ import type { NextFunction, Request, Response } from 'express';
 import { and, eq, gt, isNull, or } from 'drizzle-orm';
 import { getDb } from '../db/index.js';
 import { apiKeys } from '../db/schema.js';
+import { getTenantStatus } from '../db/queries.js';
 
 export type TenantContext = {
   tenantId: string;
@@ -63,6 +64,12 @@ export async function tenantMiddleware(
 
   if (!matched) {
     res.status(401).json({ error: 'invalid_token' });
+    return;
+  }
+
+  const status = await getTenantStatus(db, matched.tenantId);
+  if (status === 'suspended' || status === 'canceled') {
+    res.status(403).json({ error: 'tenant_suspended' });
     return;
   }
 

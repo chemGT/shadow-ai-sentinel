@@ -41,6 +41,16 @@ export function clearCache(): void {
   cache.clear();
 }
 
+export function setCacheEntry(
+  tenantId: string,
+  days: number,
+  groupBy: string,
+  data: AggregateResponse,
+): void {
+  const key = `${tenantId}:${days}:${groupBy}`;
+  cache.set(key, { data, expiresAt: Date.now() + CACHE_TTL_MS });
+}
+
 export const eventsRouter = Router();
 eventsRouter.use(tenantMiddleware as never);
 
