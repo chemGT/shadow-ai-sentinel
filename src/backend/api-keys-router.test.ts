@@ -14,6 +14,8 @@ vi.mock('./middleware/tenant.js', () => ({
 }));
 vi.mock('./db/queries.js', () => ({ appendAuditEntry: vi.fn().mockResolvedValue(undefined) }));
 
+import { appendAuditEntry } from './db/queries.js';
+
 import { getDb } from './db/index.js';
 import { apiKeysRouter } from './api-keys-router.js';
 
@@ -41,6 +43,13 @@ describe('POST /api-keys', () => {
     expect(res.body.key).toMatch(/^sk_live_[0-9a-f]{48}$/);
     expect(res.body.prefix).toMatch(/^sk_live_[0-9a-f]{8}$/);
     expect(res.body.scopes).toContain('policies:read');
+    expect(appendAuditEntry).toHaveBeenCalledWith(
+      expect.anything(),
+      'tenant-a',
+      expect.any(String),
+      'api_key.created',
+      expect.objectContaining({ keyId: expect.any(String) }),
+    );
   });
 
   it('rejects invalid scopes', async () => {
@@ -77,6 +86,13 @@ describe('DELETE /api-keys/:id', () => {
 
     const res = await request(makeApp()).delete('/api-keys/key-1');
     expect(res.status).toBe(204);
+    expect(appendAuditEntry).toHaveBeenCalledWith(
+      expect.anything(),
+      'tenant-a',
+      expect.any(String),
+      'api_key.revoked',
+      expect.objectContaining({ keyId: 'key-1' }),
+    );
   });
 
   it('returns 404 for unknown or already revoked key', async () => {
@@ -122,6 +138,13 @@ describe('POST /api-keys/:id/rotate', () => {
     expect(res.body.id).toBe('key-new');
     expect(res.body.key).toMatch(/^sk_live_/);
     expect(res.body.oldKeyExpiresAt).toBeDefined();
+    expect(appendAuditEntry).toHaveBeenCalledWith(
+      expect.anything(),
+      'tenant-a',
+      expect.any(String),
+      'api_key.rotated',
+      expect.objectContaining({ oldKeyId: 'key-old', newKeyId: 'key-new' }),
+    );
 
     const grace = new Date(res.body.oldKeyExpiresAt);
     const diff = grace.getTime() - Date.now();

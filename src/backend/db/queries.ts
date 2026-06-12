@@ -1,7 +1,7 @@
 import { eq, desc } from 'drizzle-orm';
 import type { Db } from './index.js';
 import { policies, telemetryEvents, auditLog } from './schema.js';
-import type Policy from '../../core/types.js';
+import type { Policy } from '../../core/types.js';
 
 // --- Policies ---
 
