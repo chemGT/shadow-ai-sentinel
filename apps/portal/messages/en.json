@@ -1,0 +1,31 @@
+{
+  "nav": {
+    "login": "Login",
+    "signup": "Get started",
+    "dashboard": "Dashboard"
+  },
+  "home": {
+    "hero": "Shadow AI protection for your team",
+    "sub": "Monitor and control AI tool usage across your organisation. Prevent data leaks before they reach the LLM.",
+    "cta": "Start free trial",
+    "feature1Title": "Real-time detection",
+    "feature1Body": "Block PII, secrets, and source code before they're sent to ChatGPT, Claude, or Gemini.",
+    "feature2Title": "Browser-native",
+    "feature2Body": "A Chrome/Firefox extension that intercepts at the source. No network proxy required.",
+    "feature3Title": "Multi-tenant ready",
+    "feature3Body": "Org-level policies, API key rotation, audit log, GDPR-compliant telemetry."
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome to Shadow AI Sentinel",
+    "placeholder": "Your analytics will appear here once events are received from the extension.",
+    "todoAuth": "Auth gate not yet wired — this page is public during S1-I9a."
+  },
+  "auth": {
+    "loginTitle": "Sign in",
+    "signupTitle": "Create your account",
+    "comingSoon": "Authentication is being configured.",
+    "comingSoonBody": "OAuth (Google + Microsoft) and email sign-in arrive in the next sub-iteration.",
+    "backHome": "Back to home"
+  }
+}
