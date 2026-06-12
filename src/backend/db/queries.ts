@@ -73,6 +73,27 @@ export async function getTelemetryAggregate(
   return rows.map((r) => ({ key: r.key, count: Number(r.cnt) }));
 }
 
+export type TelemetryRow = { ts: Date; host: string; ruleType: string; action: string };
+
+export async function getTelemetryEvents(
+  db: Db,
+  tenantId: string,
+  since: Date,
+  limit: number,
+): Promise<TelemetryRow[]> {
+  return db
+    .select({
+      ts: telemetryEvents.ts,
+      host: telemetryEvents.host,
+      ruleType: telemetryEvents.ruleType,
+      action: telemetryEvents.action,
+    })
+    .from(telemetryEvents)
+    .where(and(eq(telemetryEvents.tenantId, tenantId), gte(telemetryEvents.ts, since)))
+    .orderBy(desc(telemetryEvents.ts))
+    .limit(limit);
+}
+
 // --- Audit ---
 
 export async function appendAuditEntry(

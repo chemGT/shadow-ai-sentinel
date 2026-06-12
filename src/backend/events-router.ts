@@ -1,11 +1,14 @@
 import { Router } from 'express';
 import { getDb } from './db/index.js';
-import { getTelemetryAggregate, getTelemetryCount } from './db/queries.js';
+import { getTelemetryAggregate, getTelemetryCount, getTelemetryEvents } from './db/queries.js';
 import type { GroupByField, AggregateRow } from './db/queries.js';
 import { tenantMiddleware, requireScope } from './middleware/tenant.js';
 
 export const CACHE_TTL_MS = 5 * 60 * 1000;
+export const CSV_HEADER = 'ts,host,ruleType,action\n';
 const MAX_DAYS = 90;
+const MAX_EXPORT_LIMIT = 50_000;
+const DEFAULT_EXPORT_LIMIT = 10_000;
 const DEFAULT_DAYS = 30;
 const VALID_GROUP_BY = new Set(['ruleType', 'action', 'host', 'all']);
 
@@ -106,5 +109,57 @@ eventsRouter.get(
 
     res.setHeader('X-Cache', 'MISS');
     res.json(data);
+  },
+);
+
+function escapeCsvField(value: string): string {
+  if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  return value;
+}
+
+eventsRouter.get(
+  '/export',
+  requireScope('telemetry:read') as never,
+  async (req, res) => {
+    const tenantId = req.tenant!.tenantId;
+
+    const daysRaw = Number(req.query.days ?? DEFAULT_DAYS);
+    const days =
+      Number.isFinite(daysRaw) && daysRaw >= 1
+        ? Math.min(Math.floor(daysRaw), MAX_DAYS)
+        : DEFAULT_DAYS;
+
+    const limitRaw = Number(req.query.limit ?? DEFAULT_EXPORT_LIMIT);
+    const limit =
+      Number.isFinite(limitRaw) && limitRaw >= 1
+        ? Math.min(Math.floor(limitRaw), MAX_EXPORT_LIMIT)
+        : DEFAULT_EXPORT_LIMIT;
+
+    const from = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+    const dateStr = new Date().toISOString().slice(0, 10);
+
+    let db;
+    try {
+      db = getDb();
+    } catch {
+      res.status(503).json({ error: 'database_unavailable' });
+      return;
+    }
+
+    const rows = await getTelemetryEvents(db, tenantId, from, limit);
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="shadow-ai-events-${dateStr}.csv"`);
+    res.setHeader('X-Total-Rows', String(rows.length));
+
+    res.write(CSV_HEADER);
+    for (const row of rows) {
+      res.write(
+        `${row.ts.toISOString()},${escapeCsvField(row.host)},${escapeCsvField(row.ruleType)},${escapeCsvField(row.action)}\n`,
+      );
+    }
+    res.end();
   },
 );
