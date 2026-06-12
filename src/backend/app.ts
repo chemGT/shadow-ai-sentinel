@@ -10,6 +10,8 @@ import { rejectForbiddenTelemetryBody, securityHeaders } from './middleware/secu
 import { safeRequestLog } from './middleware/request-log.js';
 import { createRateLimiter } from './rate-limit.js';
 import { countStoredEvents, getRetentionMs, registerEvents } from './telemetry-store.js';
+import { apiKeysRouter } from './api-keys-router.js';
+import { eventsRouter } from './events-router.js';
 
 export type AuthedRequest = Request & { tenantId?: string };
 
@@ -119,6 +121,9 @@ export function createApp() {
     const { accepted, duplicates } = registerEvents(validEvents, retentionMs);
     res.json({ accepted, duplicates });
   });
+
+  app.use('/api-keys', apiKeysRouter);
+  app.use('/events', eventsRouter);
 
   return { app, config, retentionMs };
 }

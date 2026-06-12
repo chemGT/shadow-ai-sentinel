@@ -9,7 +9,7 @@ import { tenantMiddleware, requireScope } from './middleware/tenant.js';
 
 export const GRACE_PERIOD_DAYS = 7;
 export const BCRYPT_ROUNDS = 10;
-export const VALID_SCOPES = ['policies:read', 'telemetry:write', 'admin:*'] as const;
+export const VALID_SCOPES = ['policies:read', 'telemetry:read', 'telemetry:write', 'admin:*'] as const;
 
 function generateKey(): { full: string; prefix: string; hash: Promise<string> } {
   const full = `sk_live_${randomBytes(24).toString('hex')}`;

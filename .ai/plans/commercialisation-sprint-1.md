@@ -32,7 +32,7 @@ Légende validateurs : Q=qa_tester (toujours) · F=functional_tester · S=securi
 | S1-I2 | Schéma Postgres multi-tenant + migrations | backend_ops | 1.5 j | I1 | Q S🔒 | ✅ |
 | S1-I3 | Middleware extraction tenant + isolation queries | backend_ops | 1.5 j | I2 | Q S🔒 | ✅ |
 | S1-I4 | Rotation clés API + scopes + grace period | backend_ops | 1 j | I3 | Q S🔒 | ✅ |
-| S1-I5 | Audit log append-only | backend_ops | 0.5 j | I3 | Q S🔒 | ⏳ |
+| S1-I5 | Audit log append-only | backend_ops | 0.5 j | I3 | Q S🔒 | ✅ |
 | S1-I6 | Endpoint `/events/aggregate` + cache | backend_ops | 1.5 j | I3 | Q | ⏳ |
 | S1-I7 | Endpoint `/events/export` CSV streaming | backend_ops | 0.5 j | I6 | Q C🛡️ | ⏳ |
 | S1-I8 | Background jobs (purge + agg + dunning hook) | backend_ops | 1 j | I3 | Q | ⏳ |

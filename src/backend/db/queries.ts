@@ -1,7 +1,10 @@
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, count, gte, and } from 'drizzle-orm';
 import type { Db } from './index.js';
 import { policies, telemetryEvents, auditLog } from './schema.js';
 import type { Policy } from '../../core/types.js';
+
+export type GroupByField = 'ruleType' | 'action' | 'host';
+export type AggregateRow = { key: string; count: number };
 
 // --- Policies ---
 
@@ -37,6 +40,37 @@ export async function insertTelemetryEvents(
       ts: e.ts ?? new Date(),
     })),
   );
+}
+
+export async function getTelemetryCount(db: Db, tenantId: string, since: Date): Promise<number> {
+  const [row] = await db
+    .select({ cnt: count() })
+    .from(telemetryEvents)
+    .where(and(eq(telemetryEvents.tenantId, tenantId), gte(telemetryEvents.ts, since)));
+  return Number(row?.cnt ?? 0);
+}
+
+export async function getTelemetryAggregate(
+  db: Db,
+  tenantId: string,
+  since: Date,
+  groupByField: GroupByField,
+): Promise<AggregateRow[]> {
+  const col =
+    groupByField === 'ruleType'
+      ? telemetryEvents.ruleType
+      : groupByField === 'action'
+        ? telemetryEvents.action
+        : telemetryEvents.host;
+
+  const rows = await db
+    .select({ key: col, cnt: count() })
+    .from(telemetryEvents)
+    .where(and(eq(telemetryEvents.tenantId, tenantId), gte(telemetryEvents.ts, since)))
+    .groupBy(col)
+    .orderBy(desc(count()));
+
+  return rows.map((r) => ({ key: r.key, count: Number(r.cnt) }));
 }
 
 // --- Audit ---
