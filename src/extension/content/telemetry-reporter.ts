@@ -1,10 +1,11 @@
-import type { RuleAction, RuleType } from '../../core/types.js';
+import type { LlmHost, RuleAction, RuleType } from '../../core/types.js';
 import { resolveLocale } from '../../ui/i18n/messages.js';
 import { sendMessage } from '../platform/runtime.js';
 
 export async function reportDlpAction(
   ruleType: RuleType,
   action: RuleAction,
+  host: LlmHost,
 ): Promise<void> {
   try {
     await sendMessage({
@@ -12,6 +13,7 @@ export async function reportDlpAction(
       payload: {
         ruleType,
         action,
+        host,
         locale: resolveLocale(),
       },
     });

@@ -1,4 +1,4 @@
-import { PILOT_LLM_HOST } from '../../core/constants.js';
+import { SUPPORTED_LLM_HOSTS } from '../../core/constants.js';
 import { createDefaultPolicy } from '../../core/defaults.js';
 import type { ExtensionMessage, Policy } from '../../core/types.js';
 import {
@@ -46,7 +46,7 @@ async function bootstrap(): Promise<void> {
   });
 
   console.info('[Shadow AI Sentinel] Service worker prêt', {
-    pilotHost: PILOT_LLM_HOST,
+    supportedHosts: SUPPORTED_LLM_HOSTS,
     policyVersion: cachedPolicy.version,
     deviceId: `${deviceId.slice(0, 8)}…`,
     browser: getBrowserFamily(),

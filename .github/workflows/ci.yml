@@ -34,8 +34,17 @@ jobs:
         env:
           API_KEYS: acme-corp:dev-secret-change-me
 
-      - name: Typecheck & extension build
+      - name: Typecheck & Chromium extension build
         run: npm run build
 
-      - name: Verify dist artefact
+      - name: Verify Chromium dist
         run: node scripts/verify-dist.mjs
+
+      - name: Firefox extension build
+        run: npm run build:firefox
+
+      - name: Verify Firefox dist
+        run: node scripts/verify-dist-firefox.mjs
+
+      - name: API smoke tests
+        run: npm run test:api

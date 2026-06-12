@@ -14,7 +14,7 @@ export type Locale = 'fr' | 'en';
 
 export type BrowserFamily = 'chromium' | 'firefox';
 
-/** Hôtes LLM supportés (pilote : claude.ai uniquement). */
+/** Hôtes LLM supportés (Phase 7 : Claude, ChatGPT, Gemini). */
 export type LlmHost = 'claude.ai' | 'chatgpt.com' | 'gemini.google.com';
 
 /** Une règle policy par type de donnée. */

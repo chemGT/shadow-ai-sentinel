@@ -1,12 +1,16 @@
-# Permissions Manifest V3 — pilote Claude
+# Permissions Manifest V3 — 3 LLM
 
-## Actuelles (v0.1.0)
+## Actuelles (v0.1.0 — Phase 7)
 
 ```json
 {
   "permissions": ["storage", "alarms", "tabs"],
   "optional_host_permissions": ["http://localhost/*", "https://*/*"],
-  "host_permissions": ["*://claude.ai/*"]
+  "host_permissions": [
+    "*://claude.ai/*",
+    "*://chatgpt.com/*",
+    "*://gemini.google.com/*"
+  ]
 }
 ```
 
@@ -16,22 +20,20 @@
 |------------|----------------|
 | `activeTab` | Non utilisée — pas d’injection à la demande |
 | `scripting` | Non utilisée — content script déclaratif |
-| `matches: <all_urls>` | Hors scope pilote ; fuite surface d’attaque |
+| `matches: <all_urls>` | Hors scope ; fuite surface d’attaque |
 
-## Actives (Phase 3)
+## Actives
 
 | Permission | Usage |
 |------------|--------|
+| `storage` | Policy, credentials, file télémétrie, notice ack |
 | `alarms` | Sync policy (30 min) + flush télémétrie (5 min) |
-| `tabs` | Diffusion `POLICY_UPDATED` vers onglets Claude |
-| `optional_host_permissions` | URL API client (demandée à l’enregistrement Options) |
+| `tabs` | Diffusion `POLICY_UPDATED` vers onglets LLM |
+| `optional_host_permissions` | URL API client (Options) |
 
-## Prévues
+## Content scripts
 
-| Permission | Phase | Usage |
-|------------|-------|--------|
-| `*://chatgpt.com/*` | 7 | Extension ChatGPT |
-| `*://gemini.google.com/*` | 7 | Extension Gemini |
+Un seul bundle `src/extension/content/index.tsx` injecté sur les 3 domaines ; routage via `resolveLlmHost()`.
 
 ## Options UI
 

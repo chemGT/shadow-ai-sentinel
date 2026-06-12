@@ -1,12 +1,13 @@
 # Suivi des actions — Shadow AI Sentinel
 
 > **Document vivant** : mettre à jour à chaque fin de phase ou livrable notable.  
-> Plan détaillé : [plans/mvp-pilote-claude.md](./plans/mvp-pilote-claude.md)  
+> Plan technique MVP : [plans/mvp-pilote-claude.md](./plans/mvp-pilote-claude.md)  
+> Plan commercialisation : [plans/commercialisation.md](./plans/commercialisation.md) · sprints [1](./plans/commercialisation-sprint-1.md) / [2](./plans/commercialisation-sprint-2.md) / [3](./plans/commercialisation-sprint-3.md)  
 > Guide d’installation : [guides/INSTALLATION.md](./guides/INSTALLATION.md)
 
-**Dernière mise à jour :** 2026-05-19  
+**Dernière mise à jour :** 2026-05-20  
 **Version produit cible :** 0.1.0 (pilote Claude)  
-**Avancement global :** Phase 4 / 7 terminée (~71 %)
+**Avancement global :** Phase 7 / 7 livrée (~100 % code — recette multi-LLM manuelle)
 
 ---
 
@@ -31,9 +32,9 @@
 | 2 | Adaptateur Claude (DOM) | ✅ | platform_watcher → ext_dev | § Tester sur Claude |
 | 3 | Policies & offline | ✅ | ext_dev | § Options, § API |
 | 4 | API durcissement prod | ✅ | backend_ops | rate limit, rétention, RGPD |
-| 5 | UX & i18n | ⏳ | ux_writer | § Notice employé (à venir) |
-| 6 | QA & release pilote | ⏳ | qa_tester | § Release pilote (à venir) |
-| 7 | ChatGPT + Gemini | ⏳ | platform_watcher | § Multi-LLM (à venir) |
+| 5 | UX & i18n | ✅ | ux_writer | copy modales, toast Redact, notice structurée |
+| 6 | QA & release pilote | ✅ | qa_tester | build Firefox, CI, guides, matrice F01–F10 |
+| 7 | ChatGPT + Gemini | ✅ | platform_watcher → ext_dev | 3 hosts, adaptateurs, 88 tests |
 
 ---
 
@@ -50,6 +51,9 @@
 | 2026-05-19 | ext_dev + backend_ops | **Phase 3** : Options, sync policy, queue télémétrie, API MVP |
 | 2026-05-19 | backend_ops + compliance | **Phase 4** : rate limit, rétention 90j, docs RGPD, notice 1er run |
 | 2026-05-19 | qa_tester | **CI** : GitHub Actions, 56 tests, régression regex, couverture |
+| 2026-05-20 | ux_writer | **Phase 5** : copy B2B FR/EN, modale Block structurée, notice sections, 16 tests i18n |
+| 2026-05-20 | qa_tester | **Phase 6** : `build:firefox`, CI dual-build, matrice + checklist pilote, INSTALLATION §8–9 |
+| 2026-05-20 | ext_dev | **Fichiers texte** : `file-guard` + `text-file.ts` (Block/Redact PJ), 94 tests |
 
 ---
 
@@ -123,36 +127,42 @@
 
 ---
 
-### Phase 5 — UX & i18n ⏳
+### Phase 5 — UX & i18n ✅
 
 | ID | Action | Statut | Notes |
 |----|--------|--------|-------|
-| P5-1 | Copy modales Block FR/EN | ⏳ | |
-| P5-2 | Tokens Redact affichés côté UI | ⏳ | |
-| P5-3 | Premier lancement → notice légale | ⏳ | |
+| P5-1 | Copy modales Block FR/EN | ✅ | `blockModalCopy` — titre, headline, corps, hint, « Comprendre » |
+| P5-2 | Tokens Redact affichés côté UI | ✅ | `redactNotice(ruleTypes)` + jeton `[REDACTED_*]` |
+| P5-3 | Premier lancement → notice légale | ✅ | `employeeNoticeSections` + listes structurées |
+| P5-4 | Tests copy i18n | ✅ | `src/ui/i18n/messages.test.ts` (16 tests) |
+| P5-5 | Recette functional_tester (compréhension) | ⏳ | Tests manuels Claude (utilisateur) |
 
 ---
 
-### Phase 6 — QA & release pilote ⏳
+### Phase 6 — QA & release pilote ✅
 
 | ID | Action | Statut | Notes |
 |----|--------|--------|-------|
-| P6-1 | CI GitHub Actions (tests + build) | ✅ | `.github/workflows/ci.yml` |
-| P6-1b | Suite tests auto (56) + régression regex | ✅ | `docs/tests-automatises.md` |
-| P6-2 | Build Firefox (WXT / web-ext) | ⏳ | |
-| P6-3 | Guide install final | ⏳ | MAJ `INSTALLATION.md` |
-| P6-4 | Soumission XPI Mozilla signé | ⏳ | |
-| P6-5 | Critères fin pilote validés | ⏳ | voir § Pilote |
+| P6-1 | CI GitHub Actions (tests + build) | ✅ | Chromium + Firefox + `test:api` |
+| P6-1b | Suite tests auto (72) + régression regex | ✅ | `docs/tests-automatises.md` |
+| P6-2 | Build Firefox | ✅ | `vite.firefox.config.ts`, `dist-firefox/` |
+| P6-3 | Guide install final | ✅ | `INSTALLATION.md` §8–9 |
+| P6-4 | Doc soumission XPI Mozilla | ✅ | `docs/firefox-distribution.md` ; signature = ops client |
+| P6-5 | Matrice + checklist fin pilote | ✅ | `docs/matrice-*`, `docs/checklist-fin-pilote.md` |
+| P6-6 | Critères fin pilote validés (terrain) | ⏳ | 20–50 users / 2 sem., F01–F10 |
 
 ---
 
-### Phase 7 — ChatGPT + Gemini ⏳
+### Phase 7 — ChatGPT + Gemini ✅
 
 | ID | Action | Statut | Notes |
 |----|--------|--------|-------|
-| P7-1 | Adaptateur ChatGPT | ⏳ | |
-| P7-2 | Adaptateur Gemini | ⏳ | |
-| P7-3 | Régression 3 LLM × 2 navigateurs | ⏳ | |
+| P7-1 | Adaptateur ChatGPT | ✅ | `sites/chatgpt/` |
+| P7-2 | Adaptateur Gemini | ✅ | `sites/gemini/` |
+| P7-3 | Shared `guard-adapter` + `dom-factory` | ✅ | Refactor Claude |
+| P7-4 | Manifest 3 hosts + `resolveLlmHost` | ✅ | Chromium + Firefox |
+| P7-5 | Tests auto (88) | ✅ | `llm-hosts`, `sites-regression` |
+| P7-6 | Matrice 3 LLM × 2 navigateurs | ⏳ | [matrice-tests-multi-llm.md](./docs/matrice-tests-multi-llm.md) |
 
 ---
 
@@ -193,15 +203,15 @@
 |----|------------------|--------|------------|--------|
 | R-1 | DOM Claude change | Interception cassée | Adaptateur isolé + veille | Surveillé |
 | R-2 | DPO client non validé | Télémétrie obligatoire | Notice + schéma strict | ⏳ |
-| R-3 | Build Firefox non démarré | Pilote Chromium seul d’abord | Phase 6 | ⏳ |
+| R-3 | Délai signature Mozilla | Pilote Firefox retardé | Soumettre XPI tôt (§ firefox-distribution) | ⏳ |
 
 ---
 
 ## Prochaines actions (priorité)
 
-1. **P2-6** — Tests manuels Claude (Block/Redact + notice 1er run).
-2. **Phase 5** — Copy UX modales + onboarding.
-3. Valider file offline 24 h (test manuel P3).
+1. **Matrice multi-LLM** — [matrice-tests-multi-llm.md](./docs/matrice-tests-multi-llm.md) (M01–M11, Chromium + Firefox).
+2. **Soumission AMO** — `npm run package:firefox` puis [firefox-distribution.md](./docs/firefox-distribution.md).
+3. **Clôture pilote** — [checklist-fin-pilote.md](./docs/checklist-fin-pilote.md).
 
 ---
 

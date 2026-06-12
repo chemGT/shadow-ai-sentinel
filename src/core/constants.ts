@@ -60,4 +60,4 @@ export const ALL_RULE_TYPES: RuleType[] = [
   'generic_secret',
 ];
 
-export const PILOT_LLM_HOST = 'claude.ai' as const;
+export { LLM_TAB_URL_PATTERNS, PILOT_LLM_HOST, SUPPORTED_LLM_HOSTS } from './llm-hosts.js';

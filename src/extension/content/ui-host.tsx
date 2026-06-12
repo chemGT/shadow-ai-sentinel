@@ -1,6 +1,6 @@
 import { createRoot, type Root } from 'react-dom/client';
 import { SentinelAlert } from '../../ui/components/SentinelAlert.js';
-import { blockMessage, modalClose, modalTitle, resolveLocale } from '../../ui/i18n/messages.js';
+import { blockModalCopy, resolveLocale, type BlockModalCopy } from '../../ui/i18n/messages.js';
 import type { Locale, RuleType } from '../../core/types.js';
 
 const HOST_ID = 'shadow-ai-sentinel-ui-host';
@@ -19,7 +19,7 @@ function ensureHost(): { shadow: ShadowRoot; mount: HTMLElement } {
   const shadow = host.shadowRoot ?? host.attachShadow({ mode: 'open' });
   let mount = shadow.querySelector<HTMLElement>('[data-sentinel-mount]');
   if (!mount) {
-    mount = document.createElement('motion.div');
+    mount = document.createElement('div');
     mount.setAttribute('data-sentinel-mount', 'true');
     shadow.appendChild(mount);
   }
@@ -29,7 +29,7 @@ function ensureHost(): { shadow: ShadowRoot; mount: HTMLElement } {
   return { shadow, mount };
 }
 
-export function showBlockAlert(ruleType: RuleType): void {
+export function showBlockAlert(ruleType: RuleType, copyOverride?: BlockModalCopy): void {
   locale = resolveLocale();
   ensureHost();
 
@@ -37,11 +37,15 @@ export function showBlockAlert(ruleType: RuleType): void {
     reactRoot?.render(null);
   };
 
+  const copy = copyOverride ?? blockModalCopy(ruleType, locale);
+
   reactRoot?.render(
     <SentinelAlert
-      title={modalTitle(locale)}
-      message={blockMessage(ruleType, locale)}
-      closeLabel={modalClose(locale)}
+      title={copy.title}
+      headline={copy.headline}
+      message={copy.body}
+      hint={copy.hint}
+      closeLabel={copy.closeLabel}
       onClose={close}
     />,
   );

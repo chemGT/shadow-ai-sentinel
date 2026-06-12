@@ -1,3 +1,4 @@
+import { LLM_TAB_URL_PATTERNS } from '../../core/llm-hosts.js';
 import { validatePolicy } from '../../core/validation/policy.js';
 import type { Policy } from '../../core/types.js';
 import {
@@ -47,7 +48,7 @@ export async function syncPolicyFromApi(): Promise<Policy | null> {
 
 export async function broadcastPolicyUpdate(policy: Policy): Promise<void> {
   const api = getExtensionApi();
-  const tabs = await api.tabs.query({ url: ['*://claude.ai/*'] });
+  const tabs = await api.tabs.query({ url: [...LLM_TAB_URL_PATTERNS] });
   await Promise.all(
     tabs
       .filter((tab) => tab.id !== undefined)

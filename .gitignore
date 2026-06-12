@@ -1,8 +1,10 @@
 node_modules/
 dist/
+dist-firefox/
 .env
 .env.local
 .env.*.local
 *.log
 .DS_Store
 coverage/
+test_rules_json.json

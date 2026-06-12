@@ -1,7 +1,9 @@
 /** Modale alerte — styles inline pour Shadow DOM (sans Tailwind). */
 type SentinelAlertProps = {
   title: string;
+  headline?: string;
   message: string;
+  hint?: string;
   closeLabel: string;
   onClose?: () => void;
 };
@@ -33,11 +35,24 @@ const styles = {
     fontWeight: 600,
     color: '#111827',
   } as const,
+  headline: {
+    margin: '12px 0 0',
+    fontSize: '0.9375rem',
+    fontWeight: 600,
+    lineHeight: 1.4,
+    color: '#111827',
+  } as const,
   body: {
     margin: '8px 0 0',
     fontSize: '0.875rem',
     lineHeight: 1.5,
     color: '#4b5563',
+  } as const,
+  hint: {
+    margin: '12px 0 0',
+    fontSize: '0.75rem',
+    lineHeight: 1.45,
+    color: '#6b7280',
   } as const,
   button: {
     marginTop: '16px',
@@ -51,11 +66,19 @@ const styles = {
   } as const,
 };
 
-export function SentinelAlert({ title, message, closeLabel, onClose }: SentinelAlertProps) {
+export function SentinelAlert({
+  title,
+  headline,
+  message,
+  hint,
+  closeLabel,
+  onClose,
+}: SentinelAlertProps) {
   return (
     <div
       role="alertdialog"
       aria-labelledby="sentinel-alert-title"
+      aria-describedby="sentinel-alert-desc"
       aria-modal="true"
       style={styles.overlay}
     >
@@ -63,7 +86,15 @@ export function SentinelAlert({ title, message, closeLabel, onClose }: SentinelA
         <h2 id="sentinel-alert-title" style={styles.title}>
           {title}
         </h2>
-        <p style={styles.body}>{message}</p>
+        {headline && (
+          <p id="sentinel-alert-headline" style={styles.headline}>
+            {headline}
+          </p>
+        )}
+        <p id="sentinel-alert-desc" style={styles.body}>
+          {message}
+        </p>
+        {hint && <p style={styles.hint}>{hint}</p>}
         {onClose && (
           <button type="button" style={styles.button} onClick={onClose}>
             {closeLabel}

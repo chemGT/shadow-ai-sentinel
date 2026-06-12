@@ -2,7 +2,7 @@ import { STORAGE_KEYS } from '../../core/constants.js';
 import { getExtensionApi } from '../platform/browser-api.js';
 import {
   employeeNoticeAck,
-  employeeNoticeBody,
+  employeeNoticeSections,
   employeeNoticeTitle,
   resolveLocale,
 } from '../../ui/i18n/messages.js';
@@ -28,6 +28,7 @@ export async function showFirstRunNoticeIfNeeded(): Promise<void> {
   const overlay = document.createElement('div');
   overlay.setAttribute('role', 'dialog');
   overlay.setAttribute('aria-modal', 'true');
+  overlay.setAttribute('aria-labelledby', 'sentinel-notice-title');
   Object.assign(overlay.style, {
     position: 'fixed',
     inset: '0',
@@ -43,6 +44,8 @@ export async function showFirstRunNoticeIfNeeded(): Promise<void> {
   const card = document.createElement('div');
   Object.assign(card.style, {
     maxWidth: '32rem',
+    maxHeight: '85vh',
+    overflowY: 'auto',
     background: '#fff',
     borderRadius: '8px',
     padding: '24px',
@@ -50,22 +53,65 @@ export async function showFirstRunNoticeIfNeeded(): Promise<void> {
   });
 
   const title = document.createElement('h2');
+  title.id = 'sentinel-notice-title';
   title.textContent = employeeNoticeTitle(locale);
-  title.style.margin = '0 0 8px';
+  title.style.margin = '0 0 16px';
+  title.style.fontSize = '1.125rem';
+  card.append(title);
 
-  const body = document.createElement('p');
-  body.textContent = employeeNoticeBody(locale);
-  body.style.cssText = 'margin:0 0 16px;font-size:14px;line-height:1.5;color:#4b5563';
+  for (const section of employeeNoticeSections(locale)) {
+    const heading = document.createElement('h3');
+    heading.textContent = section.heading;
+    Object.assign(heading.style, {
+      margin: '16px 0 8px',
+      fontSize: '0.875rem',
+      fontWeight: '600',
+      color: '#111827',
+    });
+    card.append(heading);
+
+    for (const paragraph of section.paragraphs ?? []) {
+      const p = document.createElement('p');
+      p.textContent = paragraph;
+      Object.assign(p.style, {
+        margin: '0 0 8px',
+        fontSize: '14px',
+        lineHeight: '1.5',
+        color: '#4b5563',
+      });
+      card.append(p);
+    }
+
+    if (section.bullets?.length) {
+      const ul = document.createElement('ul');
+      Object.assign(ul.style, {
+        margin: '0 0 8px',
+        paddingLeft: '20px',
+        fontSize: '14px',
+        lineHeight: '1.5',
+        color: '#4b5563',
+      });
+      for (const item of section.bullets) {
+        const li = document.createElement('li');
+        li.textContent = item;
+        li.style.marginBottom = '4px';
+        ul.append(li);
+      }
+      card.append(ul);
+    }
+  }
 
   const btn = document.createElement('button');
   btn.textContent = employeeNoticeAck(locale);
   Object.assign(btn.style, {
+    marginTop: '16px',
     border: 'none',
     borderRadius: '6px',
     padding: '8px 16px',
     background: '#111827',
     color: '#fff',
     cursor: 'pointer',
+    fontSize: '14px',
   });
 
   btn.addEventListener('click', async () => {
@@ -75,7 +121,7 @@ export async function showFirstRunNoticeIfNeeded(): Promise<void> {
     overlay.remove();
   });
 
-  card.append(title, body, btn);
+  card.append(btn);
   overlay.append(card);
   shadow.append(overlay);
 }
