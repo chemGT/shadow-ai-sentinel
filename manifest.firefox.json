@@ -1,0 +1,41 @@
+{
+  "manifest_version": 3,
+  "name": "Shadow AI Sentinel",
+  "version": "0.1.0",
+  "description": "DLP local pour LLM publics — Claude, ChatGPT, Gemini",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "shadow-ai-sentinel@pilot.sentinel",
+      "strict_min_version": "109.0"
+    }
+  },
+  "permissions": ["storage", "alarms"],
+  "optional_host_permissions": [
+    "http://localhost/*",
+    "https://*/*"
+  ],
+  "host_permissions": [
+    "*://claude.ai/*",
+    "*://chatgpt.com/*",
+    "*://gemini.google.com/*"
+  ],
+  "background": {
+    "service_worker": "src/extension/background/index.ts",
+    "type": "module"
+  },
+  "options_ui": {
+    "page": "src/extension/options/index.html",
+    "open_in_tab": true
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://claude.ai/*",
+        "*://chatgpt.com/*",
+        "*://gemini.google.com/*"
+      ],
+      "js": ["src/extension/content/index.tsx"],
+      "run_at": "document_idle"
+    }
+  ]
+}

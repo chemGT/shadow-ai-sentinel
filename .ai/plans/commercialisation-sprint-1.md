@@ -31,7 +31,7 @@ Légende validateurs : Q=qa_tester (toujours) · F=functional_tester · S=securi
 | S1-I1 | Init branche + CHANGELOG + ADR multi-tenant | architect | 0.5 j | — | Q | ✅ |
 | S1-I2 | Schéma Postgres multi-tenant + migrations | backend_ops | 1.5 j | I1 | Q S🔒 | ✅ |
 | S1-I3 | Middleware extraction tenant + isolation queries | backend_ops | 1.5 j | I2 | Q S🔒 | ✅ |
-| S1-I4 | Rotation clés API + scopes + grace period | backend_ops | 1 j | I3 | Q S🔒 | ⏳ |
+| S1-I4 | Rotation clés API + scopes + grace period | backend_ops | 1 j | I3 | Q S🔒 | ✅ |
 | S1-I5 | Audit log append-only | backend_ops | 0.5 j | I3 | Q S🔒 | ⏳ |
 | S1-I6 | Endpoint `/events/aggregate` + cache | backend_ops | 1.5 j | I3 | Q | ⏳ |
 | S1-I7 | Endpoint `/events/export` CSV streaming | backend_ops | 0.5 j | I6 | Q C🛡️ | ⏳ |
@@ -47,7 +47,7 @@ Légende validateurs : Q=qa_tester (toujours) · F=functional_tester · S=securi
 | S1-I17 | Signup wizard 4 étapes + presets policy | ext_dev | 2 j | I10, I12 | Q F | ⏳ |
 | S1-I18 | Deep-link extension `chrome-extension://...#config=...` | ext_dev | 1 j | I17 | Q F S🔒 C🛡️ | ⏳ |
 | S1-I19 | Signal faux positif dans extension | ext_dev + ux_writer | 1 j | I3 | Q F C🛡️ | ⏳ |
-| S1-I20 | Réduction host_permissions + assets stores | ext_dev | 1 j | — | Q S🔒 | ⏳ |
+| S1-I20 | Réduction host_permissions + assets stores | ext_dev | 1 j | — | Q S🔒 | ✅ |
 | S1-I21 | Site marketing landing + pricing EN/FR | ux_writer + ext_dev | 2 j | S0-3 | Q F | ⏳ |
 | S1-I22 | Pages Trust/Security + Privacy + CGU intégration | ux_writer + compliance_rgpd | 1 j | I21 | Q F C🛡️ S🔒 | ⏳ |
 | S1-I23 | Soumission Chrome Web Store + AMO | qa_tester | 0.5 j | I20, I22 | Q | ⏳ |
