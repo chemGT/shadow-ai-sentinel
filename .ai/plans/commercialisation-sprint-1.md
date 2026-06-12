@@ -36,7 +36,9 @@ Légende validateurs : Q=qa_tester (toujours) · F=functional_tester · S=securi
 | S1-I6 | Endpoint `/events/aggregate` + cache | backend_ops | 1.5 j | I3 | Q | ✅ |
 | S1-I7 | Endpoint `/events/export` CSV streaming | backend_ops | 0.5 j | I6 | Q C🛡️ | ✅ |
 | S1-I8 | Background jobs (purge + agg + dunning hook) | backend_ops | 1 j | I3 | Q | ✅ |
-| S1-I9 | Next.js portal skeleton + Clerk auth EN/FR | ext_dev | 1.5 j | I3 | Q F S🔒 | ⏳ |
+| S1-I9 | Next.js portal skeleton + Clerk auth EN/FR | ext_dev | 1.5 j | I3 | Q F S🔒 | 🟡 |
+| S1-I9a | ↳ Scaffold portal sans Clerk (i18n + pages placeholders) | ext_dev | 0.5 j | I3 | Q | ✅ |
+| S1-I9b | ↳ Branchement Clerk (provider + SignIn/Up + JWT backend) | ext_dev + backend_ops | 1 j | I9a + compte Clerk | Q F S🔒 | ⏳ |
 | S1-I10 | Orgs + members + rôles (owner/admin/viewer) | ext_dev | 1.5 j | I9 | Q F S🔒 | ⏳ |
 | S1-I11 | Dashboard charts read-only (Recharts) | ext_dev | 2 j | I6, I10 | Q F | ⏳ |
 | S1-I12 | Editor policy JSON (Monaco) + validation | ext_dev | 1 j | I10 | Q F | ⏳ |
