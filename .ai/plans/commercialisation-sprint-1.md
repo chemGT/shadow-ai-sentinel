@@ -48,7 +48,7 @@ Légende validateurs : Q=qa_tester (toujours) · F=functional_tester · S=securi
 | S1-I16 | Feature gating middleware + UI | backend_ops + ext_dev | 0.5 j | I15 | Q F | ⏳ |
 | S1-I17 | Signup wizard 4 étapes + presets policy | ext_dev | 2 j | I10, I12 | Q F | ⏳ |
 | S1-I18 | Deep-link extension `chrome-extension://...#config=...` | ext_dev | 1 j | I17 | Q F S🔒 C🛡️ | ⏳ |
-| S1-I19 | Signal faux positif dans extension | ext_dev + ux_writer | 1 j | I3 | Q F C🛡️ | ⏳ |
+| S1-I19 | Signal faux positif dans extension | ext_dev + ux_writer | 1 j | I3 | Q F C🛡️ | ✅ |
 | S1-I20 | Réduction host_permissions + assets stores | ext_dev | 1 j | — | Q S🔒 | ✅ |
 | S1-I21 | Site marketing landing + pricing EN/FR | ux_writer + ext_dev | 2 j | S0-3 | Q F | ⏳ |
 | S1-I22 | Pages Trust/Security + Privacy + CGU intégration | ux_writer + compliance_rgpd | 1 j | I21 | Q F C🛡️ S🔒 | ⏳ |
