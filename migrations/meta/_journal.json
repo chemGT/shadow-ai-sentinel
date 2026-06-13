@@ -15,6 +15,13 @@
       "when": 1749686400000,
       "tag": "0001_tenant_status",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1749772800000,
+      "tag": "0002_feedback_events",
+      "breakpoints": true
     }
   ]
 }

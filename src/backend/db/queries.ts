@@ -1,6 +1,6 @@
 import { eq, desc, count, gte, and, lt, lte, isNull, ne } from 'drizzle-orm';
 import type { Db } from './index.js';
-import { policies, telemetryEvents, auditLog, tenants, apiKeys } from './schema.js';
+import { policies, telemetryEvents, auditLog, tenants, apiKeys, feedbackEvents } from './schema.js';
 import type { Policy } from '../../core/types.js';
 
 export type GroupByField = 'ruleType' | 'action' | 'host';
@@ -92,6 +92,39 @@ export async function getTelemetryEvents(
     .where(and(eq(telemetryEvents.tenantId, tenantId), gte(telemetryEvents.ts, since)))
     .orderBy(desc(telemetryEvents.ts))
     .limit(limit);
+}
+
+// --- Feedback (faux positifs) ---
+
+export async function insertFeedbackEvents(
+  db: Db,
+  tenantId: string,
+  events: Array<{ ruleType: string; contextChoice: string; host: string; ts?: Date }>,
+): Promise<void> {
+  if (events.length === 0) return;
+  await db.insert(feedbackEvents).values(
+    events.map((e) => ({
+      tenantId,
+      ruleType: e.ruleType,
+      contextChoice: e.contextChoice,
+      host: e.host,
+      ts: e.ts ?? new Date(),
+    })),
+  );
+}
+
+export async function getFeedbackAggregate(
+  db: Db,
+  tenantId: string,
+  since: Date,
+): Promise<AggregateRow[]> {
+  const rows = await db
+    .select({ key: feedbackEvents.ruleType, cnt: count() })
+    .from(feedbackEvents)
+    .where(and(eq(feedbackEvents.tenantId, tenantId), gte(feedbackEvents.ts, since)))
+    .groupBy(feedbackEvents.ruleType)
+    .orderBy(desc(count()));
+  return rows.map((r) => ({ key: r.key, count: Number(r.cnt) }));
 }
 
 // --- Audit ---

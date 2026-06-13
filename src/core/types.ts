@@ -61,6 +61,32 @@ export interface TelemetryEvent {
   departmentId?: string;
 }
 
+/** Contexte de saisie déclaré par l'utilisateur lors d'un signalement faux positif. */
+export type FeedbackContextChoice = 'code' | 'prose' | 'json' | 'url' | 'other';
+
+/**
+ * Signalement faux positif — schéma RGPD minimal.
+ * Ne contient JAMAIS le texte d'origine, le contenu de la saisie, ou un extrait.
+ */
+export interface FeedbackEvent {
+  eventId: string;
+  tenantId: string;
+  deviceId: string;
+  occurredAt: string;
+  ruleType: RuleType;
+  contextChoice: FeedbackContextChoice;
+  host: LlmHost;
+  extensionVersion: string;
+  policyVersion: string;
+  locale: Locale;
+  browser: BrowserFamily;
+}
+
+/** Enveloppe API POST /feedback */
+export interface FeedbackBatchRequest {
+  events: FeedbackEvent[];
+}
+
 /** Credentials install (page Options / intégration). */
 export interface TenantCredentials {
   tenantId: string;
@@ -89,6 +115,7 @@ export type MessageType =
   | 'GET_POLICY'
   | 'POLICY_UPDATED'
   | 'QUEUE_TELEMETRY'
+  | 'QUEUE_FEEDBACK'
   | 'FLUSH_TELEMETRY'
   | 'SYNC_POLICY';
 

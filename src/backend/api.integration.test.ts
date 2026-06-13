@@ -79,4 +79,130 @@ describe('API integration', () => {
     expect(res.status).toBe(200);
     expect(res.body.accepted).toBe(1);
   });
+
+  it('POST /feedback exige un token Bearer', async () => {
+    const res = await request(app).post('/feedback').send({ events: [] });
+    expect(res.status).toBe(401);
+  });
+
+  it('POST /feedback accepte un signalement valide', async () => {
+    const res = await request(app)
+      .post('/feedback')
+      .set('Authorization', `Bearer ${API_KEY}`)
+      .send({
+        events: [
+          {
+            eventId: crypto.randomUUID(),
+            tenantId: 'acme-corp',
+            deviceId: '00000000-0000-4000-8000-000000000010',
+            occurredAt: new Date().toISOString(),
+            ruleType: 'iban',
+            contextChoice: 'code',
+            host: 'claude.ai',
+            extensionVersion: '0.2.0',
+            policyVersion: '1.0.0',
+            locale: 'fr',
+            browser: 'chromium',
+          },
+        ],
+      });
+    expect(res.status).toBe(200);
+    expect(res.body.accepted).toBe(1);
+  });
+
+  it('POST /feedback rejette le champ "text" (contract)', async () => {
+    const res = await request(app)
+      .post('/feedback')
+      .set('Authorization', `Bearer ${API_KEY}`)
+      .send({
+        events: [
+          {
+            eventId: crypto.randomUUID(),
+            tenantId: 'acme-corp',
+            deviceId: '00000000-0000-4000-8000-000000000011',
+            occurredAt: new Date().toISOString(),
+            ruleType: 'iban',
+            contextChoice: 'code',
+            host: 'claude.ai',
+            extensionVersion: '0.2.0',
+            policyVersion: '1.0.0',
+            locale: 'fr',
+            browser: 'chromium',
+            text: 'FR7612345987654321234567890',
+          },
+        ],
+      });
+    expect(res.status).toBe(400);
+    expect(JSON.stringify(res.body)).toContain('interdit');
+  });
+
+  it('POST /feedback rejette tenantId mismatch (403)', async () => {
+    const res = await request(app)
+      .post('/feedback')
+      .set('Authorization', `Bearer ${API_KEY}`)
+      .send({
+        events: [
+          {
+            eventId: crypto.randomUUID(),
+            tenantId: 'other-tenant',
+            deviceId: '00000000-0000-4000-8000-000000000012',
+            occurredAt: new Date().toISOString(),
+            ruleType: 'iban',
+            contextChoice: 'code',
+            host: 'claude.ai',
+            extensionVersion: '0.2.0',
+            policyVersion: '1.0.0',
+            locale: 'fr',
+            browser: 'chromium',
+          },
+        ],
+      });
+    expect(res.status).toBe(403);
+  });
+
+  it('POST /feedback rejette contextChoice inconnu', async () => {
+    const res = await request(app)
+      .post('/feedback')
+      .set('Authorization', `Bearer ${API_KEY}`)
+      .send({
+        events: [
+          {
+            eventId: crypto.randomUUID(),
+            tenantId: 'acme-corp',
+            deviceId: '00000000-0000-4000-8000-000000000013',
+            occurredAt: new Date().toISOString(),
+            ruleType: 'iban',
+            contextChoice: 'invalid_choice',
+            host: 'claude.ai',
+            extensionVersion: '0.2.0',
+            policyVersion: '1.0.0',
+            locale: 'fr',
+            browser: 'chromium',
+          },
+        ],
+      });
+    expect(res.status).toBe(400);
+    expect(JSON.stringify(res.body)).toContain('contextChoice');
+  });
+
+  it('POST /feedback rejette batch > 20', async () => {
+    const events = Array.from({ length: 21 }, () => ({
+      eventId: crypto.randomUUID(),
+      tenantId: 'acme-corp',
+      deviceId: '00000000-0000-4000-8000-000000000014',
+      occurredAt: new Date().toISOString(),
+      ruleType: 'iban',
+      contextChoice: 'code',
+      host: 'claude.ai',
+      extensionVersion: '0.2.0',
+      policyVersion: '1.0.0',
+      locale: 'fr',
+      browser: 'chromium',
+    }));
+    const res = await request(app)
+      .post('/feedback')
+      .set('Authorization', `Bearer ${API_KEY}`)
+      .send({ events });
+    expect(res.status).toBe(400);
+  });
 });

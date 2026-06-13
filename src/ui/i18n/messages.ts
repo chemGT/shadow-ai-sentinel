@@ -1,4 +1,4 @@
-import type { Locale, RuleType } from '../../core/types.js';
+import type { FeedbackContextChoice, Locale, RuleType } from '../../core/types.js';
 import { REDACT_TOKENS } from '../../core/constants.js';
 
 const RULE_LABELS: Record<Locale, Record<RuleType, string>> = {
@@ -269,4 +269,51 @@ export function employeeNoticeBody(locale: Locale): string {
 
 export function employeeNoticeAck(locale: Locale): string {
   return locale === 'fr' ? "J'ai compris" : 'I understand';
+}
+
+export type FeedbackCopy = {
+  triggerLabel: string;
+  prompt: string;
+  hint: string;
+  submitLabel: string;
+  cancelLabel: string;
+  thanksLabel: string;
+  choices: Record<FeedbackContextChoice, string>;
+};
+
+/** Textes pour le panneau de signalement faux positif. */
+export function feedbackCopy(locale: Locale): FeedbackCopy {
+  if (locale === 'fr') {
+    return {
+      triggerLabel: 'Signaler un faux positif',
+      prompt: 'Dans quel contexte tapiez-vous cette donnée ?',
+      hint: 'Aucun texte saisi n’est envoyé — uniquement le type de règle et le contexte choisi.',
+      submitLabel: 'Envoyer le signalement',
+      cancelLabel: 'Annuler',
+      thanksLabel: 'Signalement envoyé. Merci.',
+      choices: {
+        code: 'Code source',
+        prose: 'Texte / prose',
+        json: 'JSON / configuration',
+        url: 'URL / lien',
+        other: 'Autre',
+      },
+    };
+  }
+
+  return {
+    triggerLabel: 'Report false positive',
+    prompt: 'What were you typing when this was flagged?',
+    hint: 'No typed text is sent — only the rule type and chosen context.',
+    submitLabel: 'Send report',
+    cancelLabel: 'Cancel',
+    thanksLabel: 'Report sent. Thank you.',
+    choices: {
+      code: 'Source code',
+      prose: 'Plain text / prose',
+      json: 'JSON / configuration',
+      url: 'URL / link',
+      other: 'Other',
+    },
+  };
 }

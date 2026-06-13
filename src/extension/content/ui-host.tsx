@@ -1,7 +1,14 @@
 import { createRoot, type Root } from 'react-dom/client';
 import { SentinelAlert } from '../../ui/components/SentinelAlert.js';
-import { blockModalCopy, resolveLocale, type BlockModalCopy } from '../../ui/i18n/messages.js';
-import type { Locale, RuleType } from '../../core/types.js';
+import {
+  blockModalCopy,
+  feedbackCopy,
+  resolveLocale,
+  type BlockModalCopy,
+} from '../../ui/i18n/messages.js';
+import { resolveLlmHost } from '../../core/llm-hosts.js';
+import type { FeedbackContextChoice, Locale, RuleType } from '../../core/types.js';
+import { reportFalsePositive } from './telemetry-reporter.js';
 
 const HOST_ID = 'shadow-ai-sentinel-ui-host';
 
@@ -38,6 +45,8 @@ export function showBlockAlert(ruleType: RuleType, copyOverride?: BlockModalCopy
   };
 
   const copy = copyOverride ?? blockModalCopy(ruleType, locale);
+  const fbCopy = feedbackCopy(locale);
+  const llmHost = resolveLlmHost(globalThis.location?.hostname ?? '');
 
   reactRoot?.render(
     <SentinelAlert
@@ -47,6 +56,16 @@ export function showBlockAlert(ruleType: RuleType, copyOverride?: BlockModalCopy
       hint={copy.hint}
       closeLabel={copy.closeLabel}
       onClose={close}
+      feedback={
+        llmHost
+          ? {
+              copy: fbCopy,
+              onSubmit: (choice: FeedbackContextChoice) => {
+                void reportFalsePositive(ruleType, choice, llmHost);
+              },
+            }
+          : undefined
+      }
     />,
   );
 }

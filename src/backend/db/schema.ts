@@ -67,6 +67,24 @@ export const telemetryEvents = pgTable(
   ],
 );
 
+export const feedbackEvents = pgTable(
+  'feedback_events',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    ruleType: text('rule_type').notNull(),
+    contextChoice: text('context_choice').notNull(),
+    host: text('host').notNull(),
+    ts: timestamp('ts', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index('feedback_tenant_ts_idx').on(t.tenantId, t.ts),
+    index('feedback_rule_idx').on(t.tenantId, t.ruleType),
+  ],
+);
+
 export const auditLog = pgTable(
   'audit_log',
   {

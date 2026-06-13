@@ -13,6 +13,7 @@ import { getExtensionApi } from '../platform/browser-api.js';
 import { POLICY_SYNC_ALARM, TELEMETRY_FLUSH_ALARM, registerAlarms } from './alarms.js';
 import { broadcastPolicyUpdate, syncPolicyFromApi } from './policy-sync.js';
 import { enqueueTelemetryEvent, flushTelemetryQueue, type DlpEventInput } from './telemetry-queue.js';
+import { sendFeedback, type FeedbackInput } from './feedback-sender.js';
 
 let cachedPolicy: Policy = createDefaultPolicy();
 
@@ -88,6 +89,11 @@ onMessage(async (message: ExtensionMessage) => {
       const input = message.payload as DlpEventInput;
       await enqueueTelemetryEvent(input);
       return { ok: true };
+    }
+    case 'QUEUE_FEEDBACK': {
+      const input = message.payload as FeedbackInput;
+      const result = await sendFeedback(input);
+      return { ok: result.sent };
     }
     case 'FLUSH_TELEMETRY': {
       const result = await flushTelemetryQueue();
