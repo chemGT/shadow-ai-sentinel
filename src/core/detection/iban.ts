@@ -1,7 +1,13 @@
 import type { RawMatch } from './types.js';
 
-/** IBAN compact (sans espaces) — longueur bornée, pas de quantificateurs imbriqués. */
-const IBAN_PATTERN = /\b([A-Z]{2}\d{2}[A-Z0-9]{11,30})\b/gi;
+/**
+ * IBAN contigu OU formaté en groupes de 4 séparés par des espaces (format usuel
+ * du copier-coller, ex. `FR76 3000 6000 0112 3456 7890 189`). Le découpage en
+ * groupes de 4 empêche le regex d'avaler les mots suivants (contrairement à un
+ * `[ ]?` par caractère). Borné (≤ 7 groupes), pas de quantificateurs imbriqués
+ * dangereux. `isValidIbanChecksum` strippe les espaces avant validation.
+ */
+const IBAN_PATTERN = /\b([A-Z]{2}\d{2}(?:[ ]?[A-Z0-9]{4}){2,7}(?:[ ]?[A-Z0-9]{1,3})?)\b/gi;
 
 export function isValidIbanChecksum(iban: string): boolean {
   const clean = iban.replace(/\s/g, '').toUpperCase();

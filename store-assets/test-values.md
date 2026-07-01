@@ -18,7 +18,7 @@ detection regexes so you can trigger each rule for the store screenshots.
 ## Pro tier (no config needed once a Pro license is active)
 | Rule | Paste this |
 |------|-----------|
-| `iban` | `DE89 3704 0044 0532 0130 00` (checksum-valid test IBAN) |
+| `iban` | `DE89370400440532013000` or spaced `FR76 3000 6000 0112 3456 7890 189` (both checksum-valid, both detected) |
 | `internal_ip` | `192.168.1.42` (also try `10.0.0.5`, `172.16.4.9`) |
 | `phone` | `+33 6 12 34 56 78` |
 

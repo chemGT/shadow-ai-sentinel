@@ -65,6 +65,21 @@ describe('detectSensitiveData — iban', () => {
     expect(matches.some((m) => m.ruleType === 'iban')).toBe(true);
   });
 
+  it('détecte un IBAN formaté avec espaces (copier-coller usuel)', () => {
+    const text = 'RIB : FR76 3000 6000 0112 3456 7890 189 merci';
+    const matches = detectSensitiveData(text, enableAllRules(createDefaultPolicy()));
+    const iban = matches.find((m) => m.ruleType === 'iban');
+    expect(iban).toBeDefined();
+    // Le match couvre l'IBAN complet, espaces compris (pour le caviardage).
+    expect(text.slice(iban!.start, iban!.end)).toBe('FR76 3000 6000 0112 3456 7890 189');
+  });
+
+  it('ignore un IBAN espacé au checksum invalide', () => {
+    const text = 'FR76 1234 5678 9012 3456 7890 188';
+    const matches = detectSensitiveData(text, enableAllRules(createDefaultPolicy()));
+    expect(matches.some((m) => m.ruleType === 'iban')).toBe(false);
+  });
+
   it('ignore une chaîne type IBAN invalide', () => {
     const text = 'FR7612345678901234567890188';
     const matches = detectSensitiveData(text, enableAllRules(createDefaultPolicy()));
