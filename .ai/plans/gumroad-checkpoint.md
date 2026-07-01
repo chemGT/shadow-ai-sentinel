@@ -4,11 +4,10 @@
 > À **mettre à jour à la fin de chaque session** (section « Journal » + statuts).
 > Plan complet : `~\.claude\plans\review-le-projet-donne-nested-minsky.md`
 
-> 🎯 **PROCHAINE ACTION** : finir le Jalon 3 — **captures d'écran** (nécessitent l'extension chargée
-> dans le navigateur : `npm run build` → `dist/` via `chrome://extensions`). Voir la checklist dans
-> `store-assets/README.md`. Icônes + descriptions EN/FR + justif permissions + privacy page = **faits**.
-> Ensuite Jalon 4 (héberger la privacy page, config Gumroad, soumission CWS/AMO, landing).
-> Vérifier d'abord le vert : `npm test` (211) · `npx tsc --noEmit` · `npm run build`.
+> 🎯 **PROCHAINE ACTION** : **Jalon 4** — héberger la privacy page (`store-assets/privacy-policy.md`)
+> à une URL publique, créer le produit Gumroad + config `VITE_GUMROAD_PRODUCT_ID/_URL`, soumission
+> CWS + AMO (textes/justifs/captures prêts dans `store-assets/`), landing 1 page. **Jalon 3 terminé**.
+> Vérifier d'abord le vert : `npm test` (213) · `npx tsc --noEmit` · `npm run build`.
 
 ---
 
@@ -62,10 +61,10 @@ l'incrément allowlist `a5e67c3` reposait dessus). Le chantier portail SaaS (Cle
 ### ⏳ Ensuite (Jalon 3 & 4)
 - (Option différée) « Ignorer cette valeur » depuis la modale Block — nécessite de passer la valeur
   matchée à `showBlockAlert` (`ui-host.tsx`), plus lourd.
-- **Jalon 3 restant** : captures d'écran (extension chargée requise — checklist `store-assets/README.md`).
-- Soumission CWS + AMO. Landing 1 page + produit Gumroad (clé de licence activée).
+- **Jalon 4** : héberger privacy page à une URL publique · produit Gumroad + `VITE_GUMROAD_*` ·
+  soumission CWS + AMO · landing 1 page.
 - ~~Audit sécurité/RGPD de sortie~~ ✅ **Fait** (2026-07-01, rien de bloquant — voir Journal).
-- ~~Icônes + descriptions EN/FR + justif permissions + privacy page~~ ✅ **Faits** (2026-07-01).
+- ~~Jalon 3 : icônes + descriptions EN/FR + justif permissions + privacy page + captures~~ ✅ **Fait** (2026-07-01).
 
 ---
 
@@ -116,3 +115,9 @@ Charger `dist/` via `chrome://extensions` (mode dev) pour tester la popup + le g
   `listing-{en,fr}.md`, `permissions-justification.md`, `privacy-policy.md`, `README.md` (checklist
   captures). Point RGPD confirmé pour la privacy page : télémétrie + policy-sync **gatées sur
   credentials tenant** → free tier = **zéro appel réseau**. Build vert. Reste : captures d'écran.
+- **2026-07-01** — **Jalon 3 terminé.** 5 captures store en 1280×800 (`store-assets/screenshots/` :
+  block ChatGPT + block Claude + popup Free + popup Pro + options/allowlist), normalisées via
+  `scripts/resize-screenshots.mjs` (pont Chrome indispo → captures manuelles). Découverte pendant les
+  tests : **faux négatif IBAN** (regex ne matchait que le contigu) → **corrigé** (`21041c3`, pattern
+  groupes-de-4 + tests). Confirmé au passage : le content script réagit **en live** à l'entitlement
+  (`storage.onChanged`), pas de bug de gating. **213 tests** verts, tsc + build OK. Prochaine : Jalon 4.
