@@ -4,9 +4,9 @@
 > À **mettre à jour à la fin de chaque session** (section « Journal » + statuts).
 > Plan complet : `~\.claude\plans\review-le-projet-donne-nested-minsky.md`
 
-> 🎯 **PROCHAINE ACTION** : audit sécurité/RGPD de sortie (skill `security-review` + personas
-> `.ai/agents/`) sur la fondation licensing avant de générer les assets store. Puis Jalon 3
-> (assets stores) → Jalon 4 (soumission CWS/AMO, landing, produit Gumroad). Voir « Ensuite » plus bas.
+> 🎯 **PROCHAINE ACTION** : Jalon 3 — **assets stores** (icônes 16/48/128, captures, descriptions
+> EN/FR, justif permissions, privacy page). Puis Jalon 4 (soumission CWS/AMO, landing, produit
+> Gumroad). L'audit sécurité/RGPD de sortie est **fait** (2026-07-01, rien de bloquant — voir Journal).
 > Vérifier d'abord le vert : `npm test` (211) · `npx tsc --noEmit` · `npm run build`.
 
 ---
@@ -63,7 +63,7 @@ l'incrément allowlist `a5e67c3` reposait dessus). Le chantier portail SaaS (Cle
   matchée à `showBlockAlert` (`ui-host.tsx`), plus lourd.
 - Assets stores (icônes 16/48/128, captures, descriptions EN/FR, justif permissions, privacy page).
 - Soumission CWS + AMO. Landing 1 page + produit Gumroad (clé de licence activée).
-- Audit sécurité/RGPD de sortie (skill `security-review` + personas `.ai/agents/`).
+- ~~Audit sécurité/RGPD de sortie~~ ✅ **Fait** (2026-07-01, rien de bloquant — voir Journal).
 
 ---
 
@@ -100,3 +100,10 @@ Charger `dist/` via `chrome://extensions` (mode dev) pour tester la popup + le g
   `background/license-manager`, `config.ts`, manifests, gating `showBlockAlert`. Découverte : ces
   fichiers étaient présents dans le tree mais **jamais versionnés** malgré le « livré » du checkpoint
   précédent (risque de perte évité). Chantier portail Clerk laissé non committé, séparé. 211 tests verts.
+- **2026-07-01** — **Audit sécurité/RGPD de sortie sur la fondation licensing (`5cc9d85`) : rien de
+  bloquant.** XSS popup nul (`textContent` partout, aucun handler inline, seul script = module externe) ·
+  pas d'override CSP (défaut MV3 strict) · permissions minimales (`storage`+`alarms`, hosts scopés,
+  pas de `<all_urls>`/`tabs`) · **télémétrie RGPD-clean** : payload = `ruleType/action/host/locale`
+  seulement, zéro extrait de texte / zéro PII quitte l'appareil · verify Gumroad = API publique sans
+  secret. Seul point mineur assumé : grâce offline 7 j contournable en coupant le réseau (tradeoff
+  soft-DRM prosumer). Aucune modif code requise. Prochaine étape : Jalon 3 (assets stores).
