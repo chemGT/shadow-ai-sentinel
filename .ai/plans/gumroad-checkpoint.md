@@ -4,9 +4,10 @@
 > À **mettre à jour à la fin de chaque session** (section « Journal » + statuts).
 > Plan complet : `~\.claude\plans\review-le-projet-donne-nested-minsky.md`
 
-> 🎯 **PROCHAINE ACTION** : Jalon 3 — **assets stores** (icônes 16/48/128, captures, descriptions
-> EN/FR, justif permissions, privacy page). Puis Jalon 4 (soumission CWS/AMO, landing, produit
-> Gumroad). L'audit sécurité/RGPD de sortie est **fait** (2026-07-01, rien de bloquant — voir Journal).
+> 🎯 **PROCHAINE ACTION** : finir le Jalon 3 — **captures d'écran** (nécessitent l'extension chargée
+> dans le navigateur : `npm run build` → `dist/` via `chrome://extensions`). Voir la checklist dans
+> `store-assets/README.md`. Icônes + descriptions EN/FR + justif permissions + privacy page = **faits**.
+> Ensuite Jalon 4 (héberger la privacy page, config Gumroad, soumission CWS/AMO, landing).
 > Vérifier d'abord le vert : `npm test` (211) · `npx tsc --noEmit` · `npm run build`.
 
 ---
@@ -61,9 +62,10 @@ l'incrément allowlist `a5e67c3` reposait dessus). Le chantier portail SaaS (Cle
 ### ⏳ Ensuite (Jalon 3 & 4)
 - (Option différée) « Ignorer cette valeur » depuis la modale Block — nécessite de passer la valeur
   matchée à `showBlockAlert` (`ui-host.tsx`), plus lourd.
-- Assets stores (icônes 16/48/128, captures, descriptions EN/FR, justif permissions, privacy page).
+- **Jalon 3 restant** : captures d'écran (extension chargée requise — checklist `store-assets/README.md`).
 - Soumission CWS + AMO. Landing 1 page + produit Gumroad (clé de licence activée).
 - ~~Audit sécurité/RGPD de sortie~~ ✅ **Fait** (2026-07-01, rien de bloquant — voir Journal).
+- ~~Icônes + descriptions EN/FR + justif permissions + privacy page~~ ✅ **Faits** (2026-07-01).
 
 ---
 
@@ -107,3 +109,10 @@ Charger `dist/` via `chrome://extensions` (mode dev) pour tester la popup + le g
   seulement, zéro extrait de texte / zéro PII quitte l'appareil · verify Gumroad = API publique sans
   secret. Seul point mineur assumé : grâce offline 7 j contournable en coupant le réseau (tradeoff
   soft-DRM prosumer). Aucune modif code requise. Prochaine étape : Jalon 3 (assets stores).
+- **2026-07-01** — **Jalon 3 : assets stores (hors captures) livrés.** Icône « monogramme S dans
+  bouclier », dégradé indigo→cyan : `assets/icon.svg` + `scripts/build-icons.mjs` (sharp) →
+  `icons/icon-{16,48,128}.png`, câblées dans les deux manifests (`icons` + `action.default_icon` —
+  **manquaient, bloquant CWS**). Découverte lisibilité OK à 16px. Textes dans `store-assets/` :
+  `listing-{en,fr}.md`, `permissions-justification.md`, `privacy-policy.md`, `README.md` (checklist
+  captures). Point RGPD confirmé pour la privacy page : télémétrie + policy-sync **gatées sur
+  credentials tenant** → free tier = **zéro appel réseau**. Build vert. Reste : captures d'écran.
