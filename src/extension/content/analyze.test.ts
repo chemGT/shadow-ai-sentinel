@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { createDefaultPolicy } from '../../core/defaults.js';
-import { applyRedactionsToText, evaluateGuard } from './analyze.js';
+import {
+  applyRedactionsToText,
+  evaluateGuard,
+  normalizeAllowlistValue,
+} from './analyze.js';
 
 describe('evaluateGuard', () => {
   it('autorise un texte vide', () => {
@@ -27,6 +31,46 @@ describe('evaluateGuard', () => {
     if (decision.kind === 'redact') {
       expect(decision.matches.length).toBeGreaterThan(0);
     }
+  });
+});
+
+describe('evaluateGuard — allowlist', () => {
+  it('exclut une valeur exacte allowlistée (block → allow)', () => {
+    const decision = evaluateGuard(
+      'key=AKIAIOSFODNN7EXAMPLE',
+      createDefaultPolicy(),
+      ['AKIAIOSFODNN7EXAMPLE'],
+    );
+    expect(decision.kind).toBe('allow');
+  });
+
+  it('ignore la casse et les espaces autour de la valeur allowlistée', () => {
+    const decision = evaluateGuard(
+      'key=AKIAIOSFODNN7EXAMPLE',
+      createDefaultPolicy(),
+      ['  akiaiosfodnn7example  '],
+    );
+    expect(decision.kind).toBe('allow');
+  });
+
+  it('ne filtre pas une valeur non allowlistée', () => {
+    const decision = evaluateGuard(
+      'key=AKIAIOSFODNN7EXAMPLE',
+      createDefaultPolicy(),
+      ['une-autre-valeur'],
+    );
+    expect(decision.kind).toBe('block');
+  });
+
+  it('allowlist vide = comportement inchangé', () => {
+    const decision = evaluateGuard('key=AKIAIOSFODNN7EXAMPLE', createDefaultPolicy(), []);
+    expect(decision.kind).toBe('block');
+  });
+});
+
+describe('normalizeAllowlistValue', () => {
+  it('trim + minuscule', () => {
+    expect(normalizeAllowlistValue('  Foo@Bar.COM ')).toBe('foo@bar.com');
   });
 });
 
