@@ -6,12 +6,15 @@ import type {
 } from '../../core/types.js';
 import { resolveLocale } from '../../ui/i18n/messages.js';
 import { sendMessage } from '../platform/runtime.js';
+import { incrementLocalStat } from '../platform/storage.js';
 
 export async function reportDlpAction(
   ruleType: RuleType,
   action: RuleAction,
   host: LlmHost,
 ): Promise<void> {
+  // Compteur local affiché dans la popup (toujours suivi, même hors télémétrie cloud).
+  void incrementLocalStat(action === 'redact' ? 'redacted' : 'blocked');
   try {
     await sendMessage({
       type: 'QUEUE_TELEMETRY',

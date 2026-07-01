@@ -10,18 +10,20 @@
     }
   },
   "permissions": ["storage", "alarms"],
-  "optional_host_permissions": [
-    "http://localhost/*",
-    "https://*/*"
-  ],
+  "optional_host_permissions": ["http://localhost/*"],
   "host_permissions": [
     "*://claude.ai/*",
     "*://chatgpt.com/*",
-    "*://gemini.google.com/*"
+    "*://gemini.google.com/*",
+    "https://api.gumroad.com/*"
   ],
   "background": {
     "service_worker": "src/extension/background/index.ts",
     "type": "module"
+  },
+  "action": {
+    "default_popup": "src/extension/popup/index.html",
+    "default_title": "Shadow AI Sentinel"
   },
   "options_ui": {
     "page": "src/extension/options/index.html",

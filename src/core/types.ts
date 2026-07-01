@@ -117,7 +117,10 @@ export type MessageType =
   | 'QUEUE_TELEMETRY'
   | 'QUEUE_FEEDBACK'
   | 'FLUSH_TELEMETRY'
-  | 'SYNC_POLICY';
+  | 'SYNC_POLICY'
+  | 'GET_ENTITLEMENT'
+  | 'ACTIVATE_LICENSE'
+  | 'DEACTIVATE_LICENSE';
 
 export interface ExtensionMessage<T = unknown> {
   type: MessageType;

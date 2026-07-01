@@ -11,13 +11,30 @@ function getRuleAction(policy: Policy, ruleType: RuleType): RuleAction | null {
   return rule?.action ?? null;
 }
 
-/** Applique la policy aux correspondances détectées. */
-export function evaluateGuard(text: string, policy: Policy): GuardDecision {
+/** Normalise une valeur pour comparaison d'allowlist (insensible casse/espaces). */
+export function normalizeAllowlistValue(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+/** Applique la policy aux correspondances détectées, hors valeurs allowlistées. */
+export function evaluateGuard(
+  text: string,
+  policy: Policy,
+  allowlist?: readonly string[],
+): GuardDecision {
   if (text.trim().length === 0) {
     return { kind: 'allow' };
   }
 
-  const matches = detectSensitiveData(text, policy);
+  let matches = detectSensitiveData(text, policy);
+
+  if (allowlist && allowlist.length > 0) {
+    const allowed = new Set(allowlist.map(normalizeAllowlistValue));
+    matches = matches.filter(
+      (m) => !allowed.has(normalizeAllowlistValue(text.slice(m.start, m.end))),
+    );
+  }
+
   if (matches.length === 0) {
     return { kind: 'allow' };
   }

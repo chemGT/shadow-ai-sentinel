@@ -10,10 +10,21 @@ import {
   setStoredPolicy,
 } from '../platform/index.js';
 import { getExtensionApi } from '../platform/browser-api.js';
-import { POLICY_SYNC_ALARM, TELEMETRY_FLUSH_ALARM, registerAlarms } from './alarms.js';
+import {
+  LICENSE_REFRESH_ALARM,
+  POLICY_SYNC_ALARM,
+  TELEMETRY_FLUSH_ALARM,
+  registerAlarms,
+} from './alarms.js';
 import { broadcastPolicyUpdate, syncPolicyFromApi } from './policy-sync.js';
 import { enqueueTelemetryEvent, flushTelemetryQueue, type DlpEventInput } from './telemetry-queue.js';
 import { sendFeedback, type FeedbackInput } from './feedback-sender.js';
+import {
+  activateLicense,
+  deactivateLicense,
+  getEntitlement,
+  refreshEntitlement,
+} from './license-manager.js';
 
 let cachedPolicy: Policy = createDefaultPolicy();
 
@@ -43,6 +54,10 @@ async function bootstrap(): Promise<void> {
     }
     if (alarm.name === TELEMETRY_FLUSH_ALARM) {
       void flushTelemetryQueue();
+      return;
+    }
+    if (alarm.name === LICENSE_REFRESH_ALARM) {
+      void refreshEntitlement();
     }
   });
 
@@ -55,6 +70,8 @@ async function bootstrap(): Promise<void> {
   });
 
   void trySyncAll();
+  // Revérifie la licence au démarrage (best-effort, applique la grâce offline).
+  void refreshEntitlement();
 }
 
 async function syncPolicyFlow(): Promise<void> {
@@ -102,6 +119,19 @@ onMessage(async (message: ExtensionMessage) => {
     case 'SYNC_POLICY': {
       await syncPolicyFlow();
       return { ok: true, policy: cachedPolicy };
+    }
+    case 'GET_ENTITLEMENT': {
+      const entitlement = await getEntitlement();
+      return { ok: true, entitlement };
+    }
+    case 'ACTIVATE_LICENSE': {
+      const { key } = message.payload as { key: string };
+      const entitlement = await activateLicense(key);
+      return { ok: entitlement.tier === 'pro' && entitlement.valid, entitlement };
+    }
+    case 'DEACTIVATE_LICENSE': {
+      const entitlement = await deactivateLicense();
+      return { ok: true, entitlement };
     }
     default:
       return { ok: false, reason: 'Unhandled message type' };
