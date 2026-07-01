@@ -8,6 +8,10 @@ export const STORAGE_KEYS = {
   telemetryQueue: 'sentinel_telemetry_queue',
   noticeAckAt: 'sentinel_notice_ack_at',
   locale: 'sentinel_locale',
+  entitlement: 'sentinel_entitlement',
+  licenseKey: 'sentinel_license_key',
+  stats: 'sentinel_stats',
+  allowlist: 'sentinel_allowlist',
 } as const;
 
 export const POLICY_VERSION_INITIAL = '1.0.0';

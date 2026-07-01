@@ -1,6 +1,13 @@
 import { STORAGE_KEYS } from '../../core/constants.js';
 import type { Policy, TelemetryQueueItem, TenantCredentials } from '../../core/types.js';
+import type { Entitlement } from '../../core/licensing/entitlement.js';
 import { createDefaultPolicy } from '../../core/defaults.js';
+
+/** Compteurs locaux affichés dans la popup (jamais envoyés). */
+export interface LocalStats {
+  blocked: number;
+  redacted: number;
+}
 import { validatePolicy } from '../../core/validation/policy.js';
 import { getExtensionApi } from './browser-api.js';
 
@@ -90,4 +97,73 @@ export async function getTenantCredentials(): Promise<TenantCredentials | null> 
 
 export async function setTenantCredentials(credentials: TenantCredentials): Promise<void> {
   await storageSet({ [STORAGE_KEYS.credentials]: credentials });
+}
+
+export async function getStoredEntitlement(): Promise<Entitlement | null> {
+  const result = await storageGet<Entitlement>(STORAGE_KEYS.entitlement);
+  const value = result[STORAGE_KEYS.entitlement];
+  if (value && (value.tier === 'free' || value.tier === 'pro')) {
+    return value;
+  }
+  return null;
+}
+
+export async function setStoredEntitlement(entitlement: Entitlement): Promise<void> {
+  await storageSet({ [STORAGE_KEYS.entitlement]: entitlement });
+}
+
+export async function getStoredLicenseKey(): Promise<string | null> {
+  const result = await storageGet<string>(STORAGE_KEYS.licenseKey);
+  const value = result[STORAGE_KEYS.licenseKey];
+  return typeof value === 'string' && value.length > 0 ? value : null;
+}
+
+export async function setStoredLicenseKey(key: string): Promise<void> {
+  await storageSet({ [STORAGE_KEYS.licenseKey]: key });
+}
+
+export async function clearStoredLicense(): Promise<void> {
+  const api = getExtensionApi();
+  await new Promise<void>((resolve, reject) => {
+    api.storage.local.remove([STORAGE_KEYS.licenseKey, STORAGE_KEYS.entitlement], () => {
+      const error = api.runtime?.lastError;
+      if (error) {
+        reject(new Error(error.message));
+        return;
+      }
+      resolve();
+    });
+  });
+}
+
+/** Valeurs allowlistées (Pro) : matches dont la valeur exacte ne doit pas déclencher la policy. */
+export async function getAllowlist(): Promise<string[]> {
+  const result = await storageGet<unknown>(STORAGE_KEYS.allowlist);
+  const value = result[STORAGE_KEYS.allowlist];
+  if (Array.isArray(value)) {
+    return value.filter((v): v is string => typeof v === 'string');
+  }
+  return [];
+}
+
+export async function setAllowlist(values: readonly string[]): Promise<void> {
+  const cleaned = Array.from(
+    new Set(values.map((v) => v.trim()).filter((v) => v.length > 0)),
+  );
+  await storageSet({ [STORAGE_KEYS.allowlist]: cleaned });
+}
+
+export async function getLocalStats(): Promise<LocalStats> {
+  const result = await storageGet<LocalStats>(STORAGE_KEYS.stats);
+  const value = result[STORAGE_KEYS.stats];
+  if (value && typeof value.blocked === 'number' && typeof value.redacted === 'number') {
+    return value;
+  }
+  return { blocked: 0, redacted: 0 };
+}
+
+export async function incrementLocalStat(kind: 'blocked' | 'redacted'): Promise<void> {
+  const stats = await getLocalStats();
+  stats[kind] += 1;
+  await storageSet({ [STORAGE_KEYS.stats]: stats });
 }
