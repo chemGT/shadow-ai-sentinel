@@ -4,6 +4,11 @@
 > À **mettre à jour à la fin de chaque session** (section « Journal » + statuts).
 > Plan complet : `~\.claude\plans\review-le-projet-donne-nested-minsky.md`
 
+> 🎯 **PROCHAINE ACTION** : audit sécurité/RGPD de sortie (skill `security-review` + personas
+> `.ai/agents/`) sur la fondation licensing avant de générer les assets store. Puis Jalon 3
+> (assets stores) → Jalon 4 (soumission CWS/AMO, landing, produit Gumroad). Voir « Ensuite » plus bas.
+> Vérifier d'abord le vert : `npm test` (211) · `npx tsc --noEmit` · `npm run build`.
+
 ---
 
 ## Résumé décision (ne pas re-débattre)
