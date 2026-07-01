@@ -9,6 +9,8 @@ import {
 
 export type ClaudeAdapterOptions = {
   getPolicy: () => Policy;
+  isFileScanEnabled?: () => boolean;
+  getAllowlist?: () => readonly string[];
 };
 
 const dom = createSiteDom({
@@ -23,5 +25,7 @@ export function attachClaudeAdapter(options: ClaudeAdapterOptions): () => void {
     host: 'claude.ai',
     dom,
     label: 'Claude',
+    isFileScanEnabled: options.isFileScanEnabled,
+    getAllowlist: options.getAllowlist,
   });
 }

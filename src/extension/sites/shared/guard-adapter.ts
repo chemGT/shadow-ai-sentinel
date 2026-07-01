@@ -15,6 +15,10 @@ export type GuardAdapterOptions = {
   dom: SiteDom;
   /** Libellé console (ex. « Claude », « ChatGPT »). */
   label: string;
+  /** Scan des pièces jointes (Pro). Si absent ou `true`, le scan est actif. */
+  isFileScanEnabled?: () => boolean;
+  /** Valeurs allowlistées (Pro) à exclure des détections. Si absent, aucune exclusion. */
+  getAllowlist?: () => readonly string[];
 };
 
 let toastHost: HTMLDivElement | null = null;
@@ -56,9 +60,10 @@ function runGuard(
   input: HTMLElement,
   event: Event,
   getPolicy: () => Policy,
+  getAllowlist?: () => readonly string[],
 ): boolean {
   const text = dom.extractTextFromInput(input);
-  const decision = evaluateGuard(text, getPolicy());
+  const decision = evaluateGuard(text, getPolicy(), getAllowlist?.());
 
   if (decision.kind === 'allow') {
     return true;
@@ -86,7 +91,7 @@ function runGuard(
 }
 
 export function attachGuardAdapter(options: GuardAdapterOptions): () => void {
-  const { dom, host, getPolicy, label } = options;
+  const { dom, host, getPolicy, label, getAllowlist } = options;
 
   function onKeyDown(event: KeyboardEvent): void {
     if (event.key !== 'Enter' || event.shiftKey || event.ctrlKey || event.metaKey || event.altKey) {
@@ -106,7 +111,7 @@ export function attachGuardAdapter(options: GuardAdapterOptions): () => void {
       return;
     }
 
-    runGuard(dom, host, input, event, getPolicy);
+    runGuard(dom, host, input, event, getPolicy, getAllowlist);
   }
 
   function onClick(event: MouseEvent): void {
@@ -119,7 +124,7 @@ export function attachGuardAdapter(options: GuardAdapterOptions): () => void {
       return;
     }
 
-    runGuard(dom, host, input, event, getPolicy);
+    runGuard(dom, host, input, event, getPolicy, getAllowlist);
   }
 
   document.addEventListener('keydown', onKeyDown, true);
@@ -128,6 +133,8 @@ export function attachGuardAdapter(options: GuardAdapterOptions): () => void {
   const detachFile = attachFileGuard({
     getPolicy: options.getPolicy,
     host: options.host,
+    isFileScanEnabled: options.isFileScanEnabled,
+    getAllowlist: options.getAllowlist,
   });
 
   console.info(`[Shadow AI Sentinel] Adaptateur ${label} actif (texte + fichiers texte)`);

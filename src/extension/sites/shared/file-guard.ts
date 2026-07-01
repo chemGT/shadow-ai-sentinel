@@ -21,6 +21,10 @@ import {
 export type FileGuardOptions = {
   getPolicy: () => Policy;
   host: LlmHost;
+  /** Scan des pièces jointes (Pro). Si absent ou `true`, le scan est actif. */
+  isFileScanEnabled?: () => boolean;
+  /** Valeurs allowlistées (Pro) à exclure des détections. Si absent, aucune exclusion. */
+  getAllowlist?: () => readonly string[];
 };
 
 let toastHost: HTMLDivElement | null = null;
@@ -67,7 +71,11 @@ type ProcessedFileResult =
   | { status: 'block'; ruleType: RuleType }
   | { status: 'redact'; file: File; ruleTypes: RuleType[] };
 
-async function processTextFile(file: File, policy: Policy): Promise<ProcessedFileResult> {
+async function processTextFile(
+  file: File,
+  policy: Policy,
+  allowlist?: readonly string[],
+): Promise<ProcessedFileResult> {
   if (!isTextLikeFile(file)) {
     return { status: 'ok', file };
   }
@@ -79,7 +87,7 @@ async function processTextFile(file: File, policy: Policy): Promise<ProcessedFil
     return { status: 'ok', file };
   }
 
-  const decision: GuardDecision = evaluateGuard(text, policy);
+  const decision: GuardDecision = evaluateGuard(text, policy, allowlist);
 
   if (decision.kind === 'allow') {
     return { status: 'ok', file };
@@ -102,12 +110,18 @@ async function guardFileList(
   files: File[],
   options: FileGuardOptions,
 ): Promise<{ allowed: File[]; blocked: boolean }> {
+  // Scan des pièces jointes réservé au Pro : en Free, on laisse tout passer.
+  if (options.isFileScanEnabled && !options.isFileScanEnabled()) {
+    return { allowed: files, blocked: false };
+  }
+
   const policy = options.getPolicy();
+  const allowlist = options.getAllowlist?.();
   const allowed: File[] = [];
   let blocked = false;
 
   for (const file of files) {
-    const result = await processTextFile(file, policy);
+    const result = await processTextFile(file, policy, allowlist);
 
     if (result.status === 'block') {
       showBlockFileAlert(result.ruleType, file.name);
