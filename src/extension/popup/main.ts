@@ -2,7 +2,7 @@ import { sendMessage } from '../platform/runtime.js';
 import { getLocalStats } from '../platform/storage.js';
 import { getExtensionApi } from '../platform/browser-api.js';
 import { resolveLocale } from '../../ui/i18n/messages.js';
-import { GUMROAD_PRODUCT_URL } from '../config.js';
+import { LEMONSQUEEZY_CHECKOUT_URL } from '../config.js';
 import { isProEntitlement, type Entitlement } from '../../core/licensing/entitlement.js';
 
 interface EntitlementResponse {
@@ -103,7 +103,7 @@ function applyStaticCopy(): void {
 
   const upgrade = $('upgradeLink') as HTMLAnchorElement;
   upgrade.textContent = copy.upgrade;
-  upgrade.href = GUMROAD_PRODUCT_URL;
+  upgrade.href = LEMONSQUEEZY_CHECKOUT_URL;
 }
 
 function setMsg(text: string, kind: 'ok' | 'error' | ''): void {

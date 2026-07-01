@@ -10,6 +10,7 @@ export const STORAGE_KEYS = {
   locale: 'sentinel_locale',
   entitlement: 'sentinel_entitlement',
   licenseKey: 'sentinel_license_key',
+  licenseInstanceId: 'sentinel_license_instance_id',
   stats: 'sentinel_stats',
   allowlist: 'sentinel_allowlist',
 } as const;

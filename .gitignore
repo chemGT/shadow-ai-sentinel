@@ -8,3 +8,4 @@ dist-firefox/
 .DS_Store
 coverage/
 test_rules_json.json
+.serena/

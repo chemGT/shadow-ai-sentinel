@@ -122,17 +122,31 @@ export async function setStoredLicenseKey(key: string): Promise<void> {
   await storageSet({ [STORAGE_KEYS.licenseKey]: key });
 }
 
+/** Identifiant d'instance Lemon Squeezy (créé à l'activation, requis pour les re-checks). */
+export async function getStoredLicenseInstanceId(): Promise<string | null> {
+  const result = await storageGet<string>(STORAGE_KEYS.licenseInstanceId);
+  const value = result[STORAGE_KEYS.licenseInstanceId];
+  return typeof value === 'string' && value.length > 0 ? value : null;
+}
+
+export async function setStoredLicenseInstanceId(id: string): Promise<void> {
+  await storageSet({ [STORAGE_KEYS.licenseInstanceId]: id });
+}
+
 export async function clearStoredLicense(): Promise<void> {
   const api = getExtensionApi();
   await new Promise<void>((resolve, reject) => {
-    api.storage.local.remove([STORAGE_KEYS.licenseKey, STORAGE_KEYS.entitlement], () => {
-      const error = api.runtime?.lastError;
-      if (error) {
-        reject(new Error(error.message));
-        return;
-      }
-      resolve();
-    });
+    api.storage.local.remove(
+      [STORAGE_KEYS.licenseKey, STORAGE_KEYS.licenseInstanceId, STORAGE_KEYS.entitlement],
+      () => {
+        const error = api.runtime?.lastError;
+        if (error) {
+          reject(new Error(error.message));
+          return;
+        }
+        resolve();
+      },
+    );
   });
 }
 

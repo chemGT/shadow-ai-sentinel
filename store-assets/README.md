@@ -39,5 +39,5 @@ open a supported AI site → trigger detection → screenshot.
 
 ## ⬜ Before publishing
 - Host `privacy-policy.md` at a public URL (landing page or GitHub Pages) and paste that URL into CWS + AMO.
-- Set `VITE_GUMROAD_PRODUCT_ID` and `VITE_GUMROAD_PRODUCT_URL` at build time once the Gumroad product exists.
+- Set `VITE_LEMONSQUEEZY_STORE_ID`, `VITE_LEMONSQUEEZY_PRODUCT_ID` and `VITE_LEMONSQUEEZY_CHECKOUT_URL` at build time once the Lemon Squeezy product exists.
 - Bump `version` in `manifest.json` / `manifest.firefox.json` from `0.1.0` to the release version.
