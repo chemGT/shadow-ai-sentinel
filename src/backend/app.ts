@@ -2,7 +2,14 @@ import cors from 'cors';
 import express, { type NextFunction, type Request, type Response } from 'express';
 import { validatePolicy } from '../core/validation/policy.js';
 import { validateTelemetryEvent } from '../core/validation/telemetry.js';
-import type { PoliciesResponse, TelemetryBatchRequest, TelemetryEvent } from '../core/types.js';
+import { validateFeedbackEvent } from '../core/validation/feedback.js';
+import type {
+  FeedbackBatchRequest,
+  FeedbackEvent,
+  PoliciesResponse,
+  TelemetryBatchRequest,
+  TelemetryEvent,
+} from '../core/types.js';
 import { loadApiKeysFromEnv, resolveTenantByApiKey } from './auth.js';
 import { loadApiConfig } from './config.js';
 import { buildPolicyForTenant } from './default-policy.js';
@@ -10,6 +17,8 @@ import { rejectForbiddenTelemetryBody, securityHeaders } from './middleware/secu
 import { safeRequestLog } from './middleware/request-log.js';
 import { createRateLimiter } from './rate-limit.js';
 import { countStoredEvents, getRetentionMs, registerEvents } from './telemetry-store.js';
+import { apiKeysRouter } from './api-keys-router.js';
+import { eventsRouter } from './events-router.js';
 
 export type AuthedRequest = Request & { tenantId?: string };
 
@@ -119,6 +128,45 @@ export function createApp() {
     const { accepted, duplicates } = registerEvents(validEvents, retentionMs);
     res.json({ accepted, duplicates });
   });
+
+  app.post('/feedback', bearerAuth, telemetryLimiter, (req: AuthedRequest, res) => {
+    const payload = req.body as FeedbackBatchRequest;
+    if (!payload || !Array.isArray(payload.events)) {
+      res.status(400).json({ error: 'Corps attendu: { events: FeedbackEvent[] }' });
+      return;
+    }
+
+    if (payload.events.length === 0) {
+      res.json({ accepted: 0 });
+      return;
+    }
+
+    if (payload.events.length > 20) {
+      res.status(400).json({ error: 'Maximum 20 signalements par requête' });
+      return;
+    }
+
+    const tenantId = req.tenantId!;
+    const validEvents: FeedbackEvent[] = [];
+
+    for (let i = 0; i < payload.events.length; i += 1) {
+      const result = validateFeedbackEvent(payload.events[i]);
+      if (!result.ok) {
+        res.status(400).json({ error: `events[${i}] invalide`, details: result.errors });
+        return;
+      }
+      if (result.event.tenantId !== tenantId) {
+        res.status(403).json({ error: `events[${i}].tenantId ne correspond pas au token` });
+        return;
+      }
+      validEvents.push(result.event);
+    }
+
+    res.json({ accepted: validEvents.length });
+  });
+
+  app.use('/api-keys', apiKeysRouter);
+  app.use('/events', eventsRouter);
 
   return { app, config, retentionMs };
 }

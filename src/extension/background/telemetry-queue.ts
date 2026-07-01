@@ -1,4 +1,4 @@
-import { PILOT_LLM_HOST } from '../../core/constants.js';
+import type { LlmHost } from '../../core/types.js';
 import { validateTelemetryEvent } from '../../core/validation/telemetry.js';
 import type {
   RuleAction,
@@ -27,6 +27,7 @@ const MAX_RETRY = 10;
 export type DlpEventInput = {
   ruleType: RuleType;
   action: RuleAction;
+  host: LlmHost;
   locale?: 'fr' | 'en';
 };
 
@@ -59,7 +60,7 @@ export async function buildTelemetryEvent(input: DlpEventInput): Promise<Telemet
     occurredAt: new Date().toISOString(),
     ruleType: input.ruleType,
     action: input.action,
-    host: PILOT_LLM_HOST,
+    host: input.host,
     extensionVersion: getExtensionVersion(),
     policyVersion: policy.version,
     locale,

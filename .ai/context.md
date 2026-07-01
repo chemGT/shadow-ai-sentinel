@@ -4,7 +4,7 @@
 Un DLP (Data Loss Prevention) ultra-léger sous forme d'extension navigateur B2B. L'objectif est d'intercepter les données sensibles (clés API, IBAN, IP internes) tapées par les utilisateurs dans des LLMs publics (ChatGPT, Claude, Gemini) AVANT leur soumission.
 
 ## Scope MVP (Version Actuelle)
-1.  **Frontend (Extension) :** Manifest V3. Content script qui intercepte les requêtes (clics/entrées clavier) sur les domaines d'IA.
+1.  **Frontend (Extension) :** Manifest V3. Content script qui intercepte saisie clavier, envoi, et **fichiers texte** (sélection, glisser-déposer, collage) sur les domaines d'IA.
 2.  **Moteur de détection :** 100% local (expressions régulières avancées pour le MVP).
 3.  **Actions :** 
     - Mode Block : Alerte l'utilisateur et empêche l'envoi.
@@ -25,6 +25,10 @@ Un DLP (Data Loss Prevention) ultra-léger sous forme d'extension navigateur B2B
 | `guides/INSTALLATION.md` | **Guide d'installation** — mis à jour à chaque phase livrée |
 | `compliance/` | Fiche traitement, notices employé, checklist RGPD |
 | `docs/tests-automatises.md` | Suite de tests, commandes, CI |
+| `docs/matrice-tests-pilote-claude.md` | Recette manuelle F01–F10 |
+| `docs/checklist-fin-pilote.md` | Critères clôture pilote |
+| `docs/firefox-distribution.md` | Build Firefox, AMO, XPI signé |
+| `docs/matrice-tests-multi-llm.md` | Recette 3 LLM × 2 navigateurs |
 
 ## Agents IA (`.ai/agents/`)
 

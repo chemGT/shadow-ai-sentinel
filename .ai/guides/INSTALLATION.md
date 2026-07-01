@@ -2,8 +2,8 @@
 
 > **Document évolutif** : les sections sont étiquetées par phase. Ne pas appliquer une section marquée « à venir » tant que la phase n’est pas ✅ dans [SUIVI-ACTIONS.md](../SUIVI-ACTIONS.md).
 
-**Dernière mise à jour :** 2026-05-19  
-**Phases disponibles aujourd’hui :** 0–4 (DLP, Options, API durcie, notice RGPD)
+**Dernière mise à jour :** 2026-05-20  
+**Phases disponibles aujourd’hui :** 0–7 (DLP multi-LLM, Options, API, UX, release)
 
 ---
 
@@ -13,11 +13,11 @@
 2. [Installation environnement de développement](#2-installation-environnement-de-développement) — Phase 0 ✅  
 3. [Build et chargement extension (Chromium)](#3-build-et-chargement-extension-chromium) — Phase 0 ✅  
 4. [Vérifier le moteur de détection](#4-vérifier-le-moteur-de-détection) — Phase 1 ✅  
-5. [Tester sur Claude.ai](#5-tester-sur-claudeai) — Phase 2 ✅  
+5. [Tester sur les LLM (Claude, ChatGPT, Gemini)](#5-tester-sur-les-llm) — Phase 7 ✅  
 6. [Configurer policies et credentials](#6-configurer-policies-et-credentials) — Phase 3 ✅
 7. [Installer l’API (Docker)](#7-installer-lapi-docker) — Phase 3 ✅ (endpoints MVP)
-8. [Firefox (XPI signé)](#8-firefox-xpi-signé) — Phase 6 ⏳ *à venir*  
-9. [Release pilote entreprise](#9-release-pilote-entreprise) — Phase 6 ⏳ *à venir*  
+8. [Firefox (XPI signé)](#8-firefox-xpi-signé) — Phase 6 ✅  
+9. [Release pilote entreprise](#9-release-pilote-entreprise) — Phase 6 ✅  
 10. [Dépannage](#10-dépannage)
 
 ---
@@ -59,12 +59,14 @@ npm test
 npm run test:ci
 npm run build
 npm run ci
+npm run build:firefox
 ```
 
 Résultat attendu :
 
-- Build : dossier `dist/` créé sans erreur.
-- Tests : `56 passed` (détails : [tests-automatises.md](../docs/tests-automatises.md)).
+- Build Chromium : dossier `dist/` créé sans erreur.
+- Build Firefox : dossier `dist-firefox/` avec `browser_specific_settings.gecko.id`.
+- Tests : `72 passed` (détails : [tests-automatises.md](../docs/tests-automatises.md)).
 
 Mode développement (rebuild automatique) :
 
@@ -113,7 +115,7 @@ Artefact : répertoire `dist/` à la racine du projet.
 **Permissions actuelles** (voir `.ai/architecture/permissions-mv3.md`) :
 
 - `storage`
-- `host_permissions` : `*://claude.ai/*` uniquement
+- `host_permissions` : `claude.ai`, `chatgpt.com`, `gemini.google.com`
 
 ### 3.5 Recharger après un nouveau build
 
@@ -171,11 +173,22 @@ console.log(detectSensitiveData('IBAN DE89370400440532013000 et jean@acme.com', 
 Console (F12) sur `claude.ai` :
 
 ```
-[Shadow AI Sentinel] Adaptateur Claude actif
+[Shadow AI Sentinel] Adaptateur Claude actif (texte + fichiers texte)
 [Shadow AI Sentinel] Content script prêt
 ```
 
-### Scénarios de test
+### Fichiers texte (pièces jointes)
+
+| Mode | Comportement |
+|------|----------------|
+| Block | Fichier non joint + modale « Fichier bloqué » |
+| Redact | Fichier remplacé avec jetons `[REDACTED_*]` |
+
+Formats : `.txt`, `.csv`, `.json`, `.env`, `.md`, `.log`, `.sql`, etc. — via sélection, glisser-déposer ou collage. **Pas** de PDF/images/Office.
+
+Test : `secrets.env` avec `AKIAIOSFODNN7EXAMPLE` → Block à l’ajout.
+
+### Scénarios de test (saisie)
 
 | # | Saisie (exemple) | Mode policy | Action | Résultat attendu |
 |---|------------------|-------------|--------|------------------|
@@ -192,6 +205,7 @@ Console (F12) sur `claude.ai` :
 
 - **Entrée** (sans Shift) dans la zone de saisie
 - **Clic** sur le bouton d’envoi
+- **Pièce jointe texte** (sélection / drop / collage)
 
 ### Si rien ne se passe
 
@@ -300,31 +314,83 @@ Variables (fichier `.env` à la racine pour Compose) :
 
 ## 8. Firefox (XPI signé)
 
-**⏳ À venir — Phase 6**
+**Disponible : Phase 6 ✅**
 
-Procédure cible :
+### 8.1 Build
 
-1. Build Firefox : `npm run build:firefox` *(script à créer)*
-2. Soumission Mozilla Developer Hub — distribution **non répertoriée**
-3. Héberger le `.xpi` signé en **HTTPS** (intranet client)
-4. Installation : lien interne ou `policies.json` entreprise
+```bash
+npm run build:firefox
+node scripts/verify-dist-firefox.mjs
+```
 
-*Aujourd’hui : uniquement Chromium (§3).*
+Artefact : répertoire **`dist-firefox/`** (ne pas confondre avec `dist/` Chromium).
+
+### 8.2 Test local (module temporaire)
+
+1. Firefox → `about:debugging` → **Ce Firefox**
+2. **Charger un module temporaire…** → `dist-firefox/manifest.json`
+3. Ouvrir [claude.ai](https://claude.ai) — mêmes scénarios que §5
+
+### 8.3 Paquet XPI non signé (soumission AMO)
+
+```bash
+npm run package:firefox
+```
+
+Produit : `dist-firefox/shadow-ai-sentinel-unsigned.xpi` — à soumettre sur [Firefox Add-on Developer Hub](https://addons.mozilla.org/developers/).
+
+Procédure complète : [firefox-distribution.md](../docs/firefox-distribution.md).
+
+### 8.4 Installation pilote (XPI signé)
+
+1. Télécharger le XPI **signé** par Mozilla (distribution non répertoriée).
+2. Héberger en **HTTPS** sur l’intranet client.
+3. Distribuer le lien ou installer via `policies.json` Firefox (ESR entreprise).
+
+**ID Gecko (fixe)** : `shadow-ai-sentinel@pilot.sentinel`
 
 ---
 
 ## 9. Release pilote entreprise
 
-**⏳ À venir — Phase 6**
+**Disponible : Phase 6 ✅**
 
-Checklist prévue :
+### 9.1 Figurer une version
 
-- [ ] Version figée (`manifest.json` / tag Git)
-- [ ] Guide utilisateur FR/EN
-- [ ] Notice employé (télémétrie)
-- [ ] Paramètres client : `tenantId`, clé API, `emailDomains`
-- [ ] 20–50 utilisateurs ou 2 semaines de pilote
-- [ ] Support : contact interne client
+```bash
+git tag v0.1.0-pilote-claude
+npm run ci
+```
+
+Vérifier `manifest.json` / `manifest.firefox.json` → version `0.1.0`.
+
+### 9.2 Distribution Chromium (20–50 utilisateurs)
+
+| Mode | Procédure |
+|------|-----------|
+| **Dev / recette** | Extension non empaquetée `dist/` (§3) |
+| **Pilote IT** | CRX / Chrome Web Store **non répertoriée** ou `ExtensionInstallForcelist` (GPO) |
+
+Livrer : ZIP du dossier `dist/` versionné + ce guide + notices [compliance/](../compliance/).
+
+### 9.3 Matrice de recette obligatoire
+
+Exécuter **F01–F10** : [matrice-tests-pilote-claude.md](../docs/matrice-tests-pilote-claude.md).
+
+### 9.4 Checklist de clôture pilote
+
+Avant de déclarer le pilote terminé : [checklist-fin-pilote.md](../docs/checklist-fin-pilote.md).
+
+| Élément | Référence |
+|---------|-----------|
+| Credentials client | §6 |
+| Notice employé FR/EN | [notice-employe-fr.md](../compliance/notice-employe-fr.md) |
+| RGPD technique | [checklist-rgpd-release.md](../compliance/checklist-rgpd-release.md) |
+| Critère métier | 20–50 utilisateurs **ou** 2 semaines |
+
+### 9.5 Support
+
+Définir côté client : contact sécurité / IT pour faux positifs, policy, et révocation clé API.
 
 ---
 
@@ -357,9 +423,18 @@ npm test
 2. `npm run build` + recharger l’extension.
 3. Policy par défaut : `api_key` et `generic_secret` en **block**, autres en **redact**.
 
+### Firefox : module temporaire disparu
+
+Recharger via `about:debugging` après chaque `npm run build:firefox`, ou déployer un XPI signé (§8.4).
+
 ### Docker / API
 
-Phase 4 non livrée : seul `/health` existe. Ne pas attendre `/policies` ou `/telemetry` pour l’instant.
+```bash
+docker compose up -d --build
+curl http://localhost:3000/health
+```
+
+Si `/policies` ou `/telemetry` échouent : vérifier `API_KEYS` et Bearer dans Options.
 
 ---
 
@@ -369,6 +444,8 @@ Phase 4 non livrée : seul `/health` existe. Ne pas attendre `/policies` ou `/te
 |------|-------|----------------|
 | 2026-05-19 | 0–1 | Création : prérequis, build Chromium, tests regex, sections futures |
 | 2026-05-19 | 2 | Tests DLP sur claude.ai, scénarios Block/Redact |
+| 2026-05-20 | 6 | Build Firefox, release pilote, matrice F01–F10, checklist clôture |
+| 2026-05-20 | 7 | ChatGPT + Gemini, permissions 3 hosts, télémétrie par site |
 
 ---
 
@@ -380,3 +457,6 @@ Phase 4 non livrée : seul `/health` existe. Ne pas attendre `/policies` ou `/te
 | [plans/mvp-pilote-claude.md](../plans/mvp-pilote-claude.md) | Plan MVP détaillé |
 | [schemas/policy.example.json](../schemas/policy.example.json) | Exemple policy |
 | [architecture/permissions-mv3.md](../architecture/permissions-mv3.md) | Permissions extension |
+| [docs/matrice-tests-pilote-claude.md](../docs/matrice-tests-pilote-claude.md) | Recette F01–F10 |
+| [docs/checklist-fin-pilote.md](../docs/checklist-fin-pilote.md) | Clôture pilote |
+| [docs/firefox-distribution.md](../docs/firefox-distribution.md) | AMO + XPI signé |

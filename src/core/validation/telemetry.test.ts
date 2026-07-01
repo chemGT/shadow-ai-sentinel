@@ -8,7 +8,7 @@ const VALID_EVENT = {
   occurredAt: '2026-05-19T12:00:00.000Z',
   ruleType: 'iban',
   action: 'block',
-  host: 'claude.ai',
+  host: 'claude.ai' as const,
   extensionVersion: '0.1.0',
   policyVersion: '1.0.0',
   locale: 'fr',
@@ -33,4 +33,12 @@ describe('validateTelemetryEvent', () => {
     const result = validateTelemetryEvent({ ...VALID_EVENT, eventId: 'not-a-uuid' });
     expect(result.ok).toBe(false);
   });
+
+  it.each(['chatgpt.com', 'gemini.google.com'] as const)(
+    'accepte host %s',
+    (host) => {
+      const result = validateTelemetryEvent({ ...VALID_EVENT, host });
+      expect(result.ok).toBe(true);
+    },
+  );
 });

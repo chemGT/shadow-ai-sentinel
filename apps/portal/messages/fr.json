@@ -1,0 +1,31 @@
+{
+  "nav": {
+    "login": "Connexion",
+    "signup": "Démarrer",
+    "dashboard": "Tableau de bord"
+  },
+  "home": {
+    "hero": "Protection Shadow AI pour votre équipe",
+    "sub": "Surveillez et contrôlez l'usage des outils IA dans votre organisation. Bloquez les fuites de données avant qu'elles n'atteignent le LLM.",
+    "cta": "Démarrer l'essai gratuit",
+    "feature1Title": "Détection temps réel",
+    "feature1Body": "Bloquez données personnelles, secrets et code source avant envoi vers ChatGPT, Claude ou Gemini.",
+    "feature2Title": "Natif navigateur",
+    "feature2Body": "Une extension Chrome/Firefox qui intercepte à la source. Aucun proxy réseau requis.",
+    "feature3Title": "Multi-tenant prêt",
+    "feature3Body": "Politiques par organisation, rotation des clés API, journal d'audit, télémétrie RGPD."
+  },
+  "dashboard": {
+    "title": "Tableau de bord",
+    "welcome": "Bienvenue sur Shadow AI Sentinel",
+    "placeholder": "Vos analytics apparaîtront ici dès réception des événements depuis l'extension.",
+    "todoAuth": "Garde d'authentification non encore branchée — cette page est publique pendant S1-I9a."
+  },
+  "auth": {
+    "loginTitle": "Connexion",
+    "signupTitle": "Créer votre compte",
+    "comingSoon": "L'authentification est en cours de configuration.",
+    "comingSoonBody": "OAuth (Google + Microsoft) et connexion par e-mail arrivent à la sous-itération suivante.",
+    "backHome": "Retour à l'accueil"
+  }
+}

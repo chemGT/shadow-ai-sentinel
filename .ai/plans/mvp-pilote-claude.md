@@ -1,7 +1,7 @@
 # Plan MVP — Pilote Claude (Shadow AI Sentinel)
 
 > Document de référence orchestrateur. Dernière mise à jour : 2026-05-19.  
-> Statut : **cadrage validé** — Phases 0–4 terminées.  
+> Statut : **cadrage validé** — Phases 0–7 livrées (recette multi-LLM + clôture pilote en attente).  
 > Suivi : [SUIVI-ACTIONS.md](../SUIVI-ACTIONS.md) · Install : [guides/INSTALLATION.md](../guides/INSTALLATION.md)
 
 ---
@@ -46,7 +46,7 @@ Livrer un DLP navigateur B2B opérationnel sur **Claude** (`claude.ai`) : détec
 
 ### Out (pilote)
 
-- ChatGPT, Gemini (Phase 7)
+- ~~ChatGPT, Gemini~~ → livré Phase 7 (sélecteurs à valider post-login)
 - MDM Intune / Chrome Enterprise / Firefox policies (doc seulement, pas d’intégration dédiée)
 - Signalement faux positif
 - Dashboard admin
@@ -287,43 +287,51 @@ build/firefox/   → WXT ou web-ext + webextension-polyfill
 
 ---
 
-### Phase 5 — UX & i18n (Agent: `ux_writer`)
+### Phase 5 — UX & i18n (Agent: `ux_writer`) ✅
 
 **Tâches**
 
-- Copy modales Block, tokens Redact, onboarding notice
-- Ton B2B pédagogique FR/EN
+- [x] Copy modales Block, tokens Redact, onboarding notice
+- [x] Ton B2B pédagogique FR/EN (`blockModalCopy`, `redactNotice`, `employeeNoticeSections`)
+- [x] Tests Vitest copy (`messages.test.ts`)
+- [ ] Recette manuelle : message compris sans formation
 
 **Done when**
 
-- Recette `functional_tester` : message compris sans formation
+- [ ] Recette `functional_tester` : message compris sans formation (tests manuels Claude)
 
 ---
 
-### Phase 6 — QA & release pilote (Agent: `qa_tester` + `functional_tester`)
+### Phase 6 — QA & release pilote (Agent: `qa_tester` + `functional_tester`) ✅
 
 **Tâches**
 
-- CI : `npm run build` Chromium + Firefox, tests regex, smoke API
-- Guides : install Chromium, install Firefox (XPI signé), config Options
-- Checklist fin de pilote
+- [x] CI : `npm run build` Chromium + Firefox, tests regex, smoke API
+- [x] `npm run build:firefox` + `manifest.firefox.json` + verify script
+- [x] Guides : §8 Firefox, §9 release dans `INSTALLATION.md`
+- [x] Matrice F01–F10 + checklist fin pilote + doc distribution AMO
+- [ ] Soumission XPI Mozilla signé (opération client / ops)
+- [ ] Critères § Fin de pilote atteints (recette + déploiement)
 
 **Done when**
 
-- Critères § Fin de pilote atteints
+- [ ] Critères § Fin de pilote atteints
 
 ---
 
-### Phase 7 — ChatGPT puis Gemini (Agent: `platform_watcher` → `ext_dev`)
+### Phase 7 — ChatGPT puis Gemini (Agent: `platform_watcher` → `ext_dev`) ✅
 
 **Tâches**
 
-- Répéter pattern `sites/<llm>/` pour ChatGPT puis Gemini
-- Étendre `host_permissions` + tests régression cross-site
+- [x] Pattern `sites/chatgpt/`, `sites/gemini/` + refactor `sites/shared/`
+- [x] `host_permissions` + content scripts sur 3 domaines
+- [x] Télémétrie `host` dynamique par site
+- [x] Tests régression sélecteurs + `llm-hosts.test.ts`
+- [ ] Matrice 3 LLM × 2 navigateurs validée (manuel)
 
 **Done when**
 
-- Matrice 3 LLM × 2 navigateurs validée
+- [ ] Matrice [matrice-tests-multi-llm.md](../docs/matrice-tests-multi-llm.md) 100 % OK
 
 ---
 
@@ -393,8 +401,9 @@ build/firefox/   → WXT ou web-ext + webextension-polyfill
 ## Commandes de validation (référence)
 
 ```bash
-npm run build          # Chromium extension
-# (à ajouter) npm run build:firefox
+npm run build          # Chromium → dist/
+npm run build:firefox  # Firefox → dist-firefox/
+npm run ci             # tests + les deux builds
 npm run backend        # API locale :3000
 docker compose up -d   # API conteneurisée
 ```
@@ -420,4 +429,4 @@ Chargement extension : `dist/` (Chromium) — voir guides Phase 6.
 
 ## Prochaine action recommandée
 
-Démarrer **Phase 0** : types, correction manifest, ADR Firefox/Chromium, format policy avec `emailDomains`.
+Exécuter la **matrice F01–F10** ([matrice-tests-pilote-claude.md](../docs/matrice-tests-pilote-claude.md)), soumettre le XPI à Mozilla, puis **Phase 7** (ChatGPT / Gemini) ou clôture pilote ([checklist-fin-pilote.md](../docs/checklist-fin-pilote.md)).

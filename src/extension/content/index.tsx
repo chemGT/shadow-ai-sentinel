@@ -1,21 +1,41 @@
-import { PILOT_LLM_HOST } from '../../core/constants.js';
-import type { ExtensionMessage, Policy } from '../../core/types.js';
+import { resolveLlmHost } from '../../core/llm-hosts.js';
+import type { ExtensionMessage, LlmHost, Policy } from '../../core/types.js';
+import {
+  applyEntitlementToPolicy,
+  isFileScanAllowed,
+  isProEntitlement,
+  type Entitlement,
+} from '../../core/licensing/index.js';
 import { getExtensionApi } from '../platform/browser-api.js';
+import { getStoredPolicy, getStoredEntitlement, getAllowlist } from '../platform/storage.js';
 import { sendMessage } from '../platform/runtime.js';
-import { showFirstRunNoticeIfNeeded } from './first-run-notice.js';
 import { attachClaudeAdapter } from '../sites/claude/adapter.js';
+import { attachChatGptAdapter } from '../sites/chatgpt/adapter.js';
+import { attachGeminiAdapter } from '../sites/gemini/adapter.js';
+import { showFirstRunNoticeIfNeeded } from './first-run-notice.js';
 
 const host = globalThis.location.hostname;
-const isPilotHost = host === PILOT_LLM_HOST || host.endsWith(`.${PILOT_LLM_HOST}`);
+const llmHost = resolveLlmHost(host);
 
 let policy: Policy | null = null;
+let entitlement: Entitlement | null = null;
+let allowlist: string[] = [];
+
+/** Allowlist effective : réservée au Pro (aucune exclusion en Free). */
+function effectiveAllowlist(): readonly string[] {
+  return isProEntitlement(entitlement) ? allowlist : [];
+}
 
 async function loadPolicy(): Promise<Policy> {
-  const response = (await sendMessage({ type: 'GET_POLICY' })) as { policy?: Policy };
-  if (!response?.policy) {
-    throw new Error('Policy indisponible');
+  try {
+    const response = (await sendMessage({ type: 'GET_POLICY' })) as { policy?: Policy };
+    if (response?.policy) {
+      return response.policy;
+    }
+  } catch {
+    // Service worker non disponible — fallback storage
   }
-  return response.policy;
+  return getStoredPolicy();
 }
 
 function listenPolicyUpdates(): void {
@@ -23,29 +43,79 @@ function listenPolicyUpdates(): void {
   api.runtime.onMessage.addListener((message: ExtensionMessage) => {
     if (message.type === 'POLICY_UPDATED' && message.payload) {
       policy = message.payload as Policy;
-      console.info('[Shadow AI Sentinel] Policy mise à jour', {
+      console.info('[Shadow AI Sentinel] Policy mise à jour (message)', {
         version: policy.version,
       });
     }
   });
+  // Fallback : écoute les mises à jour directement depuis le storage
+  // (couvre le cas où le SW est terminé et ne peut pas broadcaster)
+  api.storage.onChanged.addListener((changes, area) => {
+    if (area === 'local' && 'sentinel_entitlement' in changes) {
+      entitlement =
+        (changes['sentinel_entitlement'].newValue as Entitlement | undefined) ?? null;
+      console.info('[Shadow AI Sentinel] Entitlement mis à jour', {
+        tier: entitlement?.tier ?? 'free',
+      });
+    }
+    if (area === 'local' && 'sentinel_policy' in changes) {
+      const newPolicy = changes['sentinel_policy'].newValue as Policy | undefined;
+      if (newPolicy) {
+        policy = newPolicy;
+        console.info('[Shadow AI Sentinel] Policy mise à jour (storage)', {
+          version: newPolicy.version,
+        });
+      }
+    }
+    if (area === 'local' && 'sentinel_allowlist' in changes) {
+      const next = changes['sentinel_allowlist'].newValue;
+      allowlist = Array.isArray(next) ? next.filter((v): v is string => typeof v === 'string') : [];
+      console.info('[Shadow AI Sentinel] Allowlist mise à jour', { count: allowlist.length });
+    }
+  });
+}
+
+function attachSiteAdapter(
+  site: LlmHost,
+  getPolicy: () => Policy,
+  isFileScanEnabled: () => boolean,
+  getAllowlist: () => readonly string[],
+): () => void {
+  switch (site) {
+    case 'claude.ai':
+      return attachClaudeAdapter({ getPolicy, isFileScanEnabled, getAllowlist });
+    case 'chatgpt.com':
+      return attachChatGptAdapter({ getPolicy, isFileScanEnabled, getAllowlist });
+    case 'gemini.google.com':
+      return attachGeminiAdapter({ getPolicy, isFileScanEnabled, getAllowlist });
+    default: {
+      const _exhaustive: never = site;
+      throw new Error(`Hôte non géré: ${_exhaustive}`);
+    }
+  }
 }
 
 function bootstrap(): void {
-  if (!isPilotHost) {
+  if (!llmHost) {
     return;
   }
 
   listenPolicyUpdates();
 
-  void loadPolicy()
-    .then((loaded) => {
+  void Promise.all([loadPolicy(), getStoredEntitlement(), getAllowlist()])
+    .then(([loaded, loadedEntitlement, loadedAllowlist]) => {
       policy = loaded;
+      entitlement = loadedEntitlement;
+      allowlist = loadedAllowlist;
       void showFirstRunNoticeIfNeeded();
-      attachClaudeAdapter({
-        getPolicy: () => policy ?? loaded,
-      });
+      attachSiteAdapter(
+        llmHost,
+        () => applyEntitlementToPolicy(policy ?? loaded, entitlement),
+        () => isFileScanAllowed(entitlement),
+        effectiveAllowlist,
+      );
       console.info('[Shadow AI Sentinel] Content script prêt', {
-        host,
+        host: llmHost,
         policyVersion: loaded.version,
       });
     })

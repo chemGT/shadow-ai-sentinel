@@ -8,6 +8,11 @@ export const STORAGE_KEYS = {
   telemetryQueue: 'sentinel_telemetry_queue',
   noticeAckAt: 'sentinel_notice_ack_at',
   locale: 'sentinel_locale',
+  entitlement: 'sentinel_entitlement',
+  licenseKey: 'sentinel_license_key',
+  licenseInstanceId: 'sentinel_license_instance_id',
+  stats: 'sentinel_stats',
+  allowlist: 'sentinel_allowlist',
 } as const;
 
 export const POLICY_VERSION_INITIAL = '1.0.0';
@@ -60,4 +65,4 @@ export const ALL_RULE_TYPES: RuleType[] = [
   'generic_secret',
 ];
 
-export const PILOT_LLM_HOST = 'claude.ai' as const;
+export { LLM_TAB_URL_PATTERNS, PILOT_LLM_HOST, SUPPORTED_LLM_HOSTS } from './llm-hosts.js';

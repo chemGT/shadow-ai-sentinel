@@ -2,7 +2,7 @@
 
 Extension navigateur **B2B** (Manifest V3) qui agit comme un **DLP** sur les LLM publics : détection **100 % locale** des données sensibles avant envoi, avec modes **Block** ou **Redact**.
 
-**Pilote en cours :** [claude.ai](https://claude.ai) — phases 0–4 (DLP, API durcie, conformité RGPD).
+**Pilote :** [Claude](https://claude.ai), [ChatGPT](https://chatgpt.com), [Gemini](https://gemini.google.com) — phases 0–7 (DLP multi-LLM, API, release).
 
 ---
 
@@ -12,9 +12,9 @@ Extension navigateur **B2B** (Manifest V3) qui agit comme un **DLP** sur les LLM
 |----------|--------|
 | Détection locale (clés API, IBAN, IP interne, emails pro, téléphones, secrets) | ✅ Moteur regex |
 | Policies par type (Block / Redact) | ✅ Phase 3 |
-| Interception envoi sur Claude | ✅ Phase 2 |
+| Interception envoi (Claude, ChatGPT, Gemini) | ✅ Phase 7 |
 | API policies + télémétrie anonymisée | ✅ Phase 4 (rate limit, rétention 90 j) |
-| ChatGPT & Gemini | ⏳ Phase 7 |
+| Télémétrie par `host` (claude / chatgpt / gemini) | ✅ Phase 7 |
 
 **Principe :** aucun contenu de prompt ne quitte le navigateur. La télémétrie serveur ne contient que des métadonnées (type de règle, action, horodatage).
 
@@ -42,9 +42,9 @@ npm test
 1. `npm run build`
 2. Ouvrir `chrome://extensions` → **Mode développeur** → **Charger l’extension non empaquetée**
 3. Sélectionner le dossier `dist/`
-4. Ouvrir [claude.ai](https://claude.ai) et vérifier les logs console du content script
+4. Ouvrir un LLM supporté et vérifier `Adaptateur <Site> actif` dans la console
 
-> Voir les scénarios de test sur Claude : [.ai/guides/INSTALLATION.md](.ai/guides/INSTALLATION.md) §5
+> Recette : [.ai/docs/matrice-tests-multi-llm.md](.ai/docs/matrice-tests-multi-llm.md) · Install : [.ai/guides/INSTALLATION.md](.ai/guides/INSTALLATION.md)
 
 ### API (healthcheck uniquement)
 

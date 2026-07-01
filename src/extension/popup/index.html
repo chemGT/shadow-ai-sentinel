@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Shadow AI Sentinel</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #ffffff;
+        --fg: #111827;
+        --muted: #6b7280;
+        --border: #e5e7eb;
+        --accent: #4f46e5;
+        --ok: #047857;
+        --pro: #b45309;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        width: 320px;
+        margin: 0;
+        font-family:
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          sans-serif;
+        background: var(--bg);
+        color: var(--fg);
+        font-size: 13px;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--border);
+      }
+      .title {
+        font-weight: 600;
+        font-size: 14px;
+      }
+      .badge {
+        font-size: 11px;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: #eef2ff;
+        color: var(--accent);
+      }
+      .badge.pro {
+        background: #fffbeb;
+        color: var(--pro);
+      }
+      section {
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--border);
+      }
+      .status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 500;
+      }
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--ok);
+      }
+      .stats {
+        display: flex;
+        gap: 16px;
+        margin-top: 8px;
+        color: var(--muted);
+      }
+      .stats strong {
+        color: var(--fg);
+        font-size: 16px;
+        display: block;
+      }
+      label {
+        display: block;
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 4px;
+      }
+      input[type='text'] {
+        width: 100%;
+        padding: 7px 8px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        font-size: 12px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      button {
+        cursor: pointer;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 12px;
+        padding: 8px 10px;
+      }
+      .primary {
+        background: var(--accent);
+        color: #fff;
+        width: 100%;
+        margin-top: 8px;
+      }
+      .link {
+        background: none;
+        color: var(--accent);
+        padding: 0;
+        text-decoration: underline;
+      }
+      .cta {
+        display: block;
+        text-align: center;
+        background: var(--pro);
+        color: #fff;
+        text-decoration: none;
+        border-radius: 6px;
+        padding: 9px 10px;
+        font-weight: 600;
+        margin-top: 6px;
+      }
+      .msg {
+        margin-top: 8px;
+        font-size: 12px;
+        min-height: 16px;
+      }
+      .msg.ok {
+        color: var(--ok);
+      }
+      .msg.error {
+        color: #b91c1c;
+      }
+      footer {
+        padding: 10px 14px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .hidden {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <span class="title">Shadow AI Sentinel</span>
+      <span id="tierBadge" class="badge">Free</span>
+    </header>
+
+    <section>
+      <div class="status">
+        <span class="dot"></span>
+        <span id="statusText">Protection active</span>
+      </div>
+      <div class="stats">
+        <div><strong id="blockedCount">0</strong><span id="blockedLabel">bloqués</span></div>
+        <div><strong id="redactedLabel">0</strong><span id="redactedText">caviardés</span></div>
+      </div>
+    </section>
+
+    <section id="proSection">
+      <p id="proPitch" style="margin: 0 0 8px; color: var(--muted)"></p>
+      <a id="upgradeLink" class="cta" href="#" target="_blank" rel="noopener"></a>
+      <div style="margin-top: 10px">
+        <label id="licenseLabel" for="licenseKey">Clé de licence</label>
+        <input id="licenseKey" type="text" placeholder="XXXXXXXX-XXXXXXXX-..." />
+        <button id="activateBtn" class="primary"></button>
+        <div id="licenseMsg" class="msg"></div>
+      </div>
+    </section>
+
+    <section id="licensedSection" class="hidden">
+      <p id="licensedText" style="margin: 0 0 8px; color: var(--ok); font-weight: 600"></p>
+      <button id="deactivateBtn" class="link"></button>
+    </section>
+
+    <footer>
+      <button id="optionsBtn" class="link"></button>
+    </footer>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

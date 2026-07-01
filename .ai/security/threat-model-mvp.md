@@ -25,6 +25,8 @@
 | Vecteur | Risque | Mitigation |
 |---------|--------|------------|
 | Prompt envoyé au LLM malgré DLP | Fuite données | Interception submit + Block/Redact (Phase 2) |
+| Fichier texte (.env, .csv…) joint sans contrôle | Fuite données | `file-guard` : lecture locale + Block/Redact (fichiers texte) |
+| PDF / binaire / image | Fuite hors regex | Hors scope — pas d’OCR ; documenter limite |
 | Raccourci / API native non hookée | Contournement | Documenter limites ; tests Entrée + bouton |
 | Extension désinstallée | Bypass | Processus RH / MDM (post-pilote) |
 | ReDoS regex | DoS onglet | Limite taille texte + tests perf (Phase 1) |

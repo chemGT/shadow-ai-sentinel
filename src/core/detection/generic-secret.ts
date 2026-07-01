@@ -5,7 +5,7 @@ type SecretPattern = { source: RegExp };
 const GENERIC_SECRET_PATTERNS: SecretPattern[] = [
   { source: /\bBearer\s+[A-Za-z0-9._~+/=-]{20,512}\b/g },
   { source: /\bBasic\s+[A-Za-z0-9+/]{20,512}={0,2}\b/g },
-  { source: /\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b/g },
+  { source: /\beyJ[A-Za-z0-9_-]{10,4096}\.[A-Za-z0-9_-]{10,4096}\.[A-Za-z0-9_-]{10,512}\b/g },
 ];
 
 function isSubsetOfApiKeyMatch(start: number, end: number, apiMatches: RawMatch[]): boolean {

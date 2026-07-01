@@ -1,9 +1,11 @@
 import type { ExtensionMessage } from '../../core/types.js';
 import { getExtensionApi } from './browser-api.js';
 
-export function sendMessage<TResponse = unknown>(
-  message: ExtensionMessage,
-): Promise<TResponse> {
+const CONNECTION_ERRORS = ['Could not establish connection', 'Receiving end does not exist'];
+const SEND_MAX_RETRIES = 3;
+const SEND_RETRY_DELAY_MS = 150;
+
+function sendMessageOnce<TResponse>(message: ExtensionMessage): Promise<TResponse> {
   const api = getExtensionApi();
   return new Promise((resolve, reject) => {
     api.runtime.sendMessage(message, (response: TResponse) => {
@@ -15,6 +17,23 @@ export function sendMessage<TResponse = unknown>(
       resolve(response);
     });
   });
+}
+
+export async function sendMessage<TResponse = unknown>(
+  message: ExtensionMessage,
+  retriesLeft = SEND_MAX_RETRIES,
+): Promise<TResponse> {
+  try {
+    return await sendMessageOnce<TResponse>(message);
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    const isConnectionError = CONNECTION_ERRORS.some((e) => msg.includes(e));
+    if (isConnectionError && retriesLeft > 0) {
+      await new Promise<void>((r) => setTimeout(r, SEND_RETRY_DELAY_MS));
+      return sendMessage<TResponse>(message, retriesLeft - 1);
+    }
+    throw err;
+  }
 }
 
 export function onMessage(

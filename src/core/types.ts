@@ -14,7 +14,7 @@ export type Locale = 'fr' | 'en';
 
 export type BrowserFamily = 'chromium' | 'firefox';
 
-/** Hôtes LLM supportés (pilote : claude.ai uniquement). */
+/** Hôtes LLM supportés (Phase 7 : Claude, ChatGPT, Gemini). */
 export type LlmHost = 'claude.ai' | 'chatgpt.com' | 'gemini.google.com';
 
 /** Une règle policy par type de donnée. */
@@ -61,6 +61,32 @@ export interface TelemetryEvent {
   departmentId?: string;
 }
 
+/** Contexte de saisie déclaré par l'utilisateur lors d'un signalement faux positif. */
+export type FeedbackContextChoice = 'code' | 'prose' | 'json' | 'url' | 'other';
+
+/**
+ * Signalement faux positif — schéma RGPD minimal.
+ * Ne contient JAMAIS le texte d'origine, le contenu de la saisie, ou un extrait.
+ */
+export interface FeedbackEvent {
+  eventId: string;
+  tenantId: string;
+  deviceId: string;
+  occurredAt: string;
+  ruleType: RuleType;
+  contextChoice: FeedbackContextChoice;
+  host: LlmHost;
+  extensionVersion: string;
+  policyVersion: string;
+  locale: Locale;
+  browser: BrowserFamily;
+}
+
+/** Enveloppe API POST /feedback */
+export interface FeedbackBatchRequest {
+  events: FeedbackEvent[];
+}
+
 /** Credentials install (page Options / intégration). */
 export interface TenantCredentials {
   tenantId: string;
@@ -89,8 +115,12 @@ export type MessageType =
   | 'GET_POLICY'
   | 'POLICY_UPDATED'
   | 'QUEUE_TELEMETRY'
+  | 'QUEUE_FEEDBACK'
   | 'FLUSH_TELEMETRY'
-  | 'SYNC_POLICY';
+  | 'SYNC_POLICY'
+  | 'GET_ENTITLEMENT'
+  | 'ACTIVATE_LICENSE'
+  | 'DEACTIVATE_LICENSE';
 
 export interface ExtensionMessage<T = unknown> {
   type: MessageType;

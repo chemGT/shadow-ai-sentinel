@@ -11,7 +11,8 @@
 | `npm run test:ci` | CI : run + couverture (seuils `src/core`, `src/backend`) |
 | `npm run test:regex` | Moteur regex + régression |
 | `npm run test:api` | Backend uniquement |
-| `npm run ci` | `test:ci` + `build` (équivalent pipeline) |
+| `npm run build:firefox` | Extension Firefox → `dist-firefox/` |
+| `npm run ci` | `test:ci` + `build` + `build:firefox` (équivalent pipeline) |
 
 ## Structure
 
@@ -40,8 +41,9 @@ Déclenché sur `push` / `pull_request` vers `master` ou `main` :
 
 1. `npm ci`
 2. `npm run test:ci`
-3. `npm run build`
-4. `node scripts/verify-dist.mjs`
+3. `npm run build` + `node scripts/verify-dist.mjs`
+4. `npm run build:firefox` + `node scripts/verify-dist-firefox.mjs`
+5. `npm run test:api` (smoke API)
 
 ## Jeu de régression regex
 
@@ -55,7 +57,7 @@ Les tests `regex-regression.test.ts` échouent en CI si un pattern casse un cas 
 ## Hors scope CI (manuel)
 
 - Interception DOM sur claude.ai connecté → `functional_tester`
-- Firefox build → Phase 6
+- Matrice F01–F10 sur claude.ai → [matrice-tests-pilote-claude.md](./matrice-tests-pilote-claude.md)
 - Docker compose smoke → `docker compose up` post-merge optionnel
 
 ## Critères merge
