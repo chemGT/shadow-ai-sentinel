@@ -22,7 +22,11 @@ Pivot **Gumroad-first, freemium** pour une 1ʳᵉ vente rapide, **sans** dépend
 ## État actuel (dernier checkpoint : 2026-07-01)
 
 **Vert** : `npx tsc --noEmit` OK · `npm test` = **211 tests** · `npm run build` OK.
-Branche : `sprint/s1-make-sellable`. Commits faits jusqu'à `a5e67c3` (S1-allowlist livré).
+Branche : `sprint/s1-make-sellable`. Commits jusqu'à `5cc9d85` : la **fondation licensing
+est désormais réellement committée** (elle était « livrée » mais jamais versionnée jusque-là ;
+l'incrément allowlist `a5e67c3` reposait dessus). Le chantier portail SaaS (Clerk auth :
+`apps/portal/**`, `backend/{schema,queries,config,tenant}`, `migrations/0003_users_table`) reste
+**non committé, à part** — ne pas mélanger.
 
 ### ✅ Fait
 - **Modèle d'entitlement (core, pur, testé)** : `src/core/licensing/entitlement.ts`
@@ -86,3 +90,8 @@ Charger `dist/` via `chrome://extensions` (mode dev) pour tester la popup + le g
 - **2026-07-01** — **Allowlist terminée** (4 milestones committés jusqu'à `a5e67c3`) : storage +
   câblage Pro-gated (content → adapters → guards) + UI options (licence + allowlist) + tests.
   211 tests verts, tsc + build OK.
+- **2026-07-01** — **Fondation licensing committée** (`5cc9d85`, `feat(extension): Pro license
+  foundation [S1-licensing]`) : 18 fichiers — `core/licensing/` (entitlement + verify), popup,
+  `background/license-manager`, `config.ts`, manifests, gating `showBlockAlert`. Découverte : ces
+  fichiers étaient présents dans le tree mais **jamais versionnés** malgré le « livré » du checkpoint
+  précédent (risque de perte évité). Chantier portail Clerk laissé non committé, séparé. 211 tests verts.
