@@ -9,6 +9,11 @@
       "strict_min_version": "109.0"
     }
   },
+  "icons": {
+    "16": "icons/icon-16.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
   "permissions": ["storage", "alarms"],
   "optional_host_permissions": ["http://localhost/*"],
   "host_permissions": [
@@ -23,7 +28,12 @@
   },
   "action": {
     "default_popup": "src/extension/popup/index.html",
-    "default_title": "Shadow AI Sentinel"
+    "default_title": "Shadow AI Sentinel",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
   },
   "options_ui": {
     "page": "src/extension/options/index.html",
