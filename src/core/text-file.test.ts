@@ -3,9 +3,11 @@
  */
 import { describe, expect, it } from 'vitest';
 import {
+  consumeReplacedInputMark,
   isTextLikeFile,
   MAX_TEXT_FILE_BYTES,
   readFileAsText,
+  replaceInputFiles,
   TEXT_FILE_EXTENSIONS,
 } from './text-file.js';
 
@@ -46,5 +48,24 @@ describe('text-file', () => {
 
   it('expose une liste d’extensions non vide', () => {
     expect(TEXT_FILE_EXTENSIONS.length).toBeGreaterThan(10);
+  });
+
+  it('marque le change re-dispatché par replaceInputFiles (one-shot, anti-boucle)', () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+
+    expect(consumeReplacedInputMark(input)).toBe(false);
+
+    let changeCount = 0;
+    input.addEventListener('change', () => {
+      changeCount += 1;
+    });
+    replaceInputFiles(input, [mockFile('notes.txt', 'contenu anodin', 'text/plain')]);
+
+    expect(changeCount).toBe(1);
+    expect(input.files?.length).toBe(1);
+    // Premier consume = true (événement du re-dispatch), puis le marqueur est purgé.
+    expect(consumeReplacedInputMark(input)).toBe(true);
+    expect(consumeReplacedInputMark(input)).toBe(false);
   });
 });

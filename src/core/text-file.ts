@@ -79,12 +79,29 @@ export function readFileAsText(file: File): Promise<string> {
   });
 }
 
+/**
+ * Inputs dont le prochain `change` provient de `replaceInputFiles` (re-dispatch
+ * pour que le site voie les fichiers) : le file-guard doit l'ignorer, sinon il
+ * ré-intercepte son propre événement en boucle et le site ne le reçoit jamais.
+ */
+const replacedInputs = new WeakSet<HTMLInputElement>();
+
+/** Consomme le marqueur « change re-dispatché par Sentinel » (one-shot). */
+export function consumeReplacedInputMark(input: HTMLInputElement): boolean {
+  if (replacedInputs.has(input)) {
+    replacedInputs.delete(input);
+    return true;
+  }
+  return false;
+}
+
 export function replaceInputFiles(input: HTMLInputElement, files: File[]): void {
   const dt = new DataTransfer();
   for (const file of files) {
     dt.items.add(file);
   }
   input.files = dt.files;
+  replacedInputs.add(input);
   input.dispatchEvent(new Event('change', { bubbles: true }));
 }
 

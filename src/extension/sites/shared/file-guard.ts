@@ -1,5 +1,6 @@
 import {
   buildRedactedFile,
+  consumeReplacedInputMark,
   isTextLikeFile,
   readFileAsText,
   replaceInputFiles,
@@ -172,6 +173,11 @@ export function attachFileGuard(options: FileGuardOptions): () => void {
     }
 
     const input = event.target as HTMLInputElement;
+    if (consumeReplacedInputMark(input)) {
+      // `change` re-dispatché par replaceInputFiles : fichiers déjà scannés,
+      // laisser l'événement atteindre le site (sinon boucle de re-scan).
+      return;
+    }
     event.preventDefault();
     event.stopPropagation();
     event.stopImmediatePropagation();
