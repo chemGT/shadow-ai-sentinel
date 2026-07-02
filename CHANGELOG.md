@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased] — Sprint 1 (Make it sellable)
 
 ### Added
+- Support for 5 new LLM sites: Mistral Le Chat (chat.mistral.ai), DeepSeek (chat.deepseek.com), Perplexity (perplexity.ai), Grok (grok.com), Microsoft Copilot (copilot.microsoft.com) — prompt + text/code attachment interception with the same guard as Claude/ChatGPT/Gemini
 - Multi-tenant Postgres schema (tenants, api_keys, policies, telemetry_events, audit_log)
 - Tenant isolation middleware for Express backend
 - API key rotation with scopes and grace period

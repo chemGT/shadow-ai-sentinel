@@ -3,7 +3,17 @@ import { join } from 'node:path';
 
 const root = process.cwd();
 const required = ['dist/manifest.json', 'dist/service-worker-loader.js'];
-const expectedHosts = ['claude.ai', 'chatgpt.com', 'gemini.google.com'];
+const expectedHosts = [
+  'claude.ai',
+  'chatgpt.com',
+  'gemini.google.com',
+  'chat.mistral.ai',
+  'chat.deepseek.com',
+  'perplexity.ai',
+  'www.perplexity.ai',
+  'grok.com',
+  'copilot.microsoft.com',
+];
 
 for (const file of required) {
   const path = join(root, file);

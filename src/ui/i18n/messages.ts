@@ -184,7 +184,7 @@ export function employeeNoticeSections(locale: Locale): EmployeeNoticeSection[] 
       {
         heading: 'Pourquoi cette extension ?',
         paragraphs: [
-          'Votre organisation l’a déployée pour limiter l’envoi accidentel de données sensibles vers les IA publiques (Claude, ChatGPT, Gemini — clés API, IBAN, secrets, etc.).',
+          'Votre organisation l’a déployée pour limiter l’envoi accidentel de données sensibles vers les IA publiques (Claude, ChatGPT, Gemini, Le Chat, DeepSeek, Perplexity, Grok, Copilot — clés API, IBAN, secrets, etc.).',
         ],
       },
       {
@@ -222,7 +222,7 @@ export function employeeNoticeSections(locale: Locale): EmployeeNoticeSection[] 
     {
       heading: 'Why this extension?',
       paragraphs: [
-        'Your organization deployed it to reduce accidental sharing of sensitive data with public AI tools (Claude, ChatGPT, Gemini — API keys, IBAN, secrets, etc.).',
+        'Your organization deployed it to reduce accidental sharing of sensitive data with public AI tools (Claude, ChatGPT, Gemini, Le Chat, DeepSeek, Perplexity, Grok, Copilot — API keys, IBAN, secrets, etc.).',
       ],
     },
     {

@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Shadow AI Sentinel",
   "version": "0.1.0",
-  "description": "DLP local pour LLM publics — Claude, ChatGPT, Gemini",
+  "description": "DLP local pour LLM publics — Claude, ChatGPT, Gemini, Le Chat, DeepSeek, Perplexity, Grok, Copilot",
   "icons": {
     "16": "icons/icon-16.png",
     "48": "icons/icon-48.png",
@@ -14,7 +14,13 @@
     "*://claude.ai/*",
     "*://chatgpt.com/*",
     "*://gemini.google.com/*",
-    "https://api.gumroad.com/*"
+    "*://chat.mistral.ai/*",
+    "*://chat.deepseek.com/*",
+    "*://perplexity.ai/*",
+    "*://www.perplexity.ai/*",
+    "*://grok.com/*",
+    "*://copilot.microsoft.com/*",
+    "https://api.lemonsqueezy.com/*"
   ],
   "background": {
     "service_worker": "src/extension/background/index.ts",
@@ -38,7 +44,13 @@
       "matches": [
         "*://claude.ai/*",
         "*://chatgpt.com/*",
-        "*://gemini.google.com/*"
+        "*://gemini.google.com/*",
+        "*://chat.mistral.ai/*",
+        "*://chat.deepseek.com/*",
+        "*://perplexity.ai/*",
+        "*://www.perplexity.ai/*",
+        "*://grok.com/*",
+        "*://copilot.microsoft.com/*"
       ],
       "js": ["src/extension/content/index.tsx"],
       "run_at": "document_idle"

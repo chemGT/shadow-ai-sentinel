@@ -2,7 +2,7 @@
 
 Extension navigateur **B2B** (Manifest V3) qui agit comme un **DLP** sur les LLM publics : détection **100 % locale** des données sensibles avant envoi, avec modes **Block** ou **Redact**.
 
-**Pilote :** [Claude](https://claude.ai), [ChatGPT](https://chatgpt.com), [Gemini](https://gemini.google.com) — phases 0–7 (DLP multi-LLM, API, release).
+**Sites couverts :** [Claude](https://claude.ai), [ChatGPT](https://chatgpt.com), [Gemini](https://gemini.google.com), [Mistral Le Chat](https://chat.mistral.ai), [DeepSeek](https://chat.deepseek.com), [Perplexity](https://www.perplexity.ai), [Grok](https://grok.com), [Microsoft Copilot](https://copilot.microsoft.com).
 
 ---
 
@@ -12,9 +12,9 @@ Extension navigateur **B2B** (Manifest V3) qui agit comme un **DLP** sur les LLM
 |----------|--------|
 | Détection locale (clés API, IBAN, IP interne, emails pro, téléphones, secrets) | ✅ Moteur regex |
 | Policies par type (Block / Redact) | ✅ Phase 3 |
-| Interception envoi (Claude, ChatGPT, Gemini) | ✅ Phase 7 |
+| Interception envoi (Claude, ChatGPT, Gemini + Le Chat, DeepSeek, Perplexity, Grok, Copilot) | ✅ Phase 7 / S1 |
 | API policies + télémétrie anonymisée | ✅ Phase 4 (rate limit, rétention 90 j) |
-| Télémétrie par `host` (claude / chatgpt / gemini) | ✅ Phase 7 |
+| Télémétrie par `host` (8 hôtes LLM) | ✅ Phase 7 |
 
 **Principe :** aucun contenu de prompt ne quitte le navigateur. La télémétrie serveur ne contient que des métadonnées (type de règle, action, horodatage).
 

@@ -18,10 +18,18 @@ function isVisible(node: HTMLElement): boolean {
   return rect.width > 0 && rect.height > 0;
 }
 
+/** Un sélecteur non supporté par le moteur (ex. `:has()` sur vieux Firefox) lève — on passe au fallback. */
+function safeQueryAll(root: ParentNode, selector: string): HTMLElement[] {
+  try {
+    return Array.from(root.querySelectorAll<HTMLElement>(selector));
+  } catch {
+    return [];
+  }
+}
+
 function queryFirstVisible(selectors: readonly string[]): HTMLElement | null {
   for (const selector of selectors) {
-    const nodes = document.querySelectorAll<HTMLElement>(selector);
-    for (const node of nodes) {
+    for (const node of safeQueryAll(document, selector)) {
       if (isVisible(node)) {
         return node;
       }
@@ -58,7 +66,7 @@ export function createSiteDom(config: SiteSelectorConfig): SiteDom {
         continue;
       }
       for (const sendSelector of sendSelectors) {
-        const btn = root.querySelector<HTMLElement>(sendSelector);
+        const btn = safeQueryAll(root, sendSelector)[0];
         if (btn && isVisible(btn)) {
           return btn;
         }

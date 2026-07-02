@@ -12,6 +12,11 @@ import { sendMessage } from '../platform/runtime.js';
 import { attachClaudeAdapter } from '../sites/claude/adapter.js';
 import { attachChatGptAdapter } from '../sites/chatgpt/adapter.js';
 import { attachGeminiAdapter } from '../sites/gemini/adapter.js';
+import { attachMistralAdapter } from '../sites/mistral/adapter.js';
+import { attachDeepSeekAdapter } from '../sites/deepseek/adapter.js';
+import { attachPerplexityAdapter } from '../sites/perplexity/adapter.js';
+import { attachGrokAdapter } from '../sites/grok/adapter.js';
+import { attachCopilotAdapter } from '../sites/copilot/adapter.js';
 import { showFirstRunNoticeIfNeeded } from './first-run-notice.js';
 
 const host = globalThis.location.hostname;
@@ -88,6 +93,16 @@ function attachSiteAdapter(
       return attachChatGptAdapter({ getPolicy, isFileScanEnabled, getAllowlist });
     case 'gemini.google.com':
       return attachGeminiAdapter({ getPolicy, isFileScanEnabled, getAllowlist });
+    case 'chat.mistral.ai':
+      return attachMistralAdapter({ getPolicy, isFileScanEnabled, getAllowlist });
+    case 'chat.deepseek.com':
+      return attachDeepSeekAdapter({ getPolicy, isFileScanEnabled, getAllowlist });
+    case 'perplexity.ai':
+      return attachPerplexityAdapter({ getPolicy, isFileScanEnabled, getAllowlist });
+    case 'grok.com':
+      return attachGrokAdapter({ getPolicy, isFileScanEnabled, getAllowlist });
+    case 'copilot.microsoft.com':
+      return attachCopilotAdapter({ getPolicy, isFileScanEnabled, getAllowlist });
     default: {
       const _exhaustive: never = site;
       throw new Error(`Hôte non géré: ${_exhaustive}`);

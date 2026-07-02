@@ -14,6 +14,31 @@ import {
   GEMINI_INPUT_SELECTORS,
   GEMINI_SEND_SELECTORS,
 } from './gemini/selectors.js';
+import {
+  MISTRAL_COMPOSER_SELECTORS,
+  MISTRAL_INPUT_SELECTORS,
+  MISTRAL_SEND_SELECTORS,
+} from './mistral/selectors.js';
+import {
+  DEEPSEEK_COMPOSER_SELECTORS,
+  DEEPSEEK_INPUT_SELECTORS,
+  DEEPSEEK_SEND_SELECTORS,
+} from './deepseek/selectors.js';
+import {
+  PERPLEXITY_COMPOSER_SELECTORS,
+  PERPLEXITY_INPUT_SELECTORS,
+  PERPLEXITY_SEND_SELECTORS,
+} from './perplexity/selectors.js';
+import {
+  GROK_COMPOSER_SELECTORS,
+  GROK_INPUT_SELECTORS,
+  GROK_SEND_SELECTORS,
+} from './grok/selectors.js';
+import {
+  COPILOT_COMPOSER_SELECTORS,
+  COPILOT_INPUT_SELECTORS,
+  COPILOT_SEND_SELECTORS,
+} from './copilot/selectors.js';
 
 function assertSelectors(name: string, input: readonly string[], send: readonly string[]): void {
   expect(input.length, `${name} input`).toBeGreaterThan(0);
@@ -38,5 +63,30 @@ describe('sélecteurs LLM (régression Phase 7)', () => {
   it('Gemini — jeux non vides', () => {
     assertSelectors('Gemini', GEMINI_INPUT_SELECTORS, GEMINI_SEND_SELECTORS);
     expect(GEMINI_COMPOSER_SELECTORS.length).toBeGreaterThan(0);
+  });
+
+  it('Mistral Le Chat — jeux non vides', () => {
+    assertSelectors('Mistral', MISTRAL_INPUT_SELECTORS, MISTRAL_SEND_SELECTORS);
+    expect(MISTRAL_COMPOSER_SELECTORS.length).toBeGreaterThan(0);
+  });
+
+  it('DeepSeek — jeux non vides', () => {
+    assertSelectors('DeepSeek', DEEPSEEK_INPUT_SELECTORS, DEEPSEEK_SEND_SELECTORS);
+    expect(DEEPSEEK_COMPOSER_SELECTORS.length).toBeGreaterThan(0);
+  });
+
+  it('Perplexity — jeux non vides', () => {
+    assertSelectors('Perplexity', PERPLEXITY_INPUT_SELECTORS, PERPLEXITY_SEND_SELECTORS);
+    expect(PERPLEXITY_COMPOSER_SELECTORS.length).toBeGreaterThan(0);
+  });
+
+  it('Grok — jeux non vides', () => {
+    assertSelectors('Grok', GROK_INPUT_SELECTORS, GROK_SEND_SELECTORS);
+    expect(GROK_COMPOSER_SELECTORS.length).toBeGreaterThan(0);
+  });
+
+  it('Copilot — jeux non vides', () => {
+    assertSelectors('Copilot', COPILOT_INPUT_SELECTORS, COPILOT_SEND_SELECTORS);
+    expect(COPILOT_COMPOSER_SELECTORS.length).toBeGreaterThan(0);
   });
 });
