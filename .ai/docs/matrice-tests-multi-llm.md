@@ -1,5 +1,12 @@
 # Matrice de tests — 8 LLM × 2 navigateurs
 
+> ⚡ **Automatisé** : `npm run test:e2e` (Playwright, `e2e/guard.e2e.ts`) couvre block
+> Enter/clic + passage texte anodin sur les 8 sites, redact Pro et file-guard Pro —
+> extension réelle chargée, fixtures répliquant les sélecteurs de prod.
+> **Reste manuel** : uniquement la dérive des DOM réels (sélecteurs qui ne matchent
+> plus après un redesign du site) et le comportement des éditeurs riches en vrai
+> (persistance du redact dans Lexical/ProseMirror).
+
 > Phase 7 · Reprendre les scénarios [matrice-tests-pilote-claude.md](./matrice-tests-pilote-claude.md) sur **chaque** plateforme.
 
 ## Préparation commune

@@ -21,7 +21,8 @@ ne porte que des métadonnées.
 
 | Commande | Rôle |
 |----------|------|
-| `npm test` | Vitest — **238 tests, doit être vert** |
+| `npm test` | Vitest — **239 tests, doit être vert** |
+| `npm run test:e2e` | Playwright — extension réelle (`dist/`) + fixtures des 8 sites (28 tests) |
 | `npx tsc --noEmit` | Typecheck — doit être vide |
 | `npm run build` | Typecheck + build extension Chromium → `dist/` |
 | `npm run build:firefox` | Build Firefox → `dist-firefox/` |

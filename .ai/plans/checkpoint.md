@@ -161,3 +161,16 @@ Charger `dist/` via `chrome://extensions` (mode dev) pour tester la popup + le g
   (`textarea#userInput` + `button[data-testid="submit-button"]`), Mistral ~ (ProseMirror + form
   submit confirmés derrière la modale CGU « Vibe », non acceptée), DeepSeek ❌ (mur /sign_in —
   à valider connecté, M16–M17). Recette manuelle extension chargée (M14–M24) reste à faire.
+- **2026-07-02** — **Tests E2E automatisés** (`npm run test:e2e`, Playwright) : extension réelle
+  (`dist/`) chargée dans Chromium headless, fixtures répliquant les composers des 8 sites servies
+  aux URLs de prod par interception réseau → le content script s'injecte comme en vrai. 28 tests :
+  block Enter + block clic + passage texte anodin ×8 sites, redact IBAN Pro (Enter + clic),
+  file-guard Pro (bloqué/sain). Astuces harnais : acquittement notice premier lancement
+  (`sentinel_notice_ack_at`, overlay plein écran) ; seed Pro **après** chargement page (le SW
+  réécrit Free à chaque réveil sans clé — le content script suit via `storage.onChanged`) ;
+  `dispatchEvent('click')` pour les cas bloqués (le `stopImmediatePropagation` du guard casse le
+  hit-target check de Playwright). **Bug réel trouvé par l'E2E et corrigé** : `replaceInputFiles`
+  re-dispatchait un `change` que le file-guard ré-interceptait → boucle de re-scan infinie et le
+  site ne recevait jamais l'événement (fichiers autorisés/caviardés) — marqueur one-shot
+  `consumeReplacedInputMark` ajouté. **239 vitest + 28 e2e verts.** La recette manuelle ne couvre
+  plus que la dérive des DOM réels.

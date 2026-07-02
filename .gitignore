@@ -9,3 +9,5 @@ dist-firefox/
 coverage/
 test_rules_json.json
 .serena/
+test-results/
+playwright-report/

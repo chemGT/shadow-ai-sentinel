@@ -16,12 +16,15 @@
     "test:ci": "vitest run --coverage",
     "test:regex": "vitest run src/core",
     "test:api": "vitest run src/backend",
+    "test:e2e": "npm run build && playwright test",
     "ci": "npm run test:ci && npm run build && npm run build:firefox"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@clerk/backend": "^3.7.0",
+    "@clerk/nextjs": "^7.5.2",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "drizzle-orm": "^0.45.2",
@@ -34,6 +37,7 @@
   },
   "devDependencies": {
     "@crxjs/vite-plugin": "^2.4.0",
+    "@playwright/test": "^1.61.1",
     "@tailwindcss/postcss": "^4.3.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/chrome": "^0.1.42",
