@@ -14,7 +14,7 @@ Un DLP (Data Loss Prevention) ultra-léger sous forme d'extension navigateur B2B
 ## Modèle commercial (freemium — sprint S1)
 - **Free** : `api_key` + `generic_secret`, Block/Redact, zéro config, zéro réseau (produit d'appel store).
 - **Pro** : PII (`iban`, `internal_ip`, `pro_email`, `phone`) + scan fichiers texte/code + allowlist,
-  débloqué par **clé de licence Lemon Squeezy** (abo 4 €/mois · 39 €/an, vérif côté client).
+  débloqué par **clé de licence Lemon Squeezy** (abo 5 €/mois · 49 €/an, vérif côté client).
 - Extension gratuite sur les stores ; Lemon Squeezy = rail de paiement (Merchant of Record).
 - Runbook de vente/déploiement : `plans/plan-vente-lemonsqueezy.md` · reprise à froid : `plans/checkpoint.md`
   · point d'entrée Claude Code : `CLAUDE.md` (racine).

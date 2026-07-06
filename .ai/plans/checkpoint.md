@@ -4,7 +4,7 @@
 > À **mettre à jour à la fin de chaque session** (section « Journal » + statuts).
 > Runbook courant (Jalon 4) : `.ai/plans/plan-vente-lemonsqueezy.md` · Contexte Claude : `CLAUDE.md` (racine).
 
-> 🎯 **PROCHAINE ACTION** : **Jalon 4** — créer le produit **Lemon Squeezy** (abo 4 €/mois + 39 €/an,
+> 🎯 **PROCHAINE ACTION** : **Jalon 4** — créer le produit **Lemon Squeezy** (abo 5 €/mois + 49 €/an,
 > license keys activées) → renseigner `VITE_LEMONSQUEEZY_STORE_ID/_PRODUCT_ID/_CHECKOUT_URL` ;
 > héberger la privacy page (`store-assets/privacy-policy.md`) à une URL publique ; landing 1 page
 > (pricing + checkout Lemon.js, promesse scan fichiers = **texte/code only**) ; soumission CWS + AMO.
@@ -21,7 +21,10 @@
 
 Pivot **freemium, store-first** pour une 1ʳᵉ vente rapide, **sans** dépendre du SaaS multi-tenant
 (conservé pour plus tard, non supprimé). Rail de paiement = **Lemon Squeezy** (Merchant of Record :
-TVA UE + taxe US gérées) en **abo MRR** (4 €/mois · 39 €/an), et non plus Gumroad lifetime.
+TVA UE + taxe US gérées) en **abo MRR** (5 €/mois · 49 €/an, annuel par défaut affiché « ~4 €/mois »), et non plus Gumroad lifetime.
+Décision pricing 2026-07-06 : 5/49 au lieu de 4/39 (frais LS 5 % + 0,50 € fixe → 17,5 % mangés sur un
+mensuel à 4 €) + tier **Team** affiché sur la landing comme ancre (« nous contacter », S2) + coupon
+early-bird **-20 % la 1ʳᵉ année**, pas de lifetime.
 
 - **Free** (produit d'appel, zéro config, zéro réseau) : détection `api_key` + `generic_secret`,
   Block/Redact sur 8 LLM (Claude, ChatGPT, Gemini, Le Chat, DeepSeek, Perplexity, Grok, Copilot).

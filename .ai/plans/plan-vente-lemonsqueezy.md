@@ -11,7 +11,8 @@
 - **Modèle** : freemium. Extension **gratuite** sur les stores (produit d'appel : secrets/clés API,
   Block/Redact) → tier **Pro** par clé de licence (PII + scan fichiers texte/code + allowlists).
 - **Rail** : **Lemon Squeezy** (Merchant of Record → TVA UE + taxe US gérées pour toi).
-- **Prix** : abo **4 €/mois** ou **39 €/an**. Free gratuit à vie.
+- **Prix** : abo **5 €/mois** ou **49 €/an** (annuel par défaut, affiché « ~4 €/mois »). Free gratuit à vie.
+  Coupon launch **EARLYBIRD -20 %** la 1ʳᵉ année (à créer dans LS → Discounts). Pas de lifetime.
 - **Objectif** : MRR récurrent. Les **stores sont le moteur d'acquisition**, pas Lemon Squeezy.
 - **Promesse scan à ne PAS dépasser** : « fichiers texte & code (.env, .json, .csv, sources…) ».
   PDF/DOCX/images = roadmap, **pas** au lancement.
@@ -25,7 +26,7 @@ Sans les IDs, rien ne se teste en réel.
 - [ ] Créer un compte sur https://app.lemonsqueezy.com + créer un **Store**.
 - [ ] Store settings → activer le mode **Test** pour l'intégration (bascule en Live à la fin).
 - [ ] **New Product** « Shadow AI Sentinel Pro », type **Subscription**.
-- [ ] Ajouter 2 variants : **Monthly 4 €** et **Annual 39 €**.
+- [ ] Ajouter 2 variants : **Monthly 5 €** et **Annual 49 €**.
 - [ ] Onglet **License keys** du produit → **Enable license keys**.
   - Activation limit : **3** (3 appareils/utilisateur — anti-partage soft).
   - License length : lier à l'abonnement (expire à la fin de l'abo).
@@ -88,7 +89,9 @@ Source prête : `store-assets/privacy-policy.md`.
 Candidat : `apps/portal/app/[locale]/page.tsx` (Next.js, i18n EN/FR déjà en place).
 
 - [ ] Sections : hero (« Le garde-fou entre ton presse-papier et l'IA », détection **100% locale**),
-  3 bénéfices, **pricing** (Free / Pro 4 €·mois / 39 €·an), FAQ courte, lien Privacy.
+  3 bénéfices, **pricing 3 colonnes** (Free / **Pro ⭐ 49 €·an ~4 €·mois** ou 5 €·mois /
+  **Team** en ancre : « 4 €/siège·mois, min 5 sièges — nous contacter », mailto, rien à builder),
+  FAQ courte, lien Privacy. Framing ROI : « une seule clé API fuitée coûte plus que 10 ans d'abo ».
 - [ ] Bouton « Passer Pro » → **overlay Lemon.js** :
   ```html
   <script src="https://app.lemonsqueezy.com/js/lemon.js" defer></script>

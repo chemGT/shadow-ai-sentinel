@@ -13,7 +13,7 @@ ne porte que des métadonnées.
 
 **Modèle commercial — freemium :**
 - **Free** (produit d'appel, zéro config, zéro réseau) : `api_key` + `generic_secret`, Block/Redact.
-- **Pro** (clé de licence **Lemon Squeezy**, abo 4 €/mois · 39 €/an) : PII (`iban`, `internal_ip`,
+- **Pro** (clé de licence **Lemon Squeezy**, abo 5 €/mois · 49 €/an) : PII (`iban`, `internal_ip`,
   `pro_email`, `phone`) + scan fichiers **texte/code** + allowlist.
 - L'extension est **gratuite sur les stores** ; Lemon Squeezy vend une **clé de licence** vérifiée côté client.
 
