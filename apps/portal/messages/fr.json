@@ -2,7 +2,8 @@
   "nav": {
     "login": "Connexion",
     "signup": "Démarrer",
-    "dashboard": "Tableau de bord"
+    "dashboard": "Tableau de bord",
+    "signOut": "Se déconnecter"
   },
   "home": {
     "hero": "Protection Shadow AI pour votre équipe",
@@ -18,14 +19,13 @@
   "dashboard": {
     "title": "Tableau de bord",
     "welcome": "Bienvenue sur Shadow AI Sentinel",
-    "placeholder": "Vos analytics apparaîtront ici dès réception des événements depuis l'extension.",
-    "todoAuth": "Garde d'authentification non encore branchée — cette page est publique pendant S1-I9a."
+    "signedInAs": "Connecté en tant que {email}",
+    "placeholder": "Vos analytics apparaîtront ici dès réception des événements depuis l'extension."
   },
   "auth": {
     "loginTitle": "Connexion",
     "signupTitle": "Créer votre compte",
-    "comingSoon": "L'authentification est en cours de configuration.",
-    "comingSoonBody": "OAuth (Google + Microsoft) et connexion par e-mail arrivent à la sous-itération suivante.",
+    "continueWith": "Continuer avec",
     "backHome": "Retour à l'accueil"
   }
 }

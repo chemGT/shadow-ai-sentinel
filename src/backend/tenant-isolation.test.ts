@@ -7,7 +7,28 @@ vi.mock('./db/index.js', () => ({
   getDb: vi.fn(),
 }));
 
+// Mock queries that the Clerk JWT branch touches
+vi.mock('./db/queries.js', async () => {
+  const actual = await vi.importActual<typeof import('./db/queries.js')>('./db/queries.js');
+  return {
+    ...actual,
+    getTenantStatus: vi.fn().mockResolvedValue('active'),
+    findUserByClerkId: vi.fn(),
+    provisionUserAndTenant: vi.fn(),
+  };
+});
+
+// Mock @clerk/backend so no network calls happen
+vi.mock('@clerk/backend', () => ({
+  verifyToken: vi.fn(),
+  createClerkClient: vi.fn(() => ({
+    users: { getUser: vi.fn().mockResolvedValue({ primaryEmailAddress: null }) },
+  })),
+}));
+
 import { getDb } from './db/index.js';
+import { findUserByClerkId, provisionUserAndTenant } from './db/queries.js';
+import { verifyToken } from '@clerk/backend';
 
 function mockReq(authHeader?: string): Partial<Request> {
   return { headers: { authorization: authHeader } } as Partial<Request>;
@@ -56,6 +77,60 @@ describe('tenantMiddleware', () => {
     const res = mockRes();
     await tenantMiddleware(req as Request, res as unknown as Response, next);
     expect(res.status).toHaveBeenCalledWith(401);
+  });
+
+  describe('Clerk JWT path', () => {
+    const dummyJwt = 'eyJhbGciOi.payload.signature';
+
+    beforeEach(() => {
+      process.env.CLERK_SECRET_KEY = 'sk_test_dummy';
+      vi.mocked(getDb).mockReturnValue({
+        select: () => ({ from: () => ({ where: () => Promise.resolve([]) }) }),
+      } as never);
+    });
+
+    it('rejects when JWT signature is invalid (and no API key matches)', async () => {
+      vi.mocked(verifyToken).mockRejectedValueOnce(new Error('bad sig'));
+      const req = mockReq(`Bearer ${dummyJwt}`);
+      const res = mockRes();
+      await tenantMiddleware(req as Request, res as unknown as Response, next);
+      expect(res.status).toHaveBeenCalledWith(401);
+    });
+
+    it('returns existing user tenant when JWT is valid', async () => {
+      vi.mocked(verifyToken).mockResolvedValueOnce({ sub: 'user_abc' } as never);
+      vi.mocked(findUserByClerkId).mockResolvedValueOnce({
+        id: 'u-1', clerkUserId: 'user_abc', tenantId: 't-1', email: 'a@b.c', role: 'owner',
+      });
+      const req = mockReq(`Bearer ${dummyJwt}`);
+      const res = mockRes();
+      await tenantMiddleware(req as Request, res as unknown as Response, next);
+      expect(next).toHaveBeenCalled();
+      expect(req.tenant).toMatchObject({ tenantId: 't-1', source: 'clerk_jwt', clerkUserId: 'user_abc' });
+      expect(provisionUserAndTenant).not.toHaveBeenCalled();
+    });
+
+    it('auto-provisions a tenant for an unknown Clerk user', async () => {
+      vi.mocked(verifyToken).mockResolvedValueOnce({ sub: 'user_new' } as never);
+      vi.mocked(findUserByClerkId).mockResolvedValueOnce(null);
+      vi.mocked(provisionUserAndTenant).mockResolvedValueOnce({
+        id: 'u-2', clerkUserId: 'user_new', tenantId: 't-new', email: null, role: 'owner',
+      });
+      const req = mockReq(`Bearer ${dummyJwt}`);
+      const res = mockRes();
+      await tenantMiddleware(req as Request, res as unknown as Response, next);
+      expect(provisionUserAndTenant).toHaveBeenCalledOnce();
+      expect(req.tenant?.tenantId).toBe('t-new');
+    });
+
+    it('falls back to API-key path when CLERK_SECRET_KEY is missing', async () => {
+      delete process.env.CLERK_SECRET_KEY;
+      const req = mockReq(`Bearer ${dummyJwt}`);
+      const res = mockRes();
+      await tenantMiddleware(req as Request, res as unknown as Response, next);
+      expect(verifyToken).not.toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(401);
+    });
   });
 });
 

@@ -2,7 +2,8 @@
   "nav": {
     "login": "Login",
     "signup": "Get started",
-    "dashboard": "Dashboard"
+    "dashboard": "Dashboard",
+    "signOut": "Sign out"
   },
   "home": {
     "hero": "Shadow AI protection for your team",
@@ -18,14 +19,13 @@
   "dashboard": {
     "title": "Dashboard",
     "welcome": "Welcome to Shadow AI Sentinel",
-    "placeholder": "Your analytics will appear here once events are received from the extension.",
-    "todoAuth": "Auth gate not yet wired — this page is public during S1-I9a."
+    "signedInAs": "Signed in as {email}",
+    "placeholder": "Your analytics will appear here once events are received from the extension."
   },
   "auth": {
     "loginTitle": "Sign in",
     "signupTitle": "Create your account",
-    "comingSoon": "Authentication is being configured.",
-    "comingSoonBody": "OAuth (Google + Microsoft) and email sign-in arrive in the next sub-iteration.",
+    "continueWith": "Continue with",
     "backHome": "Back to home"
   }
 }

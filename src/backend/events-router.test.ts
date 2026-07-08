@@ -6,7 +6,7 @@ import { CACHE_TTL_MS, CSV_HEADER, clearCache } from './events-router.js';
 vi.mock('./db/index.js', () => ({ getDb: vi.fn() }));
 vi.mock('./middleware/tenant.js', () => ({
   tenantMiddleware: (_req: express.Request, _res: express.Response, next: express.NextFunction) => {
-    _req.tenant = { tenantId: 'tenant-a', scopes: ['telemetry:read'] };
+    _req.tenant = { tenantId: 'tenant-a', scopes: ['telemetry:read'], source: 'api_key' };
     next();
   },
   requireScope: () => (_req: express.Request, _res: express.Response, next: express.NextFunction) => next(),

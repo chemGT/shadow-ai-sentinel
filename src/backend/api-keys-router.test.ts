@@ -7,7 +7,7 @@ import { GRACE_PERIOD_DAYS, VALID_SCOPES } from './api-keys-router.js';
 vi.mock('./db/index.js', () => ({ getDb: vi.fn() }));
 vi.mock('./middleware/tenant.js', () => ({
   tenantMiddleware: (_req: express.Request, _res: express.Response, next: express.NextFunction) => {
-    _req.tenant = { tenantId: 'tenant-a', scopes: ['admin:*'] };
+    _req.tenant = { tenantId: 'tenant-a', scopes: ['admin:*'], source: 'api_key' };
     next();
   },
   requireScope: () => (_req: express.Request, _res: express.Response, next: express.NextFunction) => next(),
