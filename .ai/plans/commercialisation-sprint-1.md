@@ -5,6 +5,8 @@
 > Branche : `sprint/s1-make-sellable` · Tag de sortie : `v0.2.0-s1`
 > Objectif : encaisser la 1ère vente + onboarder 3 pilotes payants en prod.
 
+> **Décision (2026-07-08) :** la piste portail/Clerk (S1-I10, I11, I12, I13, I17, I18) est **mise en pause indéfiniment** après la fin de S1-I9b (auth Clerk, commitée). Priorité redirigée vers la mise en ligne du site vitrine (S1-I21/I22, cf. `prompt-redact-site`).
+
 ---
 
 ## Definition of Done (sortie de sprint)
@@ -36,18 +38,18 @@ Légende validateurs : Q=qa_tester (toujours) · F=functional_tester · S=securi
 | S1-I6 | Endpoint `/events/aggregate` + cache | backend_ops | 1.5 j | I3 | Q | ✅ |
 | S1-I7 | Endpoint `/events/export` CSV streaming | backend_ops | 0.5 j | I6 | Q C🛡️ | ✅ |
 | S1-I8 | Background jobs (purge + agg + dunning hook) | backend_ops | 1 j | I3 | Q | ✅ |
-| S1-I9 | Next.js portal skeleton + Clerk auth EN/FR | ext_dev | 1.5 j | I3 | Q F S🔒 | 🟡 |
+| S1-I9 | Next.js portal skeleton + Clerk auth EN/FR | ext_dev | 1.5 j | I3 | Q F S🔒 | ⏸️ pause |
 | S1-I9a | ↳ Scaffold portal sans Clerk (i18n + pages placeholders) | ext_dev | 0.5 j | I3 | Q | ✅ |
-| S1-I9b | ↳ Branchement Clerk (provider + SignIn/Up + JWT backend) | ext_dev + backend_ops | 1 j | I9a + compte Clerk | Q F S🔒 | ✅ |
-| S1-I10 | Orgs + members + rôles (owner/admin/viewer) | ext_dev | 1.5 j | I9 | Q F S🔒 | ⏳ |
-| S1-I11 | Dashboard charts read-only (Recharts) | ext_dev | 2 j | I6, I10 | Q F | ⏳ |
-| S1-I12 | Editor policy JSON (Monaco) + validation | ext_dev | 1 j | I10 | Q F | ⏳ |
-| S1-I13 | Gestion clés API dans portail | ext_dev | 0.5 j | I4, I10 | Q F S🔒 | ⏳ |
+| S1-I9b | ↳ Branchement Clerk (provider + SignIn/Up + JWT backend) | ext_dev + backend_ops | 1 j | I9a + compte Clerk | Q F S🔒 | ✅ (commité, dev pause après) |
+| S1-I10 | Orgs + members + rôles (owner/admin/viewer) | ext_dev | 1.5 j | I9 | Q F S🔒 | ⏸️ pause indéfinie |
+| S1-I11 | Dashboard charts read-only (Recharts) | ext_dev | 2 j | I6, I10 | Q F | ⏸️ pause indéfinie |
+| S1-I12 | Editor policy JSON (Monaco) + validation | ext_dev | 1 j | I10 | Q F | ⏸️ pause indéfinie |
+| S1-I13 | Gestion clés API dans portail | ext_dev | 0.5 j | I4, I10 | Q F S🔒 | ⏸️ pause indéfinie |
 | S1-I14 | Paddle live setup + produits + checkout overlay | backend_ops | 1.5 j | S0-5 | Q F S🔒 | ⏳ |
 | S1-I15 | Paddle webhooks → entitlements tenant | backend_ops | 2 j | I14 | Q S🔒 | ⏳ |
 | S1-I16 | Feature gating middleware + UI | backend_ops + ext_dev | 0.5 j | I15 | Q F | ⏳ |
-| S1-I17 | Signup wizard 4 étapes + presets policy | ext_dev | 2 j | I10, I12 | Q F | ⏳ |
-| S1-I18 | Deep-link extension `chrome-extension://...#config=...` | ext_dev | 1 j | I17 | Q F S🔒 C🛡️ | ⏳ |
+| S1-I17 | Signup wizard 4 étapes + presets policy | ext_dev | 2 j | I10, I12 | Q F | ⏸️ pause indéfinie |
+| S1-I18 | Deep-link extension `chrome-extension://...#config=...` | ext_dev | 1 j | I17 | Q F S🔒 C🛡️ | ⏸️ pause indéfinie |
 | S1-I19 | Signal faux positif dans extension | ext_dev + ux_writer | 1 j | I3 | Q F C🛡️ | ✅ |
 | S1-I20 | Réduction host_permissions + assets stores | ext_dev | 1 j | — | Q S🔒 | ✅ |
 | S1-I21 | Site marketing landing + pricing EN/FR | ux_writer + ext_dev | 2 j | S0-3 | Q F | ⏳ |
