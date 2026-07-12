@@ -72,16 +72,182 @@
         background: #e5e7eb;
         color: #111827;
       }
-      #status {
-        margin-top: 16px;
+
+      /* Rules table */
+      table.rules-table {
+        width: 100%;
+        border-collapse: collapse;
         font-size: 0.875rem;
-        min-height: 1.25rem;
+        margin-bottom: 4px;
       }
-      #status.ok {
+      table.rules-table th {
+        text-align: left;
+        font-weight: 600;
+        font-size: 0.75rem;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        padding: 0 8px 8px;
+        border-bottom: 1px solid #e5e7eb;
+      }
+      table.rules-table td {
+        padding: 10px 8px;
+        border-bottom: 1px solid #f3f4f6;
+        vertical-align: middle;
+      }
+      table.rules-table tr:last-child td {
+        border-bottom: none;
+      }
+      td.rule-label {
+        font-weight: 500;
+      }
+
+      /* Toggle switch, role="switch" */
+      .switch {
+        appearance: none;
+        -webkit-appearance: none;
+        display: inline-flex;
+        align-items: center;
+        width: 44px;
+        height: 24px;
+        min-width: 44px;
+        min-height: 44px;
+        padding: 10px 0;
+        box-sizing: content-box;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        position: relative;
+      }
+      .switch::before {
+        content: '';
+        display: block;
+        width: 44px;
+        height: 24px;
+        border-radius: 999px;
+        background: #d1d5db;
+        transition: background-color 0.15s ease;
+      }
+      .switch::after {
+        content: '';
+        position: absolute;
+        left: 3px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+        transition: left 0.15s ease;
+      }
+      .switch[aria-checked='true']::before {
+        background: #111827;
+      }
+      .switch[aria-checked='true']::after {
+        left: 23px;
+      }
+      .switch:focus-visible {
+        outline: 2px solid #111827;
+        outline-offset: 2px;
+      }
+
+      /* Segmented control (Redact/Block), aria-pressed */
+      .segmented {
+        display: inline-flex;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        overflow: hidden;
+      }
+      .segmented button {
+        background: #fff;
+        color: #374151;
+        border: none;
+        border-radius: 0;
+        padding: 8px 12px;
+        font-size: 0.8125rem;
+        min-height: 44px;
+        cursor: pointer;
+      }
+      .segmented button + button {
+        border-left: 1px solid #d1d5db;
+      }
+      .segmented button[aria-pressed='true'] {
+        background: #111827;
+        color: #fff;
+      }
+      .segmented button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      details.advanced {
+        margin-top: 4px;
+      }
+      details.advanced summary {
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.875rem;
+        padding: 4px 0;
+      }
+      details.advanced[open] summary {
+        margin-bottom: 12px;
+      }
+
+      /* Toast */
+      #toast {
+        position: fixed;
+        left: 50%;
+        bottom: 24px;
+        transform: translateX(-50%) translateY(8px);
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        max-width: calc(100% - 48px);
+        padding: 12px 14px;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.15s ease, transform 0.15s ease;
+        z-index: 100;
+      }
+      #toast.visible {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+        pointer-events: auto;
+      }
+      #toast.ok {
+        background: #ecfdf5;
         color: #047857;
+        border: 1px solid #a7f3d0;
       }
-      #status.error {
+      #toast.error {
+        background: #fef2f2;
         color: #b91c1c;
+        border: 1px solid #fecaca;
+      }
+      #toast svg {
+        flex: none;
+        margin-top: 1px;
+      }
+      #toast .toast-message {
+        flex: 1;
+      }
+      #toast .toast-dismiss {
+        flex: none;
+        background: transparent;
+        border: none;
+        color: inherit;
+        cursor: pointer;
+        padding: 0;
+        margin-left: 4px;
+        font-size: 1rem;
+        line-height: 1;
+      }
+      #toast:not(.error) .toast-dismiss {
+        display: none;
       }
     </style>
   </head>
@@ -139,18 +305,41 @@
     </fieldset>
 
     <fieldset>
-      <legend>Policy JSON</legend>
-      <label>
-        Contenu (import / édition manuelle)
-        <textarea id="policyJson" spellcheck="false"></textarea>
-      </label>
-      <div class="actions">
-        <button type="button" id="importPolicy">Importer en local</button>
-        <button type="button" id="exportPolicy" class="secondary">Exporter depuis le stockage</button>
-      </div>
+      <legend>Règles de détection</legend>
+      <p class="hint" style="margin: 0 0 12px">
+        Activez ou désactivez chaque type de donnée sensible et choisissez l’action
+        appliquée quand une correspondance est détectée.
+      </p>
+      <table class="rules-table">
+        <thead>
+          <tr>
+            <th scope="col">Règle</th>
+            <th scope="col">Activée</th>
+            <th scope="col">Action</th>
+          </tr>
+        </thead>
+        <tbody id="rulesTableBody"></tbody>
+      </table>
+
+      <details class="advanced">
+        <summary>Avancé</summary>
+        <label>
+          Contenu (import / édition manuelle)
+          <textarea id="policyJson" spellcheck="false"></textarea>
+        </label>
+        <div class="actions">
+          <button type="button" id="importPolicy">Importer en local</button>
+          <button type="button" id="exportPolicy" class="secondary">Exporter depuis le stockage</button>
+        </div>
+      </details>
     </fieldset>
 
-    <p id="status" role="status"></p>
+    <div id="toast" role="status" aria-live="polite">
+      <span class="toast-icon" aria-hidden="true"></span>
+      <span class="toast-message"></span>
+      <button type="button" class="toast-dismiss" aria-label="Fermer la notification">&times;</button>
+    </div>
+
     <script type="module" src="./main.ts"></script>
   </body>
 </html>
