@@ -55,7 +55,7 @@ export function blockModalCopy(ruleType: RuleType, locale: Locale): BlockModalCo
         'Pour protéger votre organisation, votre message n’a pas été envoyé. ' +
         'Retirez la donnée du champ de saisie ou contactez votre équipe sécurité si vous pensez qu’il s’agit d’une erreur.',
       hint: 'Shadow AI Sentinel analyse le texte uniquement dans votre navigateur. Le contenu n’est ni stocké ni transmis.',
-      closeLabel: 'Comprendre',
+      closeLabel: "J'ai compris",
     };
   }
 
@@ -100,7 +100,7 @@ export function blockFileModalCopy(
       body:
         'L’ajout de ce fichier a été annulé. Choisissez un autre fichier ou retirez les données sensibles avant de le joindre à la conversation.',
       hint: 'Seuls les fichiers texte (.txt, .csv, .json, etc.) sont analysés localement. Le contenu du fichier n’est pas envoyé à un serveur Sentinel.',
-      closeLabel: 'Comprendre',
+      closeLabel: "J'ai compris",
     };
   }
 

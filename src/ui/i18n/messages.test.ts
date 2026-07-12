@@ -22,8 +22,8 @@ describe('messages i18n (Phase 5)', () => {
     }
   });
 
-  it('bouton modale Block = Comprendre / Got it', () => {
-    expect(blockModalCopy('api_key', 'fr').closeLabel).toBe('Comprendre');
+  it("bouton modale Block = J'ai compris / Got it", () => {
+    expect(blockModalCopy('api_key', 'fr').closeLabel).toBe("J'ai compris");
     expect(blockModalCopy('api_key', 'en').closeLabel).toBe('Got it');
   });
 
