@@ -146,6 +146,11 @@
       .hidden {
         display: none;
       }
+      .warning {
+        background: #fff7ed;
+        color: #7c2d12;
+        font-weight: 500;
+      }
     </style>
   </head>
   <body>
@@ -163,6 +168,10 @@
         <div><strong id="blockedCount">0</strong><span id="blockedLabel">bloqués</span></div>
         <div><strong id="redactedLabel">0</strong><span id="redactedText">caviardés</span></div>
       </div>
+    </section>
+
+    <section id="adapterHealthWarning" class="warning hidden">
+      <span id="adapterHealthWarningText"></span>
     </section>
 
     <section id="proSection">

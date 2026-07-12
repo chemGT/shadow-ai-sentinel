@@ -6,6 +6,7 @@ import {
 import { reportDlpAction } from '../../content/telemetry-reporter.js';
 import { showBlockAlert } from '../../content/ui-host.js';
 import { redactNotice, resolveLocale } from '../../../ui/i18n/messages.js';
+import { startAdapterHealthMonitor } from './adapter-health-monitor.js';
 import type { SiteDom } from './dom-factory.js';
 import { attachFileGuard } from './file-guard.js';
 
@@ -137,11 +138,18 @@ export function attachGuardAdapter(options: GuardAdapterOptions): () => void {
     getAllowlist: options.getAllowlist,
   });
 
+  const detachHealthMonitor = startAdapterHealthMonitor({
+    dom,
+    label,
+    getFailMode: () => getPolicy().fail_mode ?? 'warn',
+  });
+
   console.info(`[Shadow AI Sentinel] Adaptateur ${label} actif (texte + fichiers texte)`);
 
   return () => {
     document.removeEventListener('keydown', onKeyDown, true);
     document.removeEventListener('click', onClick, true);
     detachFile();
+    detachHealthMonitor();
   };
 }

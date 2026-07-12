@@ -1,6 +1,7 @@
 import { STORAGE_KEYS } from '../../core/constants.js';
 import type { Policy, TelemetryQueueItem, TenantCredentials } from '../../core/types.js';
 import type { Entitlement } from '../../core/licensing/entitlement.js';
+import type { PersistedAdapterHealth } from '../../core/adapter-health.js';
 import { createDefaultPolicy } from '../../core/defaults.js';
 
 /** Compteurs locaux affichés dans la popup (jamais envoyés). */
@@ -163,4 +164,14 @@ export async function incrementLocalStat(kind: 'blocked' | 'redacted'): Promise<
   const stats = await getLocalStats();
   stats[kind] += 1;
   await storageSet({ [STORAGE_KEYS.stats]: stats });
+}
+
+/** État de santé de l'adaptateur du site courant (self-test au chargement, R1). */
+export async function getAdapterHealth(): Promise<PersistedAdapterHealth> {
+  const result = await storageGet<PersistedAdapterHealth>(STORAGE_KEYS.adapterHealth);
+  return result[STORAGE_KEYS.adapterHealth] === 'broken' ? 'broken' : 'healthy';
+}
+
+export async function setAdapterHealth(state: PersistedAdapterHealth): Promise<void> {
+  await storageSet({ [STORAGE_KEYS.adapterHealth]: state });
 }

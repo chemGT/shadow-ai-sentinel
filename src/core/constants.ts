@@ -1,4 +1,4 @@
-import type { Rule, RuleType } from './types.js';
+import type { FailMode, Rule, RuleType } from './types.js';
 
 /** Clés `chrome.storage` / `browser.storage`. */
 export const STORAGE_KEYS = {
@@ -13,9 +13,14 @@ export const STORAGE_KEYS = {
   licenseInstanceId: 'sentinel_license_instance_id',
   stats: 'sentinel_stats',
   allowlist: 'sentinel_allowlist',
+  adapterHealth: 'sentinel_adapter_health',
 } as const;
 
 export const POLICY_VERSION_INITIAL = '1.0.0';
+
+export const FAIL_MODES: FailMode[] = ['open', 'warn', 'closed'];
+
+export const DEFAULT_FAIL_MODE: FailMode = 'warn';
 
 export const REDACT_TOKENS: Record<RuleType, string> = {
   api_key: '[REDACTED_API_KEY]',

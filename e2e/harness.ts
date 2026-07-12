@@ -79,6 +79,45 @@ export async function seedProEntitlement(context: BrowserContext, page?: Page): 
 }
 
 /**
+ * Force un `fail_mode` de policy via le message `POLICY_UPDATED` (et non une
+ * écriture directe dans le storage) : `background/index.ts` sert `GET_POLICY`
+ * depuis le cache mémoire `cachedPolicy`, qui n'est mis à jour que par ce
+ * message — une écriture storage seule ne serait pas vue par les content
+ * scripts. Envoyé depuis une page d'extension (popup) plutôt que depuis le
+ * service worker lui-même : l'auto-envoi d'un message par un service worker
+ * MV3 vers son propre listener n'est pas fiable côté Chrome (« Could not
+ * establish connection »).
+ */
+export async function seedPolicyFailMode(
+  context: BrowserContext,
+  failMode: 'open' | 'warn' | 'closed',
+): Promise<void> {
+  const sw = await extensionServiceWorker(context);
+  const extensionId = new URL(sw.url()).hostname;
+  const senderPage = await context.newPage();
+  await senderPage.goto(`chrome-extension://${extensionId}/src/extension/popup/index.html`);
+  await senderPage.evaluate(async (mode) => {
+    const policy = {
+      version: '1.0.0',
+      tenantId: '',
+      emailDomains: [],
+      rules: [
+        { type: 'api_key', action: 'block', enabled: true },
+        { type: 'generic_secret', action: 'block', enabled: true },
+        { type: 'iban', action: 'redact', enabled: true },
+        { type: 'internal_ip', action: 'redact', enabled: true },
+        { type: 'pro_email', action: 'redact', enabled: false },
+        { type: 'phone', action: 'redact', enabled: true },
+      ],
+      updatedAt: new Date().toISOString(),
+      fail_mode: mode,
+    };
+    await chrome.runtime.sendMessage({ type: 'POLICY_UPDATED', payload: policy });
+  }, failMode);
+  await senderPage.close();
+}
+
+/**
  * Navigue vers la fixture d'un hôte et attend que l'adaptateur du content
  * script soit actif (log console « Adaptateur <label> actif », avec fallback
  * temporisé si le message console du monde isolé n'est pas capté).

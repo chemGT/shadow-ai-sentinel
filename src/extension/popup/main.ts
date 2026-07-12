@@ -1,5 +1,5 @@
 import { sendMessage } from '../platform/runtime.js';
-import { getLocalStats } from '../platform/storage.js';
+import { getAdapterHealth, getLocalStats } from '../platform/storage.js';
 import { getExtensionApi } from '../platform/browser-api.js';
 import { resolveLocale } from '../../ui/i18n/messages.js';
 import { LEMONSQUEEZY_CHECKOUT_URL } from '../config.js';
@@ -33,6 +33,7 @@ const copy =
         errEmpty: 'Saisissez votre clé.',
         errInvalid: 'Clé invalide ou non reconnue.',
         errNetwork: 'Vérification impossible (réseau).',
+        adapterBroken: 'Protection inactive sur ce site — sélecteurs obsolètes.',
       }
     : {
         tierFree: 'Free',
@@ -53,6 +54,7 @@ const copy =
         errEmpty: 'Enter your key.',
         errInvalid: 'Invalid or unrecognized key.',
         errNetwork: 'Verification failed (network).',
+        adapterBroken: 'Protection inactive on this site — outdated selectors.',
       };
 
 function $(id: string): HTMLElement {
@@ -88,6 +90,12 @@ async function loadStats(): Promise<void> {
   const stats = await getLocalStats();
   setText('blockedCount', String(stats.blocked));
   setText('redactedLabel', String(stats.redacted));
+}
+
+async function loadAdapterHealth(): Promise<void> {
+  const health = await getAdapterHealth();
+  setText('adapterHealthWarningText', copy.adapterBroken);
+  $('adapterHealthWarning').classList.toggle('hidden', health !== 'broken');
 }
 
 function applyStaticCopy(): void {
@@ -160,3 +168,4 @@ applyStaticCopy();
 wireEvents();
 void loadEntitlement();
 void loadStats();
+void loadAdapterHealth();

@@ -10,6 +10,14 @@ export type RuleType =
 /** Action appliquée lorsqu'une règle correspond. */
 export type RuleAction = 'block' | 'redact';
 
+/**
+ * Comportement quand l'adaptateur d'un site ne trouve plus le composer (sélecteurs
+ * obsolètes) : `open` = envoi autorisé sans analyse (ancien comportement, fail-open),
+ * `warn` = envoi autorisé + bannière d'alerte visible, `closed` = tout envoi bloqué
+ * (interception générique Entrée + clic submit) jusqu'à résolution.
+ */
+export type FailMode = 'open' | 'warn' | 'closed';
+
 export type Locale = 'fr' | 'en';
 
 export type BrowserFamily = 'chromium' | 'firefox';
@@ -43,6 +51,8 @@ export interface Policy {
   rules: Rule[];
   updatedAt: string;
   departmentId?: string;
+  /** Défaut si absent : `'warn'` (cf. `DEFAULT_FAIL_MODE`). */
+  fail_mode?: FailMode;
 }
 
 /** Résultat local du moteur de détection (jamais envoyé tel quel à l'API). */

@@ -271,6 +271,26 @@ export function employeeNoticeAck(locale: Locale): string {
   return locale === 'fr' ? "J'ai compris" : 'I understand';
 }
 
+export type AdapterHealthBannerCopy = {
+  title: string;
+  dismissLabel: string;
+};
+
+/** Bannière non bloquante — adaptateur cassé (sélecteurs obsolètes), fail_mode warn/closed. */
+export function adapterHealthBannerCopy(locale: Locale): AdapterHealthBannerCopy {
+  if (locale === 'fr') {
+    return {
+      title:
+        'Protection inactive sur ce site — mise à jour requise. Contactez votre équipe sécurité.',
+      dismissLabel: 'Masquer',
+    };
+  }
+  return {
+    title: 'Protection inactive on this site — update required. Contact your security team.',
+    dismissLabel: 'Dismiss',
+  };
+}
+
 export type FeedbackCopy = {
   triggerLabel: string;
   prompt: string;
