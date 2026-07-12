@@ -4,13 +4,14 @@
 > À **mettre à jour à la fin de chaque session** (section « Journal » + statuts).
 > Runbook courant (Jalon 4) : `.ai/plans/plan-vente-lemonsqueezy.md` · Contexte Claude : `CLAUDE.md` (racine).
 
-> 🎯 **PROCHAINE ACTION** : **Jalon 4** — créer le produit **Lemon Squeezy** (abo 5 €/mois + 49 €/an,
-> license keys activées) → renseigner `VITE_LEMONSQUEEZY_STORE_ID/_PRODUCT_ID/_CHECKOUT_URL` ;
-> héberger la privacy page (`store-assets/privacy-policy.md`) à une URL publique ; landing 1 page
-> (pricing + checkout Lemon.js, promesse scan fichiers = **texte/code only**) ; soumission CWS + AMO.
-> Vérifier d'abord le vert : `npm test` (238) · `npx tsc --noEmit` · `npm run build`.
-> ⚠️ Avant soumission : **recette manuelle des 5 nouveaux sites** (M14–M24 de
-> `.ai/docs/matrice-tests-multi-llm.md`) — les sélecteurs sont best-effort, non vérifiés post-login.
+> 🎯 **PROCHAINE ACTION** : **Sprint R — Résilience**, R1 **terminé** (`sprint-resilience.md`),
+> reste **R2/R3** (OTA sélecteurs signés Ed25519 via Cloudflare Workers + KV) puis **R4**.
+> Sprint L reste en parallèle sur item **L5** (recette manuelle des 5 nouveaux sites, M14–M24 de
+> `.ai/docs/matrice-tests-multi-llm.md`), en cours côté utilisateur. Roadmap complète :
+> **`master-plan.md`** (« master plan ») — séquence L (launch) → R (fail-closed + OTA sélecteurs,
+> **bloquant avant toute vente B2B active**) → M (MDM + Team) → backlog E.
+> Le Jalon 4 du runbook `plan-vente-lemonsqueezy.md` est absorbé dans le Sprint L.
+> Vérifier d'abord le vert : `npm test` (245) · `npx tsc --noEmit` · `npm run build`.
 >
 > ⚠️ **PIVOT rail (2026-07-01)** : Gumroad → **Lemon Squeezy** (MoR = TVA UE gérée) + modèle **abo MRR**.
 > Migration code faite et committée (`9b39038`, poussée). Voir Journal + [[gumroad-pivot]] (mémoire).
@@ -34,13 +35,16 @@ early-bird **-20 % la 1ʳᵉ année**, pas de lifetime.
 
 ---
 
-## État actuel (dernier checkpoint : 2026-07-02)
+## État actuel (dernier checkpoint : 2026-07-10)
 
-**Vert** : `npx tsc --noEmit` OK · `npm test` = **217 tests** · `npm run build` OK.
-Branche : `sprint/s1-make-sellable`. Commits jusqu'à `b0de026`. Le **pivot Gumroad → Lemon Squeezy
-est committé** (`9b39038`, `feat(billing): migrate Pro licensing from Gumroad to Lemon Squeezy`) :
-la vérif licence, les vars `VITE_LEMONSQUEEZY_*` et le host manifest pointent désormais vers
-Lemon Squeezy. Prochaine action = **Jalon 4** (runbook `.ai/plans/plan-vente-lemonsqueezy.md`).
+**Vert** : `npx tsc --noEmit` OK · `npm test` = **245 tests** (32 fichiers) · `npm run build` OK ·
+`npx playwright test` = **30 e2e** OK.
+Branche : `sprint/s1-make-sellable`. Le **pivot Gumroad → Lemon Squeezy est committé** (`9b39038`) et
+le produit Lemon Squeezy est **créé et configuré** (Store ID `426600`, Product ID `1206351`, checkout
+avec choix mensuel/annuel intégré) — `.env` rempli, checkout testé en Test Mode : activation licence
+OK, statut Pro actif dans l'extension. Site `prompt-redact-site` en ligne, prod verrouillée en
+coming-soon (`MAINTENANCE=true`), preview restreint à l'email owner via Cloudflare Access.
+Prochaine action = **L5** (recette manuelle 5 sites, voir `sprint-launch.md`).
 Le chantier portail SaaS (Clerk auth :
 `apps/portal/**`, `backend/{schema,queries,config,tenant}`, `migrations/0003_users_table`) reste
 **non committé, à part** — ne pas mélanger.
@@ -177,3 +181,96 @@ Charger `dist/` via `chrome://extensions` (mode dev) pour tester la popup + le g
   site ne recevait jamais l'événement (fichiers autorisés/caviardés) — marqueur one-shot
   `consumeReplacedInputMark` ajouté. **239 vitest + 28 e2e verts.** La recette manuelle ne couvre
   plus que la dérive des DOM réels.
+- **2026-07-08** — **MASTER PLAN rédigé** (`master-plan.md` + `sprint-{launch,resilience,mdm-team}.md`,
+  session Plan Mode, zéro code). Verdict enterprise-readiness vérifié dans le code :
+  **fail-open confirmé** (`guard-adapter.ts` — composer introuvable → le message part sans analyse),
+  MDM 0 %, sélecteurs sans OTA. Cadrage acté (ne pas re-débattre) : lancer d'abord (Sprint L =
+  Jalon 4 + site prompt-redact.com), puis Sprint R (fail-closed `fail_mode` + OTA sélecteurs
+  signés Ed25519 via **Cloudflare Workers + KV**), puis Sprint M (`chrome.storage.managed`,
+  templates Intune/Firefox/Jamf, tier **Team = licence LS quantity-based**, sans portail) ;
+  **SSO/Clerk reste en pause** (déclencheur : ≥ 2 prospects). Anciens plans commercialisation*
+  marqués obsolètes, items survivants dans le backlog E (`sprint-mdm-team.md`).
+- **2026-07-10** — **Sprint L : L1/L2/L3 terminés.** Site `prompt-redact-site` en ligne (Cloudflare
+  Pages) : bug de fuite corrigé (binding KV `WAITLIST` mal configuré au départ — namespace créé mais
+  pas rattaché en scope Production ; puis découverte que la branche `maintenance` servie en prod était
+  figée 2 commits derrière `main`, **sans** le toggle coming-soon → site complet exposé publiquement).
+  Corrections : branche `maintenance` resynchronisée avec `main` (fast-forward) et repositionnée comme
+  branche de **preview** perso (accès restreint à l'email owner via Cloudflare Access) ; `main` reste
+  la branche Production, gatée par `MAINTENANCE=true` (var de **build**, `import.meta.env`, distincte
+  des bindings Functions runtime — piège à ne pas reproduire). Waitlist KV vérifiée opérationnelle
+  (email de test bien capturé). Produit **Lemon Squeezy créé** : Store ID `426600`, Product ID
+  `1206351`, un seul checkout link (`prompt-redact.lemonsqueezy.com/checkout/buy/cd6acc61-...`) qui
+  propose le choix mensuel (5€) / annuel (49€) directement sur la page LS — pas besoin de deux
+  boutons séparés côté extension/site. `.env` extension rempli (`VITE_LEMONSQUEEZY_STORE_ID`,
+  `_PRODUCT_ID`, `_CHECKOUT_URL`). Pricing vérifié cohérent partout (5€/mois·49€/an) — seuls écarts
+  trouvés sont des entrées de journal datées (ancien 4€/39€) et un doc `commercialisation.md` obsolète
+  (table Team par-siège), sans impact code/copy live. Build + tests **239 vitest verts**, `tsc` OK.
+  Checkout testé manuellement en Lemon Squeezy Test Mode : activation licence OK, statut Pro affiché
+  dans l'extension. Prochaine étape : **L5** (recette manuelle 5 sites, M14–M24).
+- **2026-07-10 (suite)** — **Pivot positionnement landing `prompt-redact-site`** : copy EN/FR
+  (`src/i18n/translations.ts`) réorientée de « devs qui collent une stack trace » vers **Shadow AI /
+  Shadow IT B2B** (décideur IT/sécurité), sans toucher au pricing (Free/Pro/Team gelé, cf. ce fichier).
+  Changé : `hero.title/subtitle` + nouveau CTA secondaire `hero.ctaContact` (mailto, `Hero.astro`),
+  `problem.title/body` (mix multi-métiers : dev/support/finance), `trustedBy.label/categories`
+  (« ÉQUIPES IT & SÉCURITÉ » en tête), une ligne `tiers.team.features`. `astro build` OK (pas de
+  régression visuelle vérifiée en dist HTML ; revue visuelle navigateur encore à faire). Committé
+  `18ac300` sur branche `worktree-shadow-ai-positioning`, poussé, **PR #1 ouverte**
+  (github.com/chemGT/prompt-redact-site/pull/1) — **pas encore mergée**.
+  **L5 (recette manuelle multi-LLM) en cours par l'utilisateur**, un test à la fois. Premier résultat :
+  incohérence de traduction trouvée sur la modale "Envoi bloqué" (bouton FR "Comprendre" au lieu de
+  "J'ai compris" utilisé ailleurs) → relecture complète des 2 fichiers FR du produit
+  (`messages.ts`, `popup/main.ts`), seule incohérence trouvée, corrigée et **committée** (`db09e7d`,
+  `fix(i18n)`), 239 tests + tsc verts. Reste : poursuivre L5 site par site (M14–M24), décider du
+  merge de la PR #1 positioning.
+- **2026-07-12** — **PR #1 positioning mergée** (`d1f9bad` sur `main` de `prompt-redact-site`), rien
+  en attente côté site. Sprint L L1–L9 toujours ⏳ (infra Cloudflare/DNS/stores, nécessite les accès
+  de l'utilisateur, non actionnable directement).
+  **Refonte UX page Options extension** (`/ui-ux-pro-max`) : table "Règles de détection" (toggle +
+  segmented redact/block par `RuleType`) remplace le textarea JSON brut ; JSON avancé + import/export
+  déplacés dans `<details><summary>Avancé</summary>` ; toast `aria-live="polite"` généralisé
+  (`showToast`) remplace le `setStatus()` peu visible sur toute la page (credentials, allowlist,
+  licence, sync policy, telemetry). Import JSON avancé validé via `validatePolicy` avant application
+  (jamais silencieux). Fichiers : `src/extension/options/index.html`, `main.ts`. Committé `8f4c36c`,
+  poussé sur `sprint/s1-make-sellable`.
+  **Deux bugs Firefox trouvés et corrigés pendant les tests manuels de l'utilisateur** (Chrome OK,
+  Firefox KO) :
+  1. Install impossible (« background.service_worker is currently disabled ») — `manifest.firefox.json`
+     utilisait la clé Chrome-only `service_worker` ; Firefox stable exige `background.scripts` (array).
+  2. Une fois l'install corrigée, **détection totalement inactive sur Firefox** (pas juste partielle) :
+     `platform/runtime.ts` (`sendMessageOnce`) et `platform/storage.ts` (`storageGet/Set`,
+     `clearStoredLicense`) passaient un callback en dernier argument à `chrome.runtime.sendMessage` /
+     `chrome.storage.local.*`. Chrome MV3 tolère ce pattern hybride callback+Promise ; `browser.*`
+     (Firefox) est Promise-only et ignore le callback silencieusement → la Promise wrapper ne se
+     résolvait jamais → `Promise.all([loadPolicy(), getStoredEntitlement(), getAllowlist()])` dans le
+     bootstrap de `content/index.tsx` restait bloqué indéfiniment. **Piège à ne pas reproduire** :
+     toujours utiliser les formes Promise natives dans `platform/`, jamais de callback même optionnel.
+  Fix : passage aux formes Promise natives dans les deux fichiers, `onMessage` simplifié pour retourner
+  directement la Promise du handler. Vérifié : `tsc --noEmit`, `build` + `build:firefox`, `npm test`
+  239/239. Committé + poussé `311e49e` sur `sprint/s1-make-sellable` (avec le fix manifest ci-dessus).
+  **Reste à faire** : l'utilisateur termine ses tests manuels Chrome/Firefox (recette L5 en cours,
+  pas de blocage connu restant). Tâche différée notée par l'utilisateur, pas encore planifiée : renommer
+  l'extension et refaire le brand design — « Shadow AI Sentinel » ne correspond plus au positioning
+  cible depuis le pivot copy du 2026-07-10.
+- **2026-07-12 (suite)** — **Analyse marché/concurrence + Sprint R1 livré.** Analyse honnête
+  concurrence/positioning demandée par l'utilisateur (Nightfall AI, Harmonic Security, Microsoft
+  Purview, dope.security, LayerX, Netskope, Cyberhaven, Metomic — tous en B2B 100-200+$/siège/an) :
+  aucune protection technique réelle contre la copie du code extension (.crx/.xpi extractibles),
+  mais le vrai moat court terme = exécution (SLA, support, fail-closed, MDM) + first-mover sur le
+  segment PME/ETI RGPD délaissé par les gros acteurs enterprise-only. `master-plan.md` mis à jour
+  (section « Positionnement & séquencement commercial ») : Sprint R = **bloquant avant toute vente
+  B2B active** (fail-open actuel = disqualifiant face à un RSSI), tier Team à ne pas mettre en avant
+  commercialement avant Sprint M (MDM).
+  **Sprint R1 implémenté et livré** (`91755a7`, `feat(guard): fail-closed adapter health-check
+  [Sprint R1]`, `sprint/s1-make-sellable`) : self-test adaptateur au chargement (MutationObserver +
+  timeout 10 s, `core/adapter-health.ts`) → état `adapter_broken` si aucun composer reconnu ;
+  nouveau champ policy `fail_mode: "open"|"warn"|"closed"` (défaut `warn`) ; `warn` = bannière
+  discrète + badge popup (site toujours utilisable) ; `closed` = interception générique
+  document-level (Enter + clic bouton d'envoi) qui **bloque réellement l'envoi** tant que
+  l'adaptateur est cassé, même sans reconnaître le composer spécifique du site — corrige le
+  fail-open confirmé en session du 2026-07-08. i18n FR/EN, storage `getAdapterHealth`/
+  `setAdapterHealth`. **Piège rencontré** : seed du `fail_mode` en E2E via message
+  `POLICY_UPDATED` échouait envoyé depuis le service worker lui-même (« Could not establish
+  connection » — un SW MV3 ne peut pas fiablement se messager lui-même) ; fix = envoyer le message
+  depuis une page d'extension (popup) plutôt que depuis le SW. **245 vitest + 30 e2e verts**,
+  `tsc --noEmit` clean. `sprint-resilience.md` R1 marqué terminé (checklist DoD cochée).
+  **Reste** : R2/R3 (OTA sélecteurs signés Ed25519 via Cloudflare Workers + KV), R4.
