@@ -29,7 +29,7 @@
     "https://api.lemonsqueezy.com/*"
   ],
   "background": {
-    "service_worker": "src/extension/background/index.ts",
+    "scripts": ["src/extension/background/index.ts"],
     "type": "module"
   },
   "action": {

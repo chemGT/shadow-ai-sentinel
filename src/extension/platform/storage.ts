@@ -11,32 +11,23 @@ export interface LocalStats {
 import { validatePolicy } from '../../core/validation/policy.js';
 import { getExtensionApi } from './browser-api.js';
 
+/**
+ * `chrome.storage.local.get/set/remove` acceptent un callback en dernier argument
+ * (API historique) ET retournent une Promise (MV3). `browser.storage.local.*` (Firefox)
+ * est Promise-only : le callback passé en dernier argument est silencieusement ignoré,
+ * jamais invoqué. Utiliser le pattern callback fait donc pendre indéfiniment la Promise
+ * wrapper sur Firefox (policy jamais lue, allowlist jamais chargée, device id jamais
+ * généré, etc.) — d'où l'usage exclusif de la forme Promise native, supportée nativement
+ * par les deux navigateurs.
+ */
 function storageGet<T>(keys: string | string[]): Promise<Record<string, T>> {
   const api = getExtensionApi();
-  return new Promise((resolve, reject) => {
-    api.storage.local.get(keys, (result) => {
-      const err = api.runtime.lastError;
-      if (err) {
-        reject(new Error(err.message));
-        return;
-      }
-      resolve(result as Record<string, T>);
-    });
-  });
+  return api.storage.local.get(keys) as Promise<Record<string, T>>;
 }
 
 function storageSet(items: Record<string, unknown>): Promise<void> {
   const api = getExtensionApi();
-  return new Promise((resolve, reject) => {
-    api.storage.local.set(items, () => {
-      const err = api.runtime.lastError;
-      if (err) {
-        reject(new Error(err.message));
-        return;
-      }
-      resolve();
-    });
-  });
+  return api.storage.local.set(items) as Promise<void>;
 }
 
 export async function getStoredPolicy(): Promise<Policy> {
@@ -135,19 +126,11 @@ export async function setStoredLicenseInstanceId(id: string): Promise<void> {
 
 export async function clearStoredLicense(): Promise<void> {
   const api = getExtensionApi();
-  await new Promise<void>((resolve, reject) => {
-    api.storage.local.remove(
-      [STORAGE_KEYS.licenseKey, STORAGE_KEYS.licenseInstanceId, STORAGE_KEYS.entitlement],
-      () => {
-        const error = api.runtime?.lastError;
-        if (error) {
-          reject(new Error(error.message));
-          return;
-        }
-        resolve();
-      },
-    );
-  });
+  await (api.storage.local.remove([
+    STORAGE_KEYS.licenseKey,
+    STORAGE_KEYS.licenseInstanceId,
+    STORAGE_KEYS.entitlement,
+  ]) as Promise<void>);
 }
 
 /** Valeurs allowlistées (Pro) : matches dont la valeur exacte ne doit pas déclencher la policy. */
