@@ -1,6 +1,7 @@
 import { createRoot, type Root } from 'react-dom/client';
 import { SentinelAlert } from '../../ui/components/SentinelAlert.js';
 import {
+  adapterHealthBannerCopy,
   blockModalCopy,
   feedbackCopy,
   resolveLocale,
@@ -72,4 +73,65 @@ export function showBlockAlert(ruleType: RuleType, copyOverride?: BlockModalCopy
 
 export function hideAlert(): void {
   reactRoot?.render(null);
+}
+
+const ADAPTER_BANNER_ID = 'shadow-ai-sentinel-adapter-banner';
+let adapterBannerHost: HTMLDivElement | null = null;
+
+/** Bannière discrète (pas de shadow DOM ni de React) — adaptateur cassé, R1. */
+export function showAdapterBrokenBanner(): void {
+  const copy = adapterHealthBannerCopy(resolveLocale());
+
+  if (!adapterBannerHost) {
+    adapterBannerHost = document.createElement('div');
+    adapterBannerHost.id = ADAPTER_BANNER_ID;
+    Object.assign(adapterBannerHost.style, {
+      position: 'fixed',
+      top: '0',
+      left: '0',
+      right: '0',
+      zIndex: '2147483647',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '12px',
+      padding: '10px 16px',
+      background: '#7c2d12',
+      color: '#fff7ed',
+      fontSize: '13px',
+      fontFamily: 'system-ui, sans-serif',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+    });
+
+    const text = document.createElement('span');
+    text.dataset.role = 'text';
+
+    const dismiss = document.createElement('button');
+    dismiss.type = 'button';
+    dismiss.dataset.role = 'dismiss';
+    Object.assign(dismiss.style, {
+      background: 'transparent',
+      border: '1px solid rgba(255,255,255,0.5)',
+      color: 'inherit',
+      borderRadius: '4px',
+      padding: '2px 8px',
+      cursor: 'pointer',
+      fontSize: '12px',
+    });
+    dismiss.addEventListener('click', () => hideAdapterBrokenBanner());
+
+    adapterBannerHost.append(text, dismiss);
+    document.documentElement.appendChild(adapterBannerHost);
+  }
+
+  const text = adapterBannerHost.querySelector<HTMLSpanElement>('[data-role="text"]');
+  const dismiss = adapterBannerHost.querySelector<HTMLButtonElement>('[data-role="dismiss"]');
+  if (text) text.textContent = copy.title;
+  if (dismiss) dismiss.textContent = copy.dismissLabel;
+  adapterBannerHost.style.display = 'flex';
+}
+
+export function hideAdapterBrokenBanner(): void {
+  adapterBannerHost?.remove();
+  adapterBannerHost = null;
 }

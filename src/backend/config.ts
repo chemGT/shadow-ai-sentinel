@@ -5,6 +5,8 @@ export type ApiConfig = {
   rateLimitTelemetryPerMin: number;
   corsOrigins: string[] | '*';
   trustProxy: boolean;
+  clerkSecretKey: string | null;
+  clerkJwtIssuer: string | null;
 };
 
 export function loadApiConfig(): ApiConfig {
@@ -18,5 +20,7 @@ export function loadApiConfig(): ApiConfig {
     rateLimitTelemetryPerMin: Number(process.env.RATE_LIMIT_TELEMETRY_PER_MIN ?? 120),
     corsOrigins: corsRaw && corsRaw.length > 0 ? corsRaw.split(',').map((o) => o.trim()) : '*',
     trustProxy: process.env.TRUST_PROXY === 'true',
+    clerkSecretKey: process.env.CLERK_SECRET_KEY?.trim() || null,
+    clerkJwtIssuer: process.env.CLERK_JWT_ISSUER?.trim() || null,
   };
 }

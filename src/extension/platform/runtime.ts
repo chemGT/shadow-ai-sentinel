@@ -5,18 +5,20 @@ const CONNECTION_ERRORS = ['Could not establish connection', 'Receiving end does
 const SEND_MAX_RETRIES = 3;
 const SEND_RETRY_DELAY_MS = 150;
 
+/**
+ * Envoie un message et attend la réponse via l'API Promise native.
+ *
+ * IMPORTANT (Chrome vs Firefox) : `chrome.runtime.sendMessage` accepte un callback en
+ * 2e argument (API historique) ET retourne une Promise (MV3). `browser.runtime.sendMessage`
+ * (Firefox) est Promise-only : un callback passé en 2e argument est silencieusement ignoré
+ * et n'est jamais invoqué. Utiliser le pattern callback fait donc pendre indéfiniment cette
+ * Promise sur Firefox (elle ne se résout ni ne rejette jamais), ce qui bloque tout le
+ * pipeline detection -> action côté content script (GET_POLICY, telemetry, etc.).
+ * D'où l'usage exclusif de la forme Promise, supportée nativement par les deux navigateurs.
+ */
 function sendMessageOnce<TResponse>(message: ExtensionMessage): Promise<TResponse> {
   const api = getExtensionApi();
-  return new Promise((resolve, reject) => {
-    api.runtime.sendMessage(message, (response: TResponse) => {
-      const err = api.runtime.lastError;
-      if (err) {
-        reject(new Error(err.message));
-        return;
-      }
-      resolve(response);
-    });
-  });
+  return api.runtime.sendMessage(message) as Promise<TResponse>;
 }
 
 export async function sendMessage<TResponse = unknown>(
@@ -36,6 +38,16 @@ export async function sendMessage<TResponse = unknown>(
   }
 }
 
+/**
+ * Enregistre un handler de messages async.
+ *
+ * On retourne directement la Promise du handler plutôt que d'appeler `sendResponse`
+ * couplé à `return true` : c'est le pattern documenté comme portable par MDN pour
+ * `runtime.onMessage`, fiable à la fois sur Chrome (MV3) et Firefox. Le pattern
+ * `sendResponse` + `return true` fonctionne sur Chrome mais est une source classique
+ * d'incohérences sur Firefox si le listener n'est pas strictement synchrone jusqu'au
+ * `return true` (ex. logique conditionnelle avant l'appel async) — on l'évite ici.
+ */
 export function onMessage(
   handler: (
     message: ExtensionMessage,
@@ -43,17 +55,15 @@ export function onMessage(
   ) => Promise<unknown> | unknown,
 ): void {
   const api = getExtensionApi();
-  api.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    void (async () => {
+  api.runtime.onMessage.addListener((message, sender) => {
+    return (async () => {
       try {
-        const result = await handler(message as ExtensionMessage, sender);
-        sendResponse(result);
+        return await handler(message as ExtensionMessage, sender);
       } catch (error) {
-        sendResponse({
+        return {
           error: error instanceof Error ? error.message : 'Unknown error',
-        });
+        };
       }
     })();
-    return true;
   });
 }

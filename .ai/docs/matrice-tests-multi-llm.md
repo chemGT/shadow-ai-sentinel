@@ -1,4 +1,11 @@
-# Matrice de tests — 3 LLM × 2 navigateurs
+# Matrice de tests — 8 LLM × 2 navigateurs
+
+> ⚡ **Automatisé** : `npm run test:e2e` (Playwright, `e2e/guard.e2e.ts`) couvre block
+> Enter/clic + passage texte anodin sur les 8 sites, redact Pro et file-guard Pro —
+> extension réelle chargée, fixtures répliquant les sélecteurs de prod.
+> **Reste manuel** : uniquement la dérive des DOM réels (sélecteurs qui ne matchent
+> plus après un redesign du site) et le comportement des éditeurs riches en vrai
+> (persistance du redact dans Lexical/ProseMirror).
 
 > Phase 7 · Reprendre les scénarios [matrice-tests-pilote-claude.md](./matrice-tests-pilote-claude.md) sur **chaque** plateforme.
 
@@ -31,6 +38,17 @@ Pour chaque ligne, cocher **Chr** (Chromium) et **FF** (Firefox).
 | M11 | Tous | — | Télémétrie | block | `host` correct dans API | ☐ | ☐ |
 | M12 | Claude | claude.ai | `.txt` avec clé AWS | block | Fichier non joint + modale | ☐ | ☐ |
 | M13 | ChatGPT | chatgpt.com | `.csv` avec IBAN | redact | Fichier joint avec tokens | ☐ | ☐ |
+| M14 | Le Chat | chat.mistral.ai | Clé AWS | block (Enter + clic) | Modale, pas d’envoi | ☐ | ☐ |
+| M15 | Le Chat | chat.mistral.ai | IBAN | redact | Token persistant (ProseMirror) | ☐ | ☐ |
+| M16 | DeepSeek | chat.deepseek.com | Clé AWS | block (Enter + **clic flèche**) | Modale — vérifier le chemin clic (div role=button) | ☐ | ☐ |
+| M17 | DeepSeek | chat.deepseek.com | IBAN | redact | Token dans textarea | ☐ | ☐ |
+| M18 | Perplexity | www.perplexity.ai | Clé AWS | block (Enter + clic) | Modale, pas d’envoi | ☐ | ☐ |
+| M19 | Perplexity | www.perplexity.ai | IBAN | redact | Token persistant (Lexical) | ☐ | ☐ |
+| M20 | Grok | grok.com | Clé AWS | block (Enter + clic) | Modale, pas d’envoi | ☐ | ☐ |
+| M21 | Grok | grok.com | IBAN | redact | Token persistant (Tiptap) | ☐ | ☐ |
+| M22 | Copilot | copilot.microsoft.com | Clé AWS | block (Enter + clic) | Modale, pas d’envoi | ☐ | ☐ |
+| M23 | Copilot | copilot.microsoft.com | IBAN | redact | Token dans textarea | ☐ | ☐ |
+| M24 | Nouveaux sites | — | `.txt` avec clé AWS | block (Pro) | File-guard actif sur chaque nouveau site | ☐ | ☐ |
 
 ## Vérification télémétrie (M11)
 
@@ -48,5 +66,10 @@ curl -s -H "Authorization: Bearer <clé>" http://localhost:3000/telemetry
 | Claude | `src/extension/sites/claude/selectors.ts` |
 | ChatGPT | `src/extension/sites/chatgpt/selectors.ts` |
 | Gemini | `src/extension/sites/gemini/selectors.ts` |
+| Le Chat | `src/extension/sites/mistral/selectors.ts` |
+| DeepSeek | `src/extension/sites/deepseek/selectors.ts` |
+| Perplexity | `src/extension/sites/perplexity/selectors.ts` |
+| Grok | `src/extension/sites/grok/selectors.ts` |
+| Copilot | `src/extension/sites/copilot/selectors.ts` |
 
 Puis `npm test` (régression `sites-regression.test.ts`) et recette manuelle.

@@ -1,4 +1,5 @@
 import { FORBIDDEN_TELEMETRY_KEYS, ALL_RULE_TYPES } from '../constants.js';
+import { SUPPORTED_LLM_HOSTS } from '../llm-hosts.js';
 import type {
   BrowserFamily,
   Locale,
@@ -12,7 +13,7 @@ export type TelemetryValidationResult =
   | { ok: true; event: TelemetryEvent }
   | { ok: false; errors: string[] };
 
-const LLM_HOSTS: LlmHost[] = ['claude.ai', 'chatgpt.com', 'gemini.google.com'];
+const LLM_HOSTS: readonly LlmHost[] = SUPPORTED_LLM_HOSTS;
 const LOCALES: Locale[] = ['fr', 'en'];
 const BROWSERS: BrowserFamily[] = ['chromium', 'firefox'];
 const ACTIONS: RuleAction[] = ['block', 'redact'];

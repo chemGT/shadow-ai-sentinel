@@ -20,7 +20,17 @@ if (!geckoId) {
 }
 console.log(`OK gecko.id=${geckoId}`);
 
-const expectedHosts = ['claude.ai', 'chatgpt.com', 'gemini.google.com'];
+const expectedHosts = [
+  'claude.ai',
+  'chatgpt.com',
+  'gemini.google.com',
+  'chat.mistral.ai',
+  'chat.deepseek.com',
+  'perplexity.ai',
+  'www.perplexity.ai',
+  'grok.com',
+  'copilot.microsoft.com',
+];
 for (const host of expectedHosts) {
   const pattern = `*://${host}/*`;
   if (!(manifest.host_permissions ?? []).includes(pattern)) {

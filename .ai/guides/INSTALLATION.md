@@ -13,7 +13,7 @@
 2. [Installation environnement de développement](#2-installation-environnement-de-développement) — Phase 0 ✅  
 3. [Build et chargement extension (Chromium)](#3-build-et-chargement-extension-chromium) — Phase 0 ✅  
 4. [Vérifier le moteur de détection](#4-vérifier-le-moteur-de-détection) — Phase 1 ✅  
-5. [Tester sur les LLM (Claude, ChatGPT, Gemini)](#5-tester-sur-les-llm) — Phase 7 ✅  
+5. [Tester sur les LLM (Claude, ChatGPT, Gemini, Le Chat, DeepSeek, Perplexity, Grok, Copilot)](#5-tester-sur-les-llm) — Phase 7 ✅  
 6. [Configurer policies et credentials](#6-configurer-policies-et-credentials) — Phase 3 ✅
 7. [Installer l’API (Docker)](#7-installer-lapi-docker) — Phase 3 ✅ (endpoints MVP)
 8. [Firefox (XPI signé)](#8-firefox-xpi-signé) — Phase 6 ✅  

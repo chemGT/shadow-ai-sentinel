@@ -1,6 +1,6 @@
 import { eq, desc, count, gte, and, lt, lte, isNull, ne } from 'drizzle-orm';
 import type { Db } from './index.js';
-import { policies, telemetryEvents, auditLog, tenants, apiKeys, feedbackEvents } from './schema.js';
+import { policies, telemetryEvents, auditLog, tenants, apiKeys, feedbackEvents, users } from './schema.js';
 import type { Policy } from '../../core/types.js';
 
 export type GroupByField = 'ruleType' | 'action' | 'host';
@@ -198,6 +198,82 @@ export async function getTenantStatus(db: Db, tenantId: string): Promise<string 
     .where(eq(tenants.id, tenantId))
     .limit(1);
   return rows[0]?.status ?? null;
+}
+
+// --- Users (Clerk identity → tenant) ---
+
+export type UserRecord = {
+  id: string;
+  clerkUserId: string;
+  tenantId: string;
+  email: string | null;
+  role: string;
+};
+
+export async function findUserByClerkId(
+  db: Db,
+  clerkUserId: string,
+): Promise<UserRecord | null> {
+  const rows = await db
+    .select({
+      id: users.id,
+      clerkUserId: users.clerkUserId,
+      tenantId: users.tenantId,
+      email: users.email,
+      role: users.role,
+    })
+    .from(users)
+    .where(eq(users.clerkUserId, clerkUserId))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+export async function provisionUserAndTenant(
+  db: Db,
+  params: { clerkUserId: string; email: string | null },
+): Promise<UserRecord> {
+  return db.transaction(async (tx) => {
+    const existing = await tx
+      .select({
+        id: users.id,
+        clerkUserId: users.clerkUserId,
+        tenantId: users.tenantId,
+        email: users.email,
+        role: users.role,
+      })
+      .from(users)
+      .where(eq(users.clerkUserId, params.clerkUserId))
+      .limit(1);
+    if (existing[0]) return existing[0];
+
+    const slug = `t-${params.clerkUserId.slice(-12).toLowerCase()}-${Date.now().toString(36)}`;
+    const [tenant] = await tx
+      .insert(tenants)
+      .values({
+        slug,
+        name: params.email ?? slug,
+        plan: 'free',
+        status: 'active',
+      })
+      .returning({ id: tenants.id });
+
+    const [user] = await tx
+      .insert(users)
+      .values({
+        clerkUserId: params.clerkUserId,
+        tenantId: tenant.id,
+        email: params.email,
+        role: 'owner',
+      })
+      .returning({
+        id: users.id,
+        clerkUserId: users.clerkUserId,
+        tenantId: users.tenantId,
+        email: users.email,
+        role: users.role,
+      });
+    return user;
+  });
 }
 
 export async function markTenantPastDue(db: Db, tenantId: string): Promise<void> {

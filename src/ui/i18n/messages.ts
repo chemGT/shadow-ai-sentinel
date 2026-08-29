@@ -55,7 +55,7 @@ export function blockModalCopy(ruleType: RuleType, locale: Locale): BlockModalCo
         'Pour protéger votre organisation, votre message n’a pas été envoyé. ' +
         'Retirez la donnée du champ de saisie ou contactez votre équipe sécurité si vous pensez qu’il s’agit d’une erreur.',
       hint: 'Shadow AI Sentinel analyse le texte uniquement dans votre navigateur. Le contenu n’est ni stocké ni transmis.',
-      closeLabel: 'Comprendre',
+      closeLabel: "J'ai compris",
     };
   }
 
@@ -100,7 +100,7 @@ export function blockFileModalCopy(
       body:
         'L’ajout de ce fichier a été annulé. Choisissez un autre fichier ou retirez les données sensibles avant de le joindre à la conversation.',
       hint: 'Seuls les fichiers texte (.txt, .csv, .json, etc.) sont analysés localement. Le contenu du fichier n’est pas envoyé à un serveur Sentinel.',
-      closeLabel: 'Comprendre',
+      closeLabel: "J'ai compris",
     };
   }
 
@@ -112,6 +112,56 @@ export function blockFileModalCopy(
     hint: 'Only text files (.txt, .csv, .json, etc.) are analyzed locally. File content is not sent to a Sentinel server.',
     closeLabel: 'Got it',
   };
+}
+
+/** Modale Block — PDF/DOCX dont la décision policy est "redact" (non réécrivable en place). */
+export function blockUnsupportedFileFormatCopy(
+  ruleTypes: RuleType[],
+  fileName: string,
+  locale: Locale,
+): BlockModalCopy {
+  const safeName = fileName.replace(/[<>]/g, '');
+  const unique = [...new Set(ruleTypes)];
+  const labels = unique.map((t) => ruleLabel(t, locale));
+
+  if (locale === 'fr') {
+    return {
+      title: 'Fichier bloqué',
+      headline: `Donnée sensible détectée dans « ${safeName} » : ${labels.join(', ')}`,
+      body:
+        'Ce format de fichier ne peut pas être caviardé sur place : le fichier a donc été ' +
+        'bloqué plutôt que masqué. Retirez la donnée sensible du document ou copiez-collez le texte ' +
+        'nécessaire dans le message.',
+      hint: 'Seuls les fichiers texte peuvent être masqués automatiquement. Le contenu du fichier n’est pas envoyé à un serveur Sentinel.',
+      closeLabel: "J'ai compris",
+    };
+  }
+
+  return {
+    title: 'File blocked',
+    headline: `Sensitive data in “${safeName}”: ${labels.join(', ')}`,
+    body:
+      'This file format cannot be redacted in place, so it was blocked instead of masked. ' +
+      'Remove the sensitive data from the document, or copy the text you need directly into the message.',
+    hint: 'Only text files can be masked automatically. File content is not sent to a Sentinel server.',
+    closeLabel: 'Got it',
+  };
+}
+
+/** Toast — pièce jointe binaire trop volumineuse pour être scannée. */
+export function fileTooLargeNotice(fileName: string, locale: Locale): string {
+  const safeName = fileName.replace(/[<>]/g, '');
+  return locale === 'fr'
+    ? `Fichier « ${safeName} » trop volumineux pour être analysé : envoyé sans vérification DLP.`
+    : `File “${safeName}” is too large to scan: sent without DLP verification.`;
+}
+
+/** Toast — PDF/DOCX illisible (corrompu, chiffré…), laissé passer sans blocage. */
+export function fileScanFailedNotice(fileName: string, locale: Locale): string {
+  const safeName = fileName.replace(/[<>]/g, '');
+  return locale === 'fr'
+    ? `Fichier « ${safeName} » illisible (corrompu ou protégé) : analyse DLP impossible, envoyé sans vérification.`
+    : `File “${safeName}” could not be read (corrupted or protected): DLP scan skipped, sent without verification.`;
 }
 
 /** Toast Redact — fichier texte remplacé avant envoi. */
@@ -184,7 +234,7 @@ export function employeeNoticeSections(locale: Locale): EmployeeNoticeSection[] 
       {
         heading: 'Pourquoi cette extension ?',
         paragraphs: [
-          'Votre organisation l’a déployée pour limiter l’envoi accidentel de données sensibles vers les IA publiques (Claude, ChatGPT, Gemini — clés API, IBAN, secrets, etc.).',
+          'Votre organisation l’a déployée pour limiter l’envoi accidentel de données sensibles vers les IA publiques (Claude, ChatGPT, Gemini, Le Chat, DeepSeek, Perplexity, Grok, Copilot — clés API, IBAN, secrets, etc.).',
         ],
       },
       {
@@ -222,7 +272,7 @@ export function employeeNoticeSections(locale: Locale): EmployeeNoticeSection[] 
     {
       heading: 'Why this extension?',
       paragraphs: [
-        'Your organization deployed it to reduce accidental sharing of sensitive data with public AI tools (Claude, ChatGPT, Gemini — API keys, IBAN, secrets, etc.).',
+        'Your organization deployed it to reduce accidental sharing of sensitive data with public AI tools (Claude, ChatGPT, Gemini, Le Chat, DeepSeek, Perplexity, Grok, Copilot — API keys, IBAN, secrets, etc.).',
       ],
     },
     {
@@ -269,6 +319,26 @@ export function employeeNoticeBody(locale: Locale): string {
 
 export function employeeNoticeAck(locale: Locale): string {
   return locale === 'fr' ? "J'ai compris" : 'I understand';
+}
+
+export type AdapterHealthBannerCopy = {
+  title: string;
+  dismissLabel: string;
+};
+
+/** Bannière non bloquante — adaptateur cassé (sélecteurs obsolètes), fail_mode warn/closed. */
+export function adapterHealthBannerCopy(locale: Locale): AdapterHealthBannerCopy {
+  if (locale === 'fr') {
+    return {
+      title:
+        'Protection inactive sur ce site — mise à jour requise. Contactez votre équipe sécurité.',
+      dismissLabel: 'Masquer',
+    };
+  }
+  return {
+    title: 'Protection inactive on this site — update required. Contact your security team.',
+    dismissLabel: 'Dismiss',
+  };
 }
 
 export type FeedbackCopy = {

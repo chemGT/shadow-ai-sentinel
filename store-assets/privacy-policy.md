@@ -1,9 +1,10 @@
 # Privacy Policy — Shadow AI Sentinel
 
-**Last updated: 1 July 2026**
+**Last updated: 2 July 2026**
 
 Shadow AI Sentinel is a browser extension that helps you avoid pasting sensitive
-data into public AI assistants (Claude, ChatGPT, Gemini). This policy explains
+data into public AI assistants (Claude, ChatGPT, Gemini, Mistral Le Chat,
+DeepSeek, Perplexity, Grok, Microsoft Copilot). This policy explains
 exactly what the extension does — and does not do — with your data.
 
 ## The short version
@@ -24,11 +25,11 @@ anonymous local counters (e.g. "12 secrets blocked").
 **Free tier:** none. The extension does not contact any server.
 
 **Pro tier:** when you enter a license key, the extension sends **only that
-license key and the public product identifier** to Gumroad's license
-verification API (`api.gumroad.com`) to confirm your purchase. It re-checks
+license key and the public product identifier** to Lemon Squeezy's license
+verification API (`api.lemonsqueezy.com`) to confirm your purchase. It re-checks
 periodically so that refunded or cancelled licenses are downgraded. No prompt
-content is ever included. See Gumroad's privacy policy for how they handle this
-request: https://gumroad.com/privacy
+content is ever included. See Lemon Squeezy's privacy policy for how they handle
+this request: https://www.lemonsqueezy.com/privacy
 
 **Optional enterprise mode (off by default):** if — and only if — an administrator
 configures the extension with a managed backend, it may send **anonymous DLP
@@ -44,7 +45,8 @@ This mode requires explicit configuration and is not active for standard users.
 
 ## Data sharing
 We do not sell, rent, or share your data with third parties. The only external
-service involved is Gumroad, and only for license verification as described above.
+service involved is Lemon Squeezy, and only for license verification as described
+above.
 
 ## Your control
 You can disable any rule, remove your license, or uninstall the extension at any
@@ -54,4 +56,5 @@ time. Uninstalling removes all locally stored settings.
 Questions about this policy: **86713914+chemGT@users.noreply.github.com**
 
 ---
-*Shadow AI Sentinel is not affiliated with Anthropic, OpenAI, Google, or Gumroad.*
+*Shadow AI Sentinel is not affiliated with Anthropic, OpenAI, Google, Mistral AI,
+DeepSeek, Perplexity, xAI, Microsoft, or Lemon Squeezy.*

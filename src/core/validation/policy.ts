@@ -1,5 +1,5 @@
-import { ALL_RULE_TYPES } from '../constants.js';
-import type { Policy, Rule, RuleAction, RuleType } from '../types.js';
+import { ALL_RULE_TYPES, FAIL_MODES } from '../constants.js';
+import type { FailMode, Policy, Rule, RuleAction, RuleType } from '../types.js';
 
 export type PolicyValidationResult =
   | { ok: true; policy: Policy }
@@ -9,6 +9,10 @@ const RULE_ACTIONS: RuleAction[] = ['block', 'redact'];
 
 function isRuleType(value: unknown): value is RuleType {
   return typeof value === 'string' && ALL_RULE_TYPES.includes(value as RuleType);
+}
+
+function isFailMode(value: unknown): value is FailMode {
+  return typeof value === 'string' && FAIL_MODES.includes(value as FailMode);
 }
 
 function isRuleAction(value: unknown): value is RuleAction {
@@ -86,6 +90,10 @@ export function validatePolicy(input: unknown): PolicyValidationResult {
     errors.push('departmentId doit être une string si présent');
   }
 
+  if (raw.fail_mode !== undefined && !isFailMode(raw.fail_mode)) {
+    errors.push(`fail_mode invalide (attendu: ${FAIL_MODES.join(', ')})`);
+  }
+
   if (errors.length > 0) {
     return { ok: false, errors };
   }
@@ -112,6 +120,7 @@ export function validatePolicy(input: unknown): PolicyValidationResult {
       ...(raw.departmentId !== undefined
         ? { departmentId: raw.departmentId as string }
         : {}),
+      ...(raw.fail_mode !== undefined ? { fail_mode: raw.fail_mode as FailMode } : {}),
     },
   };
 }

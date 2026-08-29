@@ -1,4 +1,4 @@
-import { DEFAULT_RULES, POLICY_VERSION_INITIAL } from './constants.js';
+import { DEFAULT_FAIL_MODE, DEFAULT_RULES, POLICY_VERSION_INITIAL } from './constants.js';
 import type { Policy } from './types.js';
 
 export function createDefaultPolicy(tenantId = ''): Policy {
@@ -8,5 +8,6 @@ export function createDefaultPolicy(tenantId = ''): Policy {
     emailDomains: [],
     rules: DEFAULT_RULES.map((rule) => ({ ...rule })),
     updatedAt: new Date().toISOString(),
+    fail_mode: DEFAULT_FAIL_MODE,
   };
 }

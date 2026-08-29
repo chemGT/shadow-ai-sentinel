@@ -11,6 +11,16 @@ Un DLP (Data Loss Prevention) ultra-léger sous forme d'extension navigateur B2B
     - Mode Redact : Remplace la donnée par un token (ex: `[REDACTED_IBAN]`) à la volée.
 4.  **Backend (Optionnel MVP) :** API Node.js stateless pour distribuer la configuration (policies) et récupérer la télémétrie anonymisée. Déploiement prévu via conteneur sur Portainer.
 
+## Modèle commercial (freemium — sprint S1)
+- **Free** : `api_key` + `generic_secret`, Block/Redact, zéro config, zéro réseau (produit d'appel store).
+- **Pro** : PII (`iban`, `internal_ip`, `pro_email`, `phone`) + scan fichiers texte/code + allowlist,
+  débloqué par **clé de licence Lemon Squeezy** (abo 5 €/mois · 49 €/an, vérif côté client).
+- Extension gratuite sur les stores ; Lemon Squeezy = rail de paiement (Merchant of Record).
+- Runbook de vente/déploiement : `plans/plan-vente-lemonsqueezy.md` · reprise à froid : `plans/checkpoint.md`
+  · point d'entrée Claude Code : `CLAUDE.md` (racine).
+- ⚠️ Le **portail SaaS multi-tenant** (`apps/portal/**`, backend tenant, Clerk) est **hors-scope S1,
+  non committé, volontairement séparé** du chantier extension.
+
 ## Contraintes Techniques
 - Zéro fuite de contexte : L'analyse doit se faire dans le navigateur.
 - UX : Pas de friction inutile, l'extension doit éduquer l'utilisateur.
