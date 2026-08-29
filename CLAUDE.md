@@ -14,14 +14,14 @@ ne porte que des métadonnées.
 **Modèle commercial — freemium :**
 - **Free** (produit d'appel, zéro config, zéro réseau) : `api_key` + `generic_secret`, Block/Redact.
 - **Pro** (clé de licence **Lemon Squeezy**, abo 5 €/mois · 49 €/an) : PII (`iban`, `internal_ip`,
-  `pro_email`, `phone`) + scan fichiers **texte/code** + allowlist.
+  `pro_email`, `phone`) + scan fichiers **texte/code + PDF/DOCX** + allowlist.
 - L'extension est **gratuite sur les stores** ; Lemon Squeezy vend une **clé de licence** vérifiée côté client.
 
 ## Commandes & garde-fous
 
 | Commande | Rôle |
 |----------|------|
-| `npm test` | Vitest — **239 tests, doit être vert** |
+| `npm test` | Vitest — **273 tests, doit être vert** |
 | `npm run test:e2e` | Playwright — extension réelle (`dist/`) + fixtures des 8 sites (28 tests) |
 | `npx tsc --noEmit` | Typecheck — doit être vide |
 | `npm run build` | Typecheck + build extension Chromium → `dist/` |
@@ -48,13 +48,15 @@ ne porte que des métadonnées.
 
 ## État sprint & prochaine action
 
-- Branche : **`sprint/s1-make-sellable`**. Pivot **Gumroad → Lemon Squeezy** committé (`9b39038`).
+- **`master` = référence** (la branche `sprint/s1-make-sellable` a été **fusionnée le 29/08**, merge `e0f6e78`).
+  Pivot **Gumroad → Lemon Squeezy** committé (`9b39038`).
 - **Prochaine action = Jalon 4** → runbook exécutable **`.ai/plans/plan-vente-lemonsqueezy.md`**
   (créer le produit LS, remplir `.env`, héberger la privacy page, landing 1 page, soumission CWS + AMO).
 - Reprise détaillée à froid : **`.ai/plans/checkpoint.md`**.
 - ⚠️ Le chantier **portail SaaS Clerk** (`apps/portal/**`, `src/backend/{schema,queries,config,tenant}`,
-  `migrations/0003_users_table`) est **hors-scope S1, non committé, volontairement à part** —
-  **ne pas le mélanger** aux commits extension.
+  `migrations/0003_users_table`) est **committé sur master (décision 29/08 : on le garde — la doc
+  précédente « non committé » était erronée)** mais **hors périmètre S1 extension** (squelette non
+  fonctionnel, dashboard placeholder) — **ne pas le mélanger** aux commits extension.
 
 ## Renvois documentation (`.ai/`)
 

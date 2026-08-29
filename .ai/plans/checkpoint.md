@@ -37,25 +37,32 @@ early-bird **-20 % la 1ʳᵉ année**, pas de lifetime.
 
 ## État actuel (dernier checkpoint : 2026-07-10)
 
-**Vert** : `npx tsc --noEmit` OK · `npm test` = **245 tests** (32 fichiers) · `npm run build` OK ·
+**Vert** : `npx tsc --noEmit` OK · `npm test` = **273 tests** (35 fichiers) · `npm run build` OK ·
 `npx playwright test` = **30 e2e** OK.
-Branche : `sprint/s1-make-sellable`. Le **pivot Gumroad → Lemon Squeezy est committé** (`9b39038`) et
+**master = référence** (merge de `sprint/s1-make-sellable` le 29/08, `e0f6e78`). Le **pivot Gumroad → Lemon Squeezy est committé** (`9b39038`) et
 le produit Lemon Squeezy est **créé et configuré** (Store ID `426600`, Product ID `1206351`, checkout
 avec choix mensuel/annuel intégré) — `.env` rempli, checkout testé en Test Mode : activation licence
 OK, statut Pro actif dans l'extension. Site `prompt-redact-site` en ligne, prod verrouillée en
 coming-soon (`MAINTENANCE=true`), preview restreint à l'email owner via Cloudflare Access.
 Prochaine action = **L5** (recette manuelle 5 sites, voir `sprint-launch.md`).
 Le chantier portail SaaS (Clerk auth :
-`apps/portal/**`, `backend/{schema,queries,config,tenant}`, `migrations/0003_users_table`) reste
-**non committé, à part** — ne pas mélanger.
+`apps/portal/**`, `backend/{schema,queries,config,tenant}`, `migrations/0003_users_table`) est
+**committé sur master (décision 29/08 : on le garde — la doc « non committé » était erronée)** mais
+**hors périmètre S1 extension** — ne pas mélanger.
 
 ### ✅ Fait
 - **Modèle d'entitlement (core, pur, testé)** : `src/core/licensing/entitlement.ts`
   (`applyEntitlementToPolicy`, `FREE_RULE_TYPES`, `PRO_RULE_TYPES`, `isFileScanAllowed`,
   `isProEntitlement`) + `verify.ts` (API **Lemon Squeezy** depuis `9b39038`). Exporté via `core/index.ts`.
 - **Gating** : la policy effective désactive les règles Pro en Free ; scan fichiers gaté par
-  `isFileScanEnabled()` — câblé dans `content/index.tsx` → adapters (claude/chatgpt/gemini) →
+  `isFileScanEnabled()` — câblé dans `content/index.tsx` → adapters (8 sites) →
   `guard-adapter.ts` → `file-guard.ts`.
+- **Scan fichiers PDF/DOCX (Pro, 29/08)** : extraction 100 % locale via pdfjs-dist (build legacy,
+  worker conditionné à `chrome.runtime`) + mammoth (`{buffer}`/`{arrayBuffer}` selon l'env),
+  imports dynamiques (chunks séparés, `web_accessible_resources` auto) ; gate `hasScannableInList`
+  (texte OU PDF/DOCX) sur change/drop/paste ; décision `redact` sur binaire → **block** avec message
+  dédié ; limite 10 Mo + toasts (trop volumineux / parsing échoué) ; Free inchangé. Tests ajoutés :
+  binary-file, binary-extract, file-guard (+28 → 273).
 - **License-manager (background)** : `src/extension/background/license-manager.ts`
   (`activateLicense`, `refreshEntitlement`, `deactivateLicense`, `entitlementFromCheck` pur avec
   **grâce offline 7 j**). Re-check quotidien via `LICENSE_REFRESH_ALARM` (`alarms.ts`).
