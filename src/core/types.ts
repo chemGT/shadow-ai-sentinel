@@ -5,7 +5,8 @@ export type RuleType =
   | 'internal_ip'
   | 'pro_email'
   | 'phone'
-  | 'generic_secret';
+  | 'generic_secret'
+  | 'card';
 
 /** Action appliquée lorsqu'une règle correspond. */
 export type RuleAction = 'block' | 'redact';

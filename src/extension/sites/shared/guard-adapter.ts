@@ -3,9 +3,9 @@ import {
   applyRedactionsToText,
   evaluateGuard,
 } from '../../content/analyze.js';
-import { reportDlpAction } from '../../content/telemetry-reporter.js';
+import { reportDlpAction, reportTruncation } from '../../content/telemetry-reporter.js';
 import { showBlockAlert } from '../../content/ui-host.js';
-import { redactNotice, resolveLocale } from '../../../ui/i18n/messages.js';
+import { redactNotice, resolveLocale, truncationNotice } from '../../../ui/i18n/messages.js';
 import { startAdapterHealthMonitor } from './adapter-health-monitor.js';
 import type { SiteDom } from './dom-factory.js';
 import { attachFileGuard } from './file-guard.js';
@@ -55,6 +55,37 @@ function showRedactToast(ruleTypes: RuleType[]): void {
   }, 4000);
 }
 
+function showTruncationToast(): void {
+  const locale = resolveLocale();
+  if (!toastHost) {
+    toastHost = document.createElement('div');
+    toastHost.id = 'shadow-ai-sentinel-toast';
+    Object.assign(toastHost.style, {
+      position: 'fixed',
+      bottom: '24px',
+      right: '24px',
+      zIndex: '2147483646',
+      maxWidth: '320px',
+      padding: '12px 16px',
+      borderRadius: '8px',
+      background: '#111827',
+      color: '#f9fafb',
+      fontSize: '13px',
+      fontFamily: 'system-ui, sans-serif',
+      boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+    });
+    document.documentElement.appendChild(toastHost);
+  }
+
+  toastHost.textContent = truncationNotice(locale);
+  toastHost.style.display = 'block';
+  window.setTimeout(() => {
+    if (toastHost) {
+      toastHost.style.display = 'none';
+    }
+  }, 6000);
+}
+
 function runGuard(
   dom: SiteDom,
   host: LlmHost,
@@ -65,6 +96,11 @@ function runGuard(
 ): boolean {
   const text = dom.extractTextFromInput(input);
   const decision = evaluateGuard(text, getPolicy(), getAllowlist?.());
+
+  if (decision.truncated) {
+    showTruncationToast();
+    void reportTruncation(host);
+  }
 
   if (decision.kind === 'allow') {
     return true;

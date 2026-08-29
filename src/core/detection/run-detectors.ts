@@ -1,5 +1,6 @@
 import type { Policy, RuleType } from '../types.js';
 import { findApiKeyMatches } from './api-key.js';
+import { findCardMatches } from './card.js';
 import { findGenericSecretMatches } from './generic-secret.js';
 import { findIbanMatches } from './iban.js';
 import { findInternalIpMatches } from './internal-ip.js';
@@ -40,6 +41,10 @@ export function runAllDetectors(text: string, policy: Policy): RawMatch[] {
 
   if (isRuleEnabled(policy, 'phone')) {
     raw.push(...findPhoneMatches(text));
+  }
+
+  if (isRuleEnabled(policy, 'card')) {
+    raw.push(...findCardMatches(text));
   }
 
   return raw;

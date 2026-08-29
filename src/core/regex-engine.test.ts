@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { createDefaultPolicy } from './defaults.js';
-import { MAX_DETECTION_INPUT_LENGTH } from './detection/limits.js';
+import {
+  DETECTION_CHUNK_SIZE,
+  MAX_DETECTION_TOTAL_LENGTH,
+  wasTextTruncated,
+} from './detection/limits.js';
+import { isValidCardChecksum } from './detection/card.js';
 import { isValidIbanChecksum } from './detection/iban.js';
 import { detectSensitiveData } from './regex-engine.js';
 import type { Policy } from './types.js';
@@ -180,12 +185,52 @@ describe('detectSensitiveData — policy', () => {
 });
 
 describe('detectSensitiveData — limites', () => {
-  it('tronque les entrées trop longues sans planter', () => {
+  it('détecte un secret situé bien au-delà de l’ancien seuil de 100k grâce au chunking', () => {
+    // Avant le fix : tout ce qui suivait 100k caractères était tronqué en silence — une clé
+    // placée après un simple bourrage passait donc à travers le DLP sans aucune détection.
     const policy = enableAllRules(createDefaultPolicy());
-    const padding = 'x'.repeat(MAX_DETECTION_INPUT_LENGTH + 5000);
+    const padding = 'x'.repeat(DETECTION_CHUNK_SIZE + 5000);
     const text = `${padding} AKIAIOSFODNN7EXAMPLE`;
     const matches = detectSensitiveData(text, policy);
+    expect(matches.some((m) => m.ruleType === 'api_key')).toBe(true);
+  });
+
+  it('détecte un secret à cheval sur une frontière de fenêtre (chevauchement)', () => {
+    const policy = enableAllRules(createDefaultPolicy());
+    // Place la clé (précédée d'un espace, requis par la frontière `\b` du motif AKIA) pour
+    // qu'elle chevauche exactement la fin de la première fenêtre (DETECTION_CHUNK_SIZE) : sans
+    // chevauchement suffisant, ni le chunk 1 (clé coupée) ni un chunk 2 mal placé ne la
+    // verraient en entier.
+    const keyStart = DETECTION_CHUNK_SIZE - 10;
+    const padding = 'x'.repeat(keyStart - 1);
+    const text = `${padding} AKIAIOSFODNN7EXAMPLE`;
+    const matches = detectSensitiveData(text, policy);
+    const match = matches.find((m) => m.ruleType === 'api_key');
+    expect(match).toBeDefined();
+    expect(text.slice(match!.start, match!.end)).toBe('AKIAIOSFODNN7EXAMPLE');
+  });
+
+  it('ne détecte pas deux fois un secret trouvé dans la zone de chevauchement', () => {
+    const policy = enableAllRules(createDefaultPolicy());
+    const keyStart = DETECTION_CHUNK_SIZE - 10;
+    const padding = 'x'.repeat(keyStart - 1);
+    const text = `${padding} AKIAIOSFODNN7EXAMPLE`;
+    const matches = detectSensitiveData(text, policy);
+    expect(matches.filter((m) => m.ruleType === 'api_key').length).toBe(1);
+  });
+
+  it('tronque (avec perte) au-delà du plafond absolu, sans planter', () => {
+    const policy = enableAllRules(createDefaultPolicy());
+    const padding = 'x'.repeat(MAX_DETECTION_TOTAL_LENGTH + 5000);
+    const text = `${padding} AKIAIOSFODNN7EXAMPLE`;
+    expect(wasTextTruncated(text)).toBe(true);
+    const matches = detectSensitiveData(text, policy);
     expect(matches.some((m) => m.ruleType === 'api_key')).toBe(false);
+  });
+
+  it('wasTextTruncated — seuil exact', () => {
+    expect(wasTextTruncated('x'.repeat(MAX_DETECTION_TOTAL_LENGTH))).toBe(false);
+    expect(wasTextTruncated('x'.repeat(MAX_DETECTION_TOTAL_LENGTH + 1))).toBe(true);
   });
 
   it('reste rapide sur ~10k caractères', () => {
@@ -195,5 +240,62 @@ describe('detectSensitiveData — limites', () => {
     detectSensitiveData(text, policy);
     const elapsed = performance.now() - start;
     expect(elapsed).toBeLessThan(50);
+  });
+});
+
+describe('isValidCardChecksum (Luhn)', () => {
+  it('valide des numéros de test connus (Visa/Mastercard/Amex)', () => {
+    expect(isValidCardChecksum('4111 1111 1111 1111')).toBe(true);
+    expect(isValidCardChecksum('5500000000000004')).toBe(true);
+    expect(isValidCardChecksum('3782 822463 10005')).toBe(true);
+  });
+
+  it('rejette un numéro au checksum invalide', () => {
+    expect(isValidCardChecksum('4111 1111 1111 1112')).toBe(false);
+  });
+
+  it('rejette une longueur hors bornes (13-19)', () => {
+    expect(isValidCardChecksum('411111')).toBe(false);
+    expect(isValidCardChecksum('4'.repeat(20))).toBe(false);
+  });
+});
+
+describe('detectSensitiveData — card', () => {
+  it('détecte une carte Visa valide (Luhn) et masque avec le bon token', () => {
+    const text = 'ma carte : 4111 1111 1111 1111 merci';
+    const matches = detectSensitiveData(text, enableAllRules(createDefaultPolicy()));
+    const card = matches.find((m) => m.ruleType === 'card');
+    expect(card).toBeDefined();
+    expect(card?.replacementToken).toBe('[REDACTED_CARD]');
+  });
+
+  it('ignore un numéro de 16 chiffres au checksum Luhn invalide (ex. numéro de commande)', () => {
+    const text = 'commande n° 1234567890123456';
+    const matches = detectSensitiveData(text, enableAllRules(createDefaultPolicy()));
+    expect(matches.some((m) => m.ruleType === 'card')).toBe(false);
+  });
+
+  it('ne scanne pas card si désactivé', () => {
+    const text = '4111 1111 1111 1111';
+    const policy = createDefaultPolicy();
+    const disabled = {
+      ...policy,
+      rules: policy.rules.map((r) => (r.type === 'card' ? { ...r, enabled: false } : r)),
+    };
+    const matches = detectSensitiveData(text, disabled);
+    expect(matches.some((m) => m.ruleType === 'card')).toBe(false);
+  });
+
+  it('ne remonte pas de faux positif "card" sur un IBAN déjà détecté (priorité iban)', () => {
+    const text = 'RIB : FR76 3000 6000 0112 3456 7890 189 merci';
+    const matches = detectSensitiveData(text, enableAllRules(createDefaultPolicy()));
+    expect(matches.some((m) => m.ruleType === 'iban')).toBe(true);
+    expect(matches.some((m) => m.ruleType === 'card')).toBe(false);
+  });
+
+  it('ignore un numéro de téléphone FR (trop court pour une carte)', () => {
+    const text = 'appelez le 06 12 34 56 78';
+    const matches = detectSensitiveData(text, enableAllRules(createDefaultPolicy()));
+    expect(matches.some((m) => m.ruleType === 'card')).toBe(false);
   });
 });

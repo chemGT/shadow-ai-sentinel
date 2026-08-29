@@ -8,6 +8,7 @@ import { createDefaultPolicy } from '../../core/defaults.js';
 export interface LocalStats {
   blocked: number;
   redacted: number;
+  truncated: number;
 }
 import { validatePolicy } from '../../core/validation/policy.js';
 import { getExtensionApi } from './browser-api.js';
@@ -155,12 +156,17 @@ export async function getLocalStats(): Promise<LocalStats> {
   const result = await storageGet<LocalStats>(STORAGE_KEYS.stats);
   const value = result[STORAGE_KEYS.stats];
   if (value && typeof value.blocked === 'number' && typeof value.redacted === 'number') {
-    return value;
+    return {
+      blocked: value.blocked,
+      redacted: value.redacted,
+      // Champ ajouté après coup : les stats déjà en storage n'en disposent pas encore.
+      truncated: typeof value.truncated === 'number' ? value.truncated : 0,
+    };
   }
-  return { blocked: 0, redacted: 0 };
+  return { blocked: 0, redacted: 0, truncated: 0 };
 }
 
-export async function incrementLocalStat(kind: 'blocked' | 'redacted'): Promise<void> {
+export async function incrementLocalStat(kind: 'blocked' | 'redacted' | 'truncated'): Promise<void> {
   const stats = await getLocalStats();
   stats[kind] += 1;
   await storageSet({ [STORAGE_KEYS.stats]: stats });

@@ -23,7 +23,7 @@ export interface Entitlement {
 export const FREE_RULE_TYPES: RuleType[] = ['api_key', 'generic_secret'];
 
 /** Types de règles réservés au palier Pro. */
-export const PRO_RULE_TYPES: RuleType[] = ['iban', 'internal_ip', 'pro_email', 'phone'];
+export const PRO_RULE_TYPES: RuleType[] = ['iban', 'internal_ip', 'pro_email', 'phone', 'card'];
 
 /** Entitlement gratuit par défaut. */
 export function createFreeEntitlement(now: Date = new Date()): Entitlement {

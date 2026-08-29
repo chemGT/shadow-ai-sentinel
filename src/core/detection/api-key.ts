@@ -9,6 +9,11 @@ const API_KEY_PATTERNS: ApiKeyPattern[] = [
   { source: /\bsk-[A-Za-z0-9_-]{20,255}\b/g, ruleType: 'api_key' },
   { source: /\bsk-proj-[A-Za-z0-9_-]{10,255}\b/g, ruleType: 'api_key' },
   { source: /\bsk-ant-[A-Za-z0-9_-]{10,255}\b/g, ruleType: 'api_key' },
+  // Stripe : underscore (pas tiret) — distinct des clés `sk-...` ci-dessus, aucune collision.
+  { source: /\bsk_live_[A-Za-z0-9]{10,255}\b/g, ruleType: 'api_key' },
+  { source: /\bsk_test_[A-Za-z0-9]{10,255}\b/g, ruleType: 'api_key' },
+  { source: /\brk_live_[A-Za-z0-9]{10,255}\b/g, ruleType: 'api_key' },
+  { source: /\brk_test_[A-Za-z0-9]{10,255}\b/g, ruleType: 'api_key' },
   { source: /\bghp_[A-Za-z0-9]{36,255}\b/g, ruleType: 'api_key' },
   { source: /\bgithub_pat_[A-Za-z0-9_]{22,255}\b/g, ruleType: 'api_key' },
   { source: /\bglpat-[A-Za-z0-9_-]{20,255}\b/g, ruleType: 'api_key' },

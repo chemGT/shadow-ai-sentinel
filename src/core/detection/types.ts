@@ -14,4 +14,5 @@ export const RULE_PRIORITY: Record<RuleType, number> = {
   internal_ip: 3,
   pro_email: 4,
   phone: 5,
+  card: 6,
 };

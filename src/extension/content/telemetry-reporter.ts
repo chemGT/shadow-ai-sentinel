@@ -8,6 +8,20 @@ import { resolveLocale } from '../../ui/i18n/messages.js';
 import { sendMessage } from '../platform/runtime.js';
 import { incrementLocalStat } from '../platform/storage.js';
 
+/**
+ * Événement de troncature (texte au-delà du plafond de scan, cf. `core/detection/limits.ts`).
+ * Compteur local uniquement (jamais envoyé à un serveur) : le schéma `TelemetryEvent` cloud
+ * exige `ruleType`/`action` (liés aux règles de policy), qui n'ont pas de sens ici — créer un
+ * type d'événement dédié demanderait d'étendre le schéma API + la base (hors périmètre de ce
+ * correctif). Le compteur local suffit à rendre l'événement visible (popup) sans ce chantier.
+ */
+export async function reportTruncation(host: LlmHost): Promise<void> {
+  void incrementLocalStat('truncated');
+  console.warn('[Shadow AI Sentinel] Texte tronqué avant analyse DLP (plafond dépassé)', {
+    host,
+  });
+}
+
 export async function reportDlpAction(
   ruleType: RuleType,
   action: RuleAction,

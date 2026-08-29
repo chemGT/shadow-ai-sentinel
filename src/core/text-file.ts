@@ -1,5 +1,3 @@
-import { truncateForDetection } from './detection/limits.js';
-
 /** Taille max lue en mémoire (évite blocage UI sur gros fichiers). */
 export const MAX_TEXT_FILE_BYTES = 5 * 1024 * 1024;
 
@@ -71,8 +69,10 @@ export function readFileAsText(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => {
-      const raw = typeof reader.result === 'string' ? reader.result : '';
-      resolve(truncateForDetection(raw));
+      // Pas de troncature ici : `detectSensitiveData` (regex-engine.ts) scanne par fenêtres
+      // chevauchantes et ne tronque (avec avertissement) qu'au-delà de son propre plafond
+      // absolu — dupliquer une troncature ici la couperait plus tôt, en silence.
+      resolve(typeof reader.result === 'string' ? reader.result : '');
     };
     reader.onerror = () => reject(reader.error ?? new Error('FileReader failed'));
     reader.readAsText(file);

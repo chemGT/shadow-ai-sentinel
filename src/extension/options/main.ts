@@ -25,6 +25,7 @@ const RULE_LABELS: Record<RuleType, string> = {
   pro_email: 'Email professionnel',
   phone: 'Téléphone',
   generic_secret: 'Secret générique',
+  card: 'Carte bancaire',
 };
 
 const tenantIdEl = document.getElementById('tenantId') as HTMLInputElement;

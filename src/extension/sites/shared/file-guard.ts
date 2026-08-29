@@ -15,7 +15,7 @@ import {
   evaluateGuard,
   type GuardDecision,
 } from '../../content/analyze.js';
-import { reportDlpAction } from '../../content/telemetry-reporter.js';
+import { reportDlpAction, reportTruncation } from '../../content/telemetry-reporter.js';
 import { showBlockAlert } from '../../content/ui-host.js';
 import { extractBinaryText } from './binary-extract.js';
 import {
@@ -25,6 +25,7 @@ import {
   fileScanFailedNotice,
   fileTooLargeNotice,
   resolveLocale,
+  truncationNotice,
 } from '../../../ui/i18n/messages.js';
 
 export type FileGuardOptions = {
@@ -92,11 +93,18 @@ function showFileScanFailedToast(fileName: string): void {
   showToast(fileScanFailedNotice(fileName, resolveLocale()));
 }
 
+function showFileTruncatedToast(fileName: string): void {
+  const safeName = fileName.replace(/[<>]/g, '');
+  const locale = resolveLocale();
+  const base = truncationNotice(locale);
+  showToast(locale === 'fr' ? `Fichier « ${safeName} » : ${base}` : `File “${safeName}”: ${base}`);
+}
+
 type ProcessedFileResult =
-  | { status: 'ok'; file: File }
+  | { status: 'ok'; file: File; truncated?: boolean }
   | { status: 'block'; ruleType: RuleType }
   | { status: 'block-unsupported-format'; ruleTypes: RuleType[] }
-  | { status: 'redact'; file: File; ruleTypes: RuleType[] }
+  | { status: 'redact'; file: File; ruleTypes: RuleType[]; truncated?: boolean }
   | { status: 'warn'; file: File; reason: 'too-large' | 'parse-failed' };
 
 async function evaluateExtractedText(
@@ -106,9 +114,10 @@ async function evaluateExtractedText(
   allowlist?: readonly string[],
 ): Promise<ProcessedFileResult> {
   const decision: GuardDecision = evaluateGuard(text, policy, allowlist);
+  const truncated = decision.truncated === true;
 
   if (decision.kind === 'allow') {
-    return { status: 'ok', file };
+    return { status: 'ok', file, truncated };
   }
 
   if (decision.kind === 'block') {
@@ -121,6 +130,7 @@ async function evaluateExtractedText(
     status: 'redact',
     file: buildRedactedFile(file, redacted),
     ruleTypes,
+    truncated,
   };
 }
 
@@ -223,6 +233,10 @@ export async function guardFileList(
       if (primary) {
         void reportDlpAction(primary, 'redact', options.host);
       }
+      if (result.truncated) {
+        showFileTruncatedToast(file.name);
+        void reportTruncation(options.host);
+      }
       continue;
     }
 
@@ -237,6 +251,10 @@ export async function guardFileList(
     }
 
     allowed.push(result.file);
+    if (result.status === 'ok' && result.truncated) {
+      showFileTruncatedToast(file.name);
+      void reportTruncation(options.host);
+    }
   }
 
   return { allowed, blocked };

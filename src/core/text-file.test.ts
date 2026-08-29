@@ -33,10 +33,10 @@ describe('text-file', () => {
     expect(isTextLikeFile(mockFile('empty.txt', ''))).toBe(false);
   });
 
-  it('lit le contenu et tronque au plafond détection', async () => {
+  it('lit le contenu intégralement (le plafond de scan est géré par le moteur de détection)', async () => {
     const content = 'x'.repeat(150_000);
     const text = await readFileAsText(mockFile('big.txt', content));
-    expect(text.length).toBe(100_000);
+    expect(text.length).toBe(150_000);
   });
 
   it('rejette les fichiers trop volumineux', async () => {

@@ -9,6 +9,7 @@ const RULE_LABELS: Record<Locale, Record<RuleType, string>> = {
     internal_ip: 'adresse IP interne',
     pro_email: 'e-mail professionnel',
     phone: 'numéro de téléphone',
+    card: 'carte bancaire',
   },
   en: {
     api_key: 'API key',
@@ -17,6 +18,7 @@ const RULE_LABELS: Record<Locale, Record<RuleType, string>> = {
     internal_ip: 'internal IP address',
     pro_email: 'work email',
     phone: 'phone number',
+    card: 'card number',
   },
 };
 
@@ -146,6 +148,13 @@ export function blockUnsupportedFileFormatCopy(
     hint: 'Only text files can be masked automatically. File content is not sent to a Sentinel server.',
     closeLabel: 'Got it',
   };
+}
+
+/** Toast — le texte dépassait le plafond de scan : la fin n'a pas été analysée. */
+export function truncationNotice(locale: Locale): string {
+  return locale === 'fr'
+    ? 'Texte très volumineux : la fin du message n’a pas été analysée par le DLP avant envoi.'
+    : 'Very large text: the end of the message was not scanned by DLP before sending.';
 }
 
 /** Toast — pièce jointe binaire trop volumineuse pour être scannée. */

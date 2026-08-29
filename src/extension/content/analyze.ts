@@ -1,10 +1,11 @@
+import { wasTextTruncated } from '../../core/detection/limits.js';
 import { detectSensitiveData } from '../../core/regex-engine.js';
 import type { DetectionMatch, Policy, RuleAction, RuleType } from '../../core/types.js';
 
 export type GuardDecision =
-  | { kind: 'allow' }
-  | { kind: 'block'; match: DetectionMatch }
-  | { kind: 'redact'; matches: DetectionMatch[] };
+  | { kind: 'allow'; truncated?: boolean }
+  | { kind: 'block'; match: DetectionMatch; truncated?: boolean }
+  | { kind: 'redact'; matches: DetectionMatch[]; truncated?: boolean };
 
 function getRuleAction(policy: Policy, ruleType: RuleType): RuleAction | null {
   const rule = policy.rules.find((r) => r.type === ruleType && r.enabled);
@@ -26,6 +27,8 @@ export function evaluateGuard(
     return { kind: 'allow' };
   }
 
+  const truncated = wasTextTruncated(text);
+
   let matches = detectSensitiveData(text, policy);
 
   if (allowlist && allowlist.length > 0) {
@@ -36,20 +39,20 @@ export function evaluateGuard(
   }
 
   if (matches.length === 0) {
-    return { kind: 'allow' };
+    return { kind: 'allow', ...(truncated ? { truncated } : {}) };
   }
 
   const blockMatch = matches.find((m) => getRuleAction(policy, m.ruleType) === 'block');
   if (blockMatch) {
-    return { kind: 'block', match: blockMatch };
+    return { kind: 'block', match: blockMatch, ...(truncated ? { truncated } : {}) };
   }
 
   const redactMatches = matches.filter((m) => getRuleAction(policy, m.ruleType) === 'redact');
   if (redactMatches.length > 0) {
-    return { kind: 'redact', matches: redactMatches };
+    return { kind: 'redact', matches: redactMatches, ...(truncated ? { truncated } : {}) };
   }
 
-  return { kind: 'allow' };
+  return { kind: 'allow', ...(truncated ? { truncated } : {}) };
 }
 
 /** Remplace les segments détectés par leurs tokens (fin → début). */

@@ -29,6 +29,7 @@ export const REDACT_TOKENS: Record<RuleType, string> = {
   pro_email: '[REDACTED_PRO_EMAIL]',
   phone: '[REDACTED_PHONE]',
   generic_secret: '[REDACTED_SECRET]',
+  card: '[REDACTED_CARD]',
 };
 
 /** Règles par défaut (modes mixtes — cf. plan MVP). */
@@ -39,6 +40,7 @@ export const DEFAULT_RULES: Rule[] = [
   { type: 'internal_ip', action: 'redact', enabled: true },
   { type: 'pro_email', action: 'redact', enabled: false },
   { type: 'phone', action: 'redact', enabled: true },
+  { type: 'card', action: 'redact', enabled: true },
 ];
 
 /** Champs interdits dans tout payload télémétrie (validation API + client). */
@@ -68,6 +70,7 @@ export const ALL_RULE_TYPES: RuleType[] = [
   'pro_email',
   'phone',
   'generic_secret',
+  'card',
 ];
 
 export { LLM_TAB_URL_PATTERNS, PILOT_LLM_HOST, SUPPORTED_LLM_HOSTS } from './llm-hosts.js';
