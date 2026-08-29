@@ -10,37 +10,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased] — Sprint 1 (Make it sellable)
 
 ### Added
-- Support for 5 new LLM sites: Mistral Le Chat (chat.mistral.ai), DeepSeek (chat.deepseek.com), Perplexity (perplexity.ai), Grok (grok.com), Microsoft Copilot (copilot.microsoft.com) — prompt + text/code attachment interception with the same guard as Claude/ChatGPT/Gemini
-- Multi-tenant Postgres schema (tenants, api_keys, policies, telemetry_events, audit_log)
-- Tenant isolation middleware for Express backend
-- API key rotation with scopes and grace period
-- Audit log append-only
-- Aggregated events endpoint `/events/aggregate` with cache
-- CSV export endpoint `/events/export`
-- Background jobs (purge, aggregation, Paddle dunning hook)
-- Next.js portal skeleton with Clerk auth (EN/FR)
-- Organizations, members, roles (owner/admin/viewer)
-- Dashboard read-only charts (Recharts)
-- Policy JSON editor (Monaco) with validation
-- API key management in portal
-- Paddle live setup: products, pricing, checkout overlay
-- Paddle webhooks → tenant entitlements sync
-- Feature gating middleware + UI
-- 4-step signup wizard with policy presets
-- Extension deep-link provisioning `chrome-extension://…#config=…`
+- Support for 5 new LLM sites: Mistral Le Chat (chat.mistral.ai), DeepSeek (chat.deepseek.com), Perplexity (perplexity.ai), Grok (grok.com), Microsoft Copilot (copilot.microsoft.com) — prompt + text/code attachment interception with the same guard as Claude/ChatGPT/Gemini (8 sites total)
+- PDF/DOCX attachment scanning (Pro): local text extraction (pdfjs-dist, mammoth), same block/redact-as-block decision pipeline as text files
+- Pro licensing via Lemon Squeezy license key (client-side verification, no server secret) with 7-day offline grace period and daily background re-check
+- Redact/Block rules table in the options page, with visible confirmation before applying a change
+- Fail-closed adapter health-check: broken site adapter falls back to the configured `fail_mode` instead of silently allowing traffic
 - False positive signal in extension (safe schema, no prompt text)
-- Marketing landing + pricing page (EN/FR)
-- Trust/Security/Privacy/CGU/DPA pages
-- Monitoring: Sentry + Better Stack + PostHog
-- E2E Playwright suite: signup → install → first alert
+- Multi-tenant Postgres schema (tenants, api_keys, policies, telemetry_events, audit_log) and tenant isolation middleware for the Express backend — scaffolding, not wired to the extension's licensing flow
+- API key issuance/revocation/rotation with scopes and grace period
+- Aggregated events endpoint `/events/aggregate` (cached) and CSV export endpoint `/events/export`
+- Background jobs: DB purge, aggregation warm-up, dunning check (generic overdue-tenant suspension, not tied to a specific payment provider)
+- Next.js portal skeleton with Clerk authentication (sign-up/sign-in, EN/FR) and a placeholder dashboard page — early scaffolding, not part of the sellable extension surface
+- E2E Playwright suite (real extension build, fixtures for all 8 sites): block on Enter, block on send click, benign text passes, Pro redact, Pro file-guard, adapter health-check banner
 
 ### Changed
 - Reduced `host_permissions` to minimum required (MV3 store compliance)
+- Migrated Pro billing from Gumroad to Lemon Squeezy (subscription pricing, EU VAT/US tax handled by Lemon Squeezy as merchant of record)
 
 ### Security
-- Tenant data isolation enforced at query layer (no cross-tenant leakage)
+- Tenant data isolation enforced at query layer (no cross-tenant leakage) — backend scaffolding, not yet exposed to end users
 - API keys stored as bcrypt hash
-- Paddle webhook HMAC signature verification
 
 ---
 

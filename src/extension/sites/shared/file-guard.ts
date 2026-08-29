@@ -1,4 +1,8 @@
 import {
+  isBinaryFileTooLarge,
+  isBinaryScannableFile,
+} from '../../../core/binary-file.js';
+import {
   buildRedactedFile,
   consumeReplacedInputMark,
   isTextLikeFile,
@@ -13,9 +17,13 @@ import {
 } from '../../content/analyze.js';
 import { reportDlpAction } from '../../content/telemetry-reporter.js';
 import { showBlockAlert } from '../../content/ui-host.js';
+import { extractBinaryText } from './binary-extract.js';
 import {
   blockFileModalCopy,
+  blockUnsupportedFileFormatCopy,
   fileRedactNotice,
+  fileScanFailedNotice,
+  fileTooLargeNotice,
   resolveLocale,
 } from '../../../ui/i18n/messages.js';
 
@@ -30,8 +38,7 @@ export type FileGuardOptions = {
 
 let toastHost: HTMLDivElement | null = null;
 
-function showFileRedactToast(ruleTypes: RuleType[], fileName: string): void {
-  const locale = resolveLocale();
+function showToast(message: string): void {
   if (!toastHost) {
     toastHost = document.createElement('div');
     toastHost.id = 'shadow-ai-sentinel-file-toast';
@@ -52,7 +59,7 @@ function showFileRedactToast(ruleTypes: RuleType[], fileName: string): void {
     document.documentElement.appendChild(toastHost);
   }
 
-  toastHost.textContent = fileRedactNotice(ruleTypes, fileName, locale);
+  toastHost.textContent = message;
   toastHost.style.display = 'block';
   window.setTimeout(() => {
     if (toastHost) {
@@ -61,33 +68,43 @@ function showFileRedactToast(ruleTypes: RuleType[], fileName: string): void {
   }, 5000);
 }
 
+function showFileRedactToast(ruleTypes: RuleType[], fileName: string): void {
+  showToast(fileRedactNotice(ruleTypes, fileName, resolveLocale()));
+}
+
 function showBlockFileAlert(ruleType: RuleType, fileName: string): void {
   const locale = resolveLocale();
   const copy = blockFileModalCopy(ruleType, fileName, locale);
   showBlockAlert(ruleType, copy);
 }
 
+function showUnsupportedFormatBlockAlert(ruleTypes: RuleType[], fileName: string): void {
+  const locale = resolveLocale();
+  const copy = blockUnsupportedFileFormatCopy(ruleTypes, fileName, locale);
+  showBlockAlert(ruleTypes[0] ?? 'generic_secret', copy);
+}
+
+function showFileTooLargeToast(fileName: string): void {
+  showToast(fileTooLargeNotice(fileName, resolveLocale()));
+}
+
+function showFileScanFailedToast(fileName: string): void {
+  showToast(fileScanFailedNotice(fileName, resolveLocale()));
+}
+
 type ProcessedFileResult =
   | { status: 'ok'; file: File }
   | { status: 'block'; ruleType: RuleType }
-  | { status: 'redact'; file: File; ruleTypes: RuleType[] };
+  | { status: 'block-unsupported-format'; ruleTypes: RuleType[] }
+  | { status: 'redact'; file: File; ruleTypes: RuleType[] }
+  | { status: 'warn'; file: File; reason: 'too-large' | 'parse-failed' };
 
-async function processTextFile(
+async function evaluateExtractedText(
   file: File,
+  text: string,
   policy: Policy,
   allowlist?: readonly string[],
 ): Promise<ProcessedFileResult> {
-  if (!isTextLikeFile(file)) {
-    return { status: 'ok', file };
-  }
-
-  let text: string;
-  try {
-    text = await readFileAsText(file);
-  } catch {
-    return { status: 'ok', file };
-  }
-
   const decision: GuardDecision = evaluateGuard(text, policy, allowlist);
 
   if (decision.kind === 'allow') {
@@ -107,7 +124,65 @@ async function processTextFile(
   };
 }
 
-async function guardFileList(
+async function processTextFile(
+  file: File,
+  policy: Policy,
+  allowlist?: readonly string[],
+): Promise<ProcessedFileResult> {
+  let text: string;
+  try {
+    text = await readFileAsText(file);
+  } catch {
+    return { status: 'ok', file };
+  }
+
+  return evaluateExtractedText(file, text, policy, allowlist);
+}
+
+/**
+ * PDF/DOCX : même pipeline de décision que le texte brut, mais une décision "redact" est
+ * impossible à appliquer fidèlement sur un binaire (pas de réécriture en place) — elle est donc
+ * traitée comme un blocage. Taille excessive ou échec de parsing (corrompu/chiffré) : le fichier
+ * passe, avec un avertissement, plutôt qu'un blocage (on ne bloque jamais sur une incertitude).
+ */
+async function processBinaryFile(
+  file: File,
+  policy: Policy,
+  allowlist?: readonly string[],
+): Promise<ProcessedFileResult> {
+  if (isBinaryFileTooLarge(file)) {
+    return { status: 'warn', file, reason: 'too-large' };
+  }
+
+  let text: string;
+  try {
+    text = await extractBinaryText(file);
+  } catch {
+    return { status: 'warn', file, reason: 'parse-failed' };
+  }
+
+  const result = await evaluateExtractedText(file, text, policy, allowlist);
+  if (result.status === 'redact') {
+    return { status: 'block-unsupported-format', ruleTypes: result.ruleTypes };
+  }
+  return result;
+}
+
+async function processFile(
+  file: File,
+  policy: Policy,
+  allowlist?: readonly string[],
+): Promise<ProcessedFileResult> {
+  if (isTextLikeFile(file)) {
+    return processTextFile(file, policy, allowlist);
+  }
+  if (isBinaryScannableFile(file)) {
+    return processBinaryFile(file, policy, allowlist);
+  }
+  return { status: 'ok', file };
+}
+
+export async function guardFileList(
   files: File[],
   options: FileGuardOptions,
 ): Promise<{ allowed: File[]; blocked: boolean }> {
@@ -122,11 +197,21 @@ async function guardFileList(
   let blocked = false;
 
   for (const file of files) {
-    const result = await processTextFile(file, policy, allowlist);
+    const result = await processFile(file, policy, allowlist);
 
     if (result.status === 'block') {
       showBlockFileAlert(result.ruleType, file.name);
       void reportDlpAction(result.ruleType, 'block', options.host);
+      blocked = true;
+      break;
+    }
+
+    if (result.status === 'block-unsupported-format') {
+      showUnsupportedFormatBlockAlert(result.ruleTypes, file.name);
+      const primary = result.ruleTypes[0];
+      if (primary) {
+        void reportDlpAction(primary, 'block', options.host);
+      }
       blocked = true;
       break;
     }
@@ -137,6 +222,16 @@ async function guardFileList(
       const primary = result.ruleTypes[0];
       if (primary) {
         void reportDlpAction(primary, 'redact', options.host);
+      }
+      continue;
+    }
+
+    if (result.status === 'warn') {
+      allowed.push(result.file);
+      if (result.reason === 'too-large') {
+        showFileTooLargeToast(file.name);
+      } else {
+        showFileScanFailedToast(file.name);
       }
       continue;
     }
@@ -161,14 +256,19 @@ function filesFromDataTransfer(dt: DataTransfer | null): File[] {
   return Array.from(dt.files);
 }
 
-function hasTextLikeInList(files: File[]): boolean {
-  return files.some(isTextLikeFile);
+function isScannableFile(file: File): boolean {
+  return isTextLikeFile(file) || isBinaryScannableFile(file);
+}
+
+/** Au moins un fichier scannable (texte, PDF ou DOCX) dans la liste. */
+export function hasScannableInList(files: File[]): boolean {
+  return files.some(isScannableFile);
 }
 
 export function attachFileGuard(options: FileGuardOptions): () => void {
   async function onChange(event: Event): Promise<void> {
     const files = filesFromInput(event.target);
-    if (files.length === 0 || !hasTextLikeInList(files)) {
+    if (files.length === 0 || !hasScannableInList(files)) {
       return;
     }
 
@@ -196,7 +296,7 @@ export function attachFileGuard(options: FileGuardOptions): () => void {
 
   async function onDrop(event: DragEvent): Promise<void> {
     const files = filesFromDataTransfer(event.dataTransfer);
-    if (files.length === 0 || !hasTextLikeInList(files)) {
+    if (files.length === 0 || !hasScannableInList(files)) {
       return;
     }
 
@@ -218,7 +318,7 @@ export function attachFileGuard(options: FileGuardOptions): () => void {
 
   async function onPaste(event: ClipboardEvent): Promise<void> {
     const files = filesFromDataTransfer(event.clipboardData);
-    if (files.length === 0 || !hasTextLikeInList(files)) {
+    if (files.length === 0 || !hasScannableInList(files)) {
       return;
     }
 

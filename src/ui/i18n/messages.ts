@@ -114,6 +114,56 @@ export function blockFileModalCopy(
   };
 }
 
+/** Modale Block — PDF/DOCX dont la décision policy est "redact" (non réécrivable en place). */
+export function blockUnsupportedFileFormatCopy(
+  ruleTypes: RuleType[],
+  fileName: string,
+  locale: Locale,
+): BlockModalCopy {
+  const safeName = fileName.replace(/[<>]/g, '');
+  const unique = [...new Set(ruleTypes)];
+  const labels = unique.map((t) => ruleLabel(t, locale));
+
+  if (locale === 'fr') {
+    return {
+      title: 'Fichier bloqué',
+      headline: `Donnée sensible détectée dans « ${safeName} » : ${labels.join(', ')}`,
+      body:
+        'Ce format de fichier ne peut pas être caviardé sur place : le fichier a donc été ' +
+        'bloqué plutôt que masqué. Retirez la donnée sensible du document ou copiez-collez le texte ' +
+        'nécessaire dans le message.',
+      hint: 'Seuls les fichiers texte peuvent être masqués automatiquement. Le contenu du fichier n’est pas envoyé à un serveur Sentinel.',
+      closeLabel: "J'ai compris",
+    };
+  }
+
+  return {
+    title: 'File blocked',
+    headline: `Sensitive data in “${safeName}”: ${labels.join(', ')}`,
+    body:
+      'This file format cannot be redacted in place, so it was blocked instead of masked. ' +
+      'Remove the sensitive data from the document, or copy the text you need directly into the message.',
+    hint: 'Only text files can be masked automatically. File content is not sent to a Sentinel server.',
+    closeLabel: 'Got it',
+  };
+}
+
+/** Toast — pièce jointe binaire trop volumineuse pour être scannée. */
+export function fileTooLargeNotice(fileName: string, locale: Locale): string {
+  const safeName = fileName.replace(/[<>]/g, '');
+  return locale === 'fr'
+    ? `Fichier « ${safeName} » trop volumineux pour être analysé : envoyé sans vérification DLP.`
+    : `File “${safeName}” is too large to scan: sent without DLP verification.`;
+}
+
+/** Toast — PDF/DOCX illisible (corrompu, chiffré…), laissé passer sans blocage. */
+export function fileScanFailedNotice(fileName: string, locale: Locale): string {
+  const safeName = fileName.replace(/[<>]/g, '');
+  return locale === 'fr'
+    ? `Fichier « ${safeName} » illisible (corrompu ou protégé) : analyse DLP impossible, envoyé sans vérification.`
+    : `File “${safeName}” could not be read (corrupted or protected): DLP scan skipped, sent without verification.`;
+}
+
 /** Toast Redact — fichier texte remplacé avant envoi. */
 export function fileRedactNotice(
   ruleTypes: RuleType[],
