@@ -1,8 +1,15 @@
 import type { RawMatch } from './types.js';
 
-/** FR : 0X XX XX XX XX ou +33 X XX XX XX XX */
+/**
+ * FR : 0X XX XX XX XX ou +33 X XX XX XX XX.
+ * Ancrage de tête `(?<![\w+])` et non `\b` : une frontière `\b` ne peut exister avant un `+`
+ * précédé d'un espace ou d'un début de chaîne (`+` et espace sont tous deux non-`\w`), si bien
+ * qu'un `\b` de tête empêchait tout numéro au format international `+33…` d'être reconnu — et le
+ * motif E.164 ci-dessous l'exclut explicitement. Le lookbehind négatif conserve le refus des
+ * numéros collés à un mot/chiffre (`x0612345678`) tout en couvrant `+33…`.
+ */
 const FR_PHONE_PATTERN =
-  /\b(?:(?:\+33|0033)[\s.-]?[1-9](?:[\s.-]?\d{2}){4}|0[1-9](?:[\s.-]?\d{2}){4})\b/g;
+  /(?<![\w+])(?:(?:\+33|0033)[\s.-]?[1-9](?:[\s.-]?\d{2}){4}|0[1-9](?:[\s.-]?\d{2}){4})\b/g;
 
 /** E.164 international (hors +33 déjà couvert). */
 const E164_PATTERN = /\+[1-9]\d{7,14}\b/g;
