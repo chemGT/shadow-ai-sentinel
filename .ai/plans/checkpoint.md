@@ -6,6 +6,9 @@
 
 > 🎯 **PROCHAINE ACTION** : **Sprint R — Résilience**, R1 **terminé** (`sprint-resilience.md`),
 > reste **R2/R3** (OTA sélecteurs signés Ed25519 via Cloudflare Workers + KV) puis **R4**.
+> ⚠️ **File sécurité ouverte (2026-09-15)** : `.ai/security/bypasses-2026-09.md` — 1 contournement
+> HAUTE corrigé (`+33…` non détecté), items 🟠/🟡 documentés ; la **normalisation défensive avant scan**
+> est l'item au plus fort rendement mais elle touche les offsets de caviardage (à concevoir).
 > Sprint L reste en parallèle sur item **L5** (recette manuelle des 5 nouveaux sites, M14–M24 de
 > `.ai/docs/matrice-tests-multi-llm.md`), en cours côté utilisateur. Roadmap complète :
 > **`master-plan.md`** (« master plan ») — séquence L (launch) → R (fail-closed + OTA sélecteurs,
@@ -118,6 +121,18 @@ Charger `dist/` via `chrome://extensions` (mode dev) pour tester la popup + le g
 ---
 
 ## Journal des checkpoints
+- **2026-09-15** — **Corpus d'évasion adversarial du moteur DLP** (`4a1188d` + `d30a9bc`, non poussés) :
+  `.ai/security/evasion-threat-model.md` (modèle de menace vérifié sur le code réel),
+  `src/core/detection/evasion-corpus.test.ts` (35 cas exécutables), `.ai/security/bypasses-2026-09.md`
+  (findings confirmés par exécution). **Contournement de gravité HAUTE corrigé : les numéros `+33…`
+  n'étaient JAMAIS détectés** — l'ancrage `\b` ne peut pas exister avant un `+` et le motif E.164
+  exclut explicitement `+33` ; c'est la forme la plus courante en France, donc tout le PII téléphone
+  en écriture internationale échappait au DLP, **Pro inclus**. Correctif : `\b` → `(?<![\w+])`.
+  Suite 325 tests verts (36 fichiers), `tsc` propre. **Restent ouverts** (documentés, non corrigés) :
+  normalisation défensive avant scan (fermerait NBSP / zero-width / pleine-chasse d'un coup, mais
+  impacte les offsets de caviardage — à concevoir), élargissement des séparateurs IBAN/carte,
+  sous-domaines `pro_email`, formats fichiers non extractibles (XLSX/PPTX/RTF/ZIP/images),
+  PDF image ou chiffré, texte en commentaire DOCX, `.txt` > 5 Mo en **fail-open silencieux**.
 - **2026-07-01** — Jalons 1 & 2 (core) livrés : licensing + gating + license-manager + popup +
   manifest. 206 tests verts. Allowlist démarrée (`evaluateGuard` fait, câblage restant).
 - **2026-07-01** — **Allowlist terminée** (4 milestones committés jusqu'à `a5e67c3`) : storage +
