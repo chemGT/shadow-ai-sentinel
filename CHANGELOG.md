@@ -9,7 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] — Open source
 
+### Fixed
+- Flaky e2e suite (~50 % of runs): the harness evaluated code in the extension service worker before Chromium had injected `chrome.*` bindings; it now waits for `chrome.storage` (0 failures over 12 full runs)
+
 ### Added
+- `ROADMAP.md`, `docs/README.md` index, `docs/compliance/` (GDPR/NIS2/AI Act notes, employee-notice templates EN/FR), `docs/policy.example.json` (validated by a unit test)
 - English README (+ `README.fr.md`), `SECURITY.md` (private vulnerability reporting), `CONTRIBUTING.md` (incl. how to add a detector), `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1)
 - Issue forms (false positive — prefilled by the extension —, missed detection, new detector, broken site adapter, bug) and a pull-request template
 - CI: e2e Playwright job, CodeQL (security-extended), OpenSSF Scorecard (public repo only), tag-triggered release workflow (Chromium zip + unsigned Firefox xpi, SHA256SUMS, build provenance attestation), Dependabot (npm + actions), least-privilege workflow permissions
@@ -21,12 +25,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Allowlist matching applies the same normalization
 
 ### Changed
+- First-run notice no longer claims that metadata is shared with the organization (nothing is transmitted)
+- `CLAUDE.md` rewritten in English for contributors using coding agents
 - Project relicensed under **Apache-2.0** (`LICENSE`, `NOTICE`); previously unlicensed/ISC
 - All features are available to everyone: PII rules (IBAN, card, internal IP, work email, phone), PDF/DOCX/text attachment scanning and allowlist no longer require a license
 - Popup shows an "Open source" badge and a source-code link instead of the upgrade CTA
 - Store listings, privacy policy and permission justifications updated: no third-party service, no network request by default
 
 ### Removed
+- Internal working docs (`.ai/`: commercial plans, sprint tracking, agent prompts, pilot checklists) and `.cursorrules`; public docs moved to `docs/` (threat model, bypass log, ReDoS audit, ADRs, compliance notes, per-site selectors, manual test matrix). `.ai/` is now git-ignored for private notes
 - Express backend (policies API, telemetry ingestion, API keys, Postgres/Drizzle schema and migrations, Clerk JWT auth, dunning jobs), Dockerfile and docker-compose — archived on branch `archive/saas-portal`
 - Extension network code: policy sync, telemetry queue, feedback sender, tenant credentials in options, background alarms; `alarms` permission and optional `http://localhost/*` host permission
 - "Report false positive" now opens a prefilled GitHub issue (rule, site, chosen context, version — never typed text) instead of sending an event to a backend

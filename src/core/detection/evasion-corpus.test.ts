@@ -1,12 +1,12 @@
 /**
- * Corpus adversarial d'évasion du moteur DLP — cf. `.ai/security/evasion-threat-model.md`.
+ * Corpus adversarial d'évasion du moteur DLP — cf. `docs/security/evasion-threat-model.md`.
  *
  * Deux catégories de tests :
  *  - Régressions POSITIVES : la détection DOIT fonctionner (verrou permanent contre une régression).
  *  - `[BYPASS CONNU]` : contournements RÉELS non couverts aujourd'hui. Le test asserte le
  *    comportement ACTUEL (non-détection) pour rester vert, tout en traçant le trou : si un jour la
  *    détection est renforcée, le test échouera et forcera sa mise à jour (le trou ne sera pas oublié).
- *    Chaque cas est daté + cause racine `fichier:ligne`, repris dans `.ai/security/bypasses-2026-09.md`.
+ *    Chaque cas est daté + cause racine `fichier:ligne`, repris dans `docs/security/bypasses-2026-09.md`.
  *
  * Autonome : aucune dépendance réseau ni site réel. `File` (Node 20+) sert aux prédicats de fichier.
  */

@@ -1,6 +1,7 @@
 # ADR 002 — File d’attente télémétrie offline
 
-**Statut :** Accepté  
+**Statut :** Remplacé (2026-10-18) — télémétrie et backend retirés lors du passage open source ;
+l'extension n'émet plus aucune requête réseau. Code d'origine : branche `archive/saas-portal`.  
 **Date :** 2026-05-19
 
 ## Contexte

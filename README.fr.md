@@ -63,14 +63,15 @@ npm run build:firefox    # Firefox  → dist-firefox/
 Il protège contre la **fuite par inadvertance**, pas contre un initié déterminé : secrets encodés
 (base64, hex…), images, XLSX/PPTX, archives, PDF scannés et appels hors de la zone de saisie ne sont
 pas couverts. Modèle de menace complet :
-[`.ai/security/evasion-threat-model.md`](.ai/security/evasion-threat-model.md).
+[`docs/security/evasion-threat-model.md`](docs/security/evasion-threat-model.md).
 
 ## Conformité
 
 Outil d'appoint pour une politique d'usage de l'IA générative : il aide à réduire le risque de
 divulgation de données personnelles (RGPD art. 32 — mesures techniques) et de secrets techniques
 (hygiène cyber NIS2). Il ne remplace ni une analyse d'impact, ni une politique d'usage, ni la
-sensibilisation des équipes.
+sensibilisation des équipes. Notes et modèles de notice salarié :
+[`docs/compliance/`](docs/compliance/README.md).
 
 ## Contribuer
 

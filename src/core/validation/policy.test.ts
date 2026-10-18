@@ -39,3 +39,12 @@ describe('validatePolicy', () => {
     }
   });
 });
+
+describe('docs/policy.example.json', () => {
+  it('reste une policy valide (exemple documenté pour l’import dans les options)', async () => {
+    const { readFile } = await import('node:fs/promises');
+    const raw = JSON.parse(await readFile('docs/policy.example.json', 'utf8')) as unknown;
+    const result = validatePolicy(raw);
+    expect(result.ok, result.ok ? '' : result.errors.join(', ')).toBe(true);
+  });
+});

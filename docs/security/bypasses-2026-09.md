@@ -3,7 +3,7 @@
 **Date :** 2026-09-15 · **Méthode :** chaque contournement listé est **confirmé par exécution** du
 corpus `src/core/detection/evasion-corpus.test.ts` (`npx vitest run src/core/detection/evasion-corpus.test.ts`,
 35 tests verts) — ce ne sont **pas** des hypothèses. Modèle de menace détaillé :
-`.ai/security/evasion-threat-model.md`. Suite complète : **325 tests verts**, `tsc` propre.
+`evasion-threat-model.md`. Suite complète : **325 tests verts**, `tsc` propre.
 
 Gravité : **haute** = fuite probable sans intention de contourner (format courant) · **moyenne** =
 fuite réaliste, action simple ou copier-coller · **basse** = nécessite une intention claire de

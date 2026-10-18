@@ -1,22 +1,22 @@
 # Matrice de tests — 8 LLM × 2 navigateurs
 
 > ⚡ **Automatisé** : `npm run test:e2e` (Playwright, `e2e/guard.e2e.ts`) couvre block
-> Enter/clic + passage texte anodin sur les 8 sites, redact Pro et file-guard Pro —
+> Enter/clic + passage texte anodin sur les 8 sites, redact et file-guard —
 > extension réelle chargée, fixtures répliquant les sélecteurs de prod.
 > **Reste manuel** : uniquement la dérive des DOM réels (sélecteurs qui ne matchent
 > plus après un redesign du site) et le comportement des éditeurs riches en vrai
 > (persistance du redact dans Lexical/ProseMirror).
 
-> Phase 7 · Reprendre les scénarios [matrice-tests-pilote-claude.md](./matrice-tests-pilote-claude.md) sur **chaque** plateforme.
+> Recette manuelle avant chaque release (`v*`), sur Chromium et Firefox.
 
 ## Préparation commune
 
 | Étape | Commande / action |
 |-------|-------------------|
-| Build | `npm run ci` |
+| Build | `npm run build && npm run build:firefox` |
 | Chromium | Charger `dist/` |
 | Firefox | Charger `dist-firefox/manifest.json` (temporaire) ou XPI signé |
-| Policy | Import avec `emailDomains` pour F06–F07 |
+| Policy | Importer [`policy.example.json`](policy.example.json) (options → Règles) pour activer `pro_email` |
 | Console | `Adaptateur <Site> actif` selon l’URL |
 
 ## Matrice par site
@@ -35,7 +35,6 @@ Pour chaque ligne, cocher **Chr** (Chromium) et **FF** (Firefox).
 | M08 | Gemini | gemini.google.com | IP 10.x | redact | Token | ☐ | ☐ |
 | M09 | Gemini | gemini.google.com | Téléphone FR | redact | Token | ☐ | ☐ |
 | M10 | Claude | claude.ai | email `@client.com` | redact + allowlist | Token pro | ☐ | ☐ |
-| M11 | Tous | — | Télémétrie | block | `host` correct dans API | ☐ | ☐ |
 | M12 | Claude | claude.ai | `.txt` avec clé AWS | block | Fichier non joint + modale | ☐ | ☐ |
 | M13 | ChatGPT | chatgpt.com | `.csv` avec IBAN | redact | Fichier joint avec tokens | ☐ | ☐ |
 | M14 | Le Chat | chat.mistral.ai | Clé AWS | block (Enter + clic) | Modale, pas d’envoi | ☐ | ☐ |
@@ -48,16 +47,7 @@ Pour chaque ligne, cocher **Chr** (Chromium) et **FF** (Firefox).
 | M21 | Grok | grok.com | IBAN | redact | Token persistant (Tiptap) | ☐ | ☐ |
 | M22 | Copilot | copilot.microsoft.com | Clé AWS | block (Enter + clic) | Modale, pas d’envoi | ☐ | ☐ |
 | M23 | Copilot | copilot.microsoft.com | IBAN | redact | Token dans textarea | ☐ | ☐ |
-| M24 | Nouveaux sites | — | `.txt` avec clé AWS | block (Pro) | File-guard actif sur chaque nouveau site | ☐ | ☐ |
-
-## Vérification télémétrie (M11)
-
-Après un Block sur ChatGPT :
-
-```bash
-curl -s -H "Authorization: Bearer <clé>" http://localhost:3000/telemetry
-# ou inspecter les logs API — host attendu : chatgpt.com
-```
+| M24 | Nouveaux sites | — | `.txt` avec clé AWS | block | File-guard actif sur chaque nouveau site | ☐ | ☐ |
 
 ## Rupture sélecteurs
 

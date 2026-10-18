@@ -12,7 +12,7 @@
 
 - [ ] Positive **and** negative tests added
 - [ ] Evasion corpus updated (`src/core/detection/evasion-corpus.test.ts`) when a bypass is closed or documented
-- [ ] Regex is bounded (no nested quantifiers) — see `.ai/security/redos-audit-results.md`
+- [ ] Regex is bounded (no nested quantifiers) — see `docs/security/redos-audit.md`
 
 ## Privacy
 

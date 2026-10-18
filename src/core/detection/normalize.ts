@@ -1,5 +1,5 @@
 /**
- * Normalisation défensive avant scan (cf. `.ai/security/bypasses-2026-09.md`, section D).
+ * Normalisation défensive avant scan (cf. `docs/security/bypasses-2026-09.md`, section D).
  *
  * Les motifs des détecteurs sont ASCII : un caractère invisible intercalé, un espace Unicode
  * exotique ou un homoglyphe suffit à casser un match. Cette passe produit une version

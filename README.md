@@ -92,7 +92,7 @@ config file. It is not designed to stop a determined insider:
 - requests sent outside the page's message box (direct API calls, other apps) are out of reach.
 
 The full threat model and the adversarial test corpus are public:
-[`.ai/security/evasion-threat-model.md`](.ai/security/evasion-threat-model.md) ·
+[`docs/security/evasion-threat-model.md`](docs/security/evasion-threat-model.md) ·
 [`src/core/detection/evasion-corpus.test.ts`](src/core/detection/evasion-corpus.test.ts).
 
 ## Privacy
@@ -122,6 +122,11 @@ e2e/             # Playwright suite + site fixtures
 ```
 
 Stack: TypeScript, React 19, Vite + CRXJS, Vitest, Playwright, pdf.js, mammoth.
+
+## Documentation
+
+[docs/](docs/README.md) — threat model, bypass log, ReDoS audit, compliance notes (GDPR, NIS2,
+AI Act) with employee-notice templates, per-site selectors. What's next: [ROADMAP.md](ROADMAP.md).
 
 ## Contributing
 

@@ -68,7 +68,7 @@ The adversarial corpus (`src/core/detection/evasion-corpus.test.ts`) uses two ki
   (and the docs) to be updated.
 
 Closing a known bypass = flip its test to a positive assertion and update
-`.ai/security/bypasses-2026-09.md`.
+`docs/security/bypasses-2026-09.md`.
 
 ## Commits and pull requests
 

@@ -232,8 +232,8 @@ export function redactNotice(ruleTypes: RuleType[], locale: Locale): string {
 
 export function employeeNoticeTitle(locale: Locale): string {
   return locale === 'fr'
-    ? 'Shadow AI Sentinel — information employé'
-    : 'Shadow AI Sentinel — employee information';
+    ? 'Shadow AI Sentinel — à savoir'
+    : 'Shadow AI Sentinel — what you should know';
 }
 
 /** Notice premier lancement — sections courtes, compréhensibles sans formation. */
@@ -243,13 +243,13 @@ export function employeeNoticeSections(locale: Locale): EmployeeNoticeSection[] 
       {
         heading: 'Pourquoi cette extension ?',
         paragraphs: [
-          'Votre organisation l’a déployée pour limiter l’envoi accidentel de données sensibles vers les IA publiques (Claude, ChatGPT, Gemini, Le Chat, DeepSeek, Perplexity, Grok, Copilot — clés API, IBAN, secrets, etc.).',
+          'Elle limite l’envoi accidentel de données sensibles vers les IA publiques (Claude, ChatGPT, Gemini, Le Chat, DeepSeek, Perplexity, Grok, Copilot — clés API, IBAN, secrets, etc.). Vous l’avez installée vous-même ou votre organisation l’a déployée.',
         ],
       },
       {
         heading: 'Ce que fait Sentinel',
         bullets: [
-          'Analyse votre saisie et les fichiers texte (.txt, .csv, .json, etc.) localement, avant envoi.',
+          'Analyse votre saisie et vos pièces jointes (texte, code, PDF, DOCX) localement, avant envoi.',
           'Peut bloquer l’envoi ou remplacer une donnée par un jeton (ex. [REDACTED_IBAN]).',
         ],
       },
@@ -261,17 +261,16 @@ export function employeeNoticeSections(locale: Locale): EmployeeNoticeSection[] 
         ],
       },
       {
-        heading: 'Données transmises à votre entreprise',
+        heading: 'Données transmises',
         bullets: [
-          'Type de règle déclenchée (ex. clé API, IBAN).',
-          'Action effectuée (blocage ou masquage).',
-          'Date et heure, version de la policy, identifiant technique anonyme de l’installation.',
+          'Aucune : l’extension n’établit aucune connexion réseau, ni vers votre entreprise ni vers son éditeur.',
+          'Seuls des compteurs locaux (blocages, masquages) sont conservés dans votre navigateur.',
         ],
       },
       {
         heading: 'Besoin d’aide ?',
         paragraphs: [
-          'Contactez votre service sécurité ou votre DPO pour exercer vos droits ou obtenir le détail du traitement.',
+          'Extension déployée par votre entreprise : contactez votre service sécurité ou votre DPO. Le code source est public : github.com/chemGT/shadow-ai-sentinel.',
         ],
       },
     ];
@@ -281,13 +280,13 @@ export function employeeNoticeSections(locale: Locale): EmployeeNoticeSection[] 
     {
       heading: 'Why this extension?',
       paragraphs: [
-        'Your organization deployed it to reduce accidental sharing of sensitive data with public AI tools (Claude, ChatGPT, Gemini, Le Chat, DeepSeek, Perplexity, Grok, Copilot — API keys, IBAN, secrets, etc.).',
+        'It reduces accidental sharing of sensitive data with public AI tools (Claude, ChatGPT, Gemini, Le Chat, DeepSeek, Perplexity, Grok, Copilot — API keys, IBAN, secrets, etc.). You installed it yourself or your organization deployed it.',
       ],
     },
     {
       heading: 'What Sentinel does',
       bullets: [
-        'Analyzes what you type and text file attachments (.txt, .csv, .json, etc.) locally before sending.',
+        'Analyzes what you type and your attachments (text, code, PDF, DOCX) locally before sending.',
         'May block sending or replace data with a token (e.g. [REDACTED_IBAN]).',
       ],
     },
@@ -299,17 +298,16 @@ export function employeeNoticeSections(locale: Locale): EmployeeNoticeSection[] 
       ],
     },
     {
-      heading: 'Data shared with your organization',
+      heading: 'Data shared',
       bullets: [
-        'Rule type triggered (e.g. API key, IBAN).',
-        'Action taken (block or mask).',
-        'Timestamp, policy version, anonymous installation identifier.',
+        'None: the extension makes no network connection, neither to your organization nor to its authors.',
+        'Only local counters (blocks, redactions) are kept in your browser.',
       ],
     },
     {
       heading: 'Questions?',
       paragraphs: [
-        'Contact your security team or DPO for your rights or processing details.',
+        'Deployed by your organization? Contact your security team or DPO. The source code is public: github.com/chemGT/shadow-ai-sentinel.',
       ],
     },
   ];

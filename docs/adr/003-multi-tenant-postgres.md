@@ -1,7 +1,8 @@
 # ADR 003 — Multi-tenant Postgres : row-level isolation via middleware
 
 **Date** : 2026-06-12  
-**Statut** : Accepté  
+**Statut** : Remplacé (2026-10-18) — backend multi-tenant archivé (branche `archive/saas-portal`)
+lors du passage open source.  
 **Décideurs** : chemGT (solo)  
 **Sprint** : S1-I2 / S1-I3
 

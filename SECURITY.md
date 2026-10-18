@@ -27,7 +27,7 @@ Reporters are credited in the advisory and the changelog unless they ask otherwi
 - **Detection bypasses** of an ordinary, non-adversarial format (e.g. a common key layout that
   slips through) — these are leaks by accident and the highest priority.
 - Adversarial evasion techniques not yet listed in the
-  [threat model](.ai/security/evasion-threat-model.md).
+  [threat model](docs/security/evasion-threat-model.md).
 - Interception failures: a supported site sending a message without it being scanned.
 - Anything that causes prompt content to be **stored, logged or transmitted** by the extension.
 - ReDoS or freezes triggered by crafted input.

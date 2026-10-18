@@ -1,58 +1,45 @@
 # CLAUDE.md — Shadow AI Sentinel
 
-Point d'entrée Claude Code. Concis : le détail vit dans `.ai/` (voir renvois en bas).
-Les préférences globales de chemGT (style FR, RTK, conventions) s'appliquent en plus — non redupliquées ici.
+Entry point for Claude Code (and other coding agents).
 
-## Le projet en une ligne
+## Project
 
-Extension navigateur **MV3 B2B** = **DLP** sur les LLM publics (Claude / ChatGPT / Gemini /
-Le Chat / DeepSeek / Perplexity / Grok / Copilot) :
-détection **100 % locale** des données sensibles **avant envoi**, modes **Block** ou **Redact**.
-Aucun contenu de prompt ne quitte le navigateur ; **aucun appel réseau** (pas de backend, pas de
-télémétrie — backend archivé le 18/10).
+Open-source (Apache-2.0) **MV3 browser extension** acting as a **DLP for public LLMs** (Claude,
+ChatGPT, Gemini, Le Chat, DeepSeek, Perplexity, Grok, Copilot): detects secrets and personal data
+**locally, before sending**, then **blocks** or **redacts**.
 
-**Modèle : open source (Apache-2.0)** — décision du 18/10, vente abandonnée. Toutes les
-fonctionnalités (secrets, PII `iban`/`card`/`internal_ip`/`pro_email`/`phone`, scan fichiers
-texte/code + PDF/DOCX, allowlist) sont disponibles sans licence. Identité publique = pseudo `chemGT`
-(pas de nom réel, pas de domaine perso). Étude + plan L1–L6 : `.ai/plans/open-source.md`.
+Hard constraints:
+- **Zero network.** No backend, no telemetry, no analytics. Never add a `fetch`, a host permission or
+  remote code. The only outbound action is a user click opening a prefilled GitHub issue
+  (`src/extension/content/reporting.ts`) — never include typed text in it.
+- Never log or persist prompt content.
+- Every regex bounded (no nested quantifiers) — see `docs/security/redos-audit.md`.
+- Public identity is the pseudonym `chemGT`: no real name, no personal domain or email anywhere.
 
-## Commandes & garde-fous
+## Commands (must stay green)
 
-| Commande | Rôle |
-|----------|------|
-| `npm test` | Vitest — **202 tests, doit être vert** |
-| `npm run test:e2e` | Playwright — extension réelle (`dist/`) + fixtures des 8 sites (30 tests) |
-| `npx tsc --noEmit` | Typecheck — doit être vide |
-| `npm run build` | Typecheck + build extension Chromium → `dist/` |
-| `npm run build:firefox` | Build Firefox → `dist-firefox/` |
-| `npm run package:firefox` | .xpi signable pour AMO |
+| Command | Purpose |
+|---------|---------|
+| `npm test` | Vitest unit tests |
+| `npx tsc --noEmit` | Typecheck — must be empty |
+| `npm run test:e2e` | Build + Playwright on the real extension, fixtures of the 8 sites |
+| `npm run build` / `npm run build:firefox` | Chromium → `dist/`, Firefox → `dist-firefox/` |
 
-**Reprise à froid :** les 3 premiers verts, puis charger `dist/` via `chrome://extensions`
-(mode dev → « charger l'extension non empaquetée ») pour tester popup + allowlist.
+## Architecture
 
-## Architecture (l'essentiel)
+- `src/core/regex-engine.ts` → `normalizeForScan` (`detection/normalize.ts`: invisible chars, Unicode
+  spaces, homoglyphs, targeted NFKC, sparse offset map back to the original text) → bounded chunks →
+  `run-detectors.ts` → merge.
+- Policy (`sentinel_policy`) and allowlist (`sentinel_allowlist`) live in `chrome.storage.local`;
+  the background only caches the policy and broadcasts updates to LLM tabs.
+- Site adapters: `src/extension/sites/<site>/` (selectors) + `sites/shared/` (send guard, file guard).
+- Known bypasses are tests: `src/core/detection/evasion-corpus.test.ts` (`[BYPASS CONNU]` = asserted
+  gap; fixing one means flipping the test and updating `docs/security/bypasses-2026-09.md`).
 
-- Côté content, `getPolicy()` renvoie la policy stockée telle quelle (plus de gating Free/Pro).
-- **Allowlist** dans clé **`sentinel_allowlist`**, toujours appliquée.
-- Le code de licence (Lemon Squeezy, `src/core/licensing`, `license-manager`) a été **supprimé** (L1).
+## Conventions
 
-## État sprint & prochaine action
-
-- **Open source en cours** : plan **`.ai/plans/open-source.md`** (L1 nettoyage fait ; L2 correctifs
-  B1/B2/B4 fait — `src/core/detection/normalize.ts` ; L3 hygiène OSS fait (README EN/FR, SECURITY,
-  CONTRIBUTING, CoC, issue forms, CodeQL, Scorecard, release) ; L4 tri `.ai/` ; L5 publication ; stores CWS/AMO : plus tard).
-- **Portail Clerk + backend Express** (API policies/télémétrie, auth Clerk, jobs dunning) **archivés**
-  sur la branche `archive/saas-portal`. L'extension n'a plus aucun code réseau : policy et allowlist
-  100 % locales ; « faux positif » = issue GitHub pré-remplie (`content/reporting.ts`).
-- Reprise détaillée à froid : **`.ai/plans/checkpoint.md`** (antérieur au pivot OSS).
-
-## Renvois documentation (`.ai/`)
-
-| Fichier | Rôle |
-|---------|------|
-| `.ai/plans/checkpoint.md` | **Reprise à froid** (statuts, journal, archi gating) |
-| `.ai/plans/open-source.md` | **Plan open source** (audit, licence, lots L1–L6) |
-| `.ai/context.md` | Vision technique + doc projet + agents |
-| `.ai/agents/orchestrator.md` | Délégation multi-agents (tâche large) |
-| `.ai/SUIVI-ACTIONS.md` | Suivi des actions / avancement |
-| `store-assets/` | Listings EN/FR, permissions, privacy, screenshots 1280×800 |
+- Code comments and internal docs are in French; public-facing docs (README, CONTRIBUTING,
+  SECURITY) in English, with `README.fr.md`.
+- Update `CHANGELOG.md` (Keep a Changelog) with every user-visible change.
+- Roadmap: `ROADMAP.md`. The former SaaS backend/portal is archived on branch `archive/saas-portal`
+  — do not reintroduce it.
