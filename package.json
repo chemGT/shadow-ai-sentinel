@@ -1,7 +1,7 @@
 {
   "name": "shadow-ai-sentinel",
   "version": "1.0.0",
-  "description": "Open-source browser DLP: blocks or redacts secrets and personal data before they reach public LLMs (ChatGPT, Claude, Gemini…). 100% local.",
+  "description": "Open-source prompt redactor: a local browser DLP that blocks or redacts secrets and personal data before they reach ChatGPT, Claude, Gemini and other AI chatbots.",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -17,6 +17,7 @@
     "ci": "npm run test:ci && npm run build && npm run build:firefox"
   },
   "keywords": [
+    "prompt-redactor",
     "dlp",
     "browser-extension",
     "manifest-v3",
@@ -27,7 +28,11 @@
     "secrets",
     "pii",
     "privacy",
-    "security"
+    "security",
+    "redaction",
+    "pii-redaction",
+    "data-loss-prevention",
+    "shadow-ai"
   ],
   "author": "chemGT",
   "license": "Apache-2.0",

@@ -1,10 +1,10 @@
 # Store Listing — English
 
 ## Name
-Shadow AI Sentinel — DLP for ChatGPT, Claude, Gemini & more
+Shadow AI Sentinel — Prompt Redactor & DLP for ChatGPT, Claude, Gemini
 
 ## Short summary (max 132 chars)
-Stop leaking secrets into ChatGPT, Claude, Gemini, Le Chat, DeepSeek & more. Local, private, real-time DLP. No account needed.
+Prompt redactor for ChatGPT, Claude, Gemini & more: masks secrets and personal data before sending. 100% local, open source.
 
 ## Category
 Productivity (secondary: Privacy & Security)
