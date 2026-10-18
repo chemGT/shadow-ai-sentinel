@@ -13,7 +13,7 @@ Thanks for helping make AI usage safer. Small, focused pull requests are the eas
 
 ## Setup
 
-Node.js 20+.
+Node.js 22+ (LTS).
 
 ```bash
 npm ci

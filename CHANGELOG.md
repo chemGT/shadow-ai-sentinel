@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased] — Open source
 
 ### Fixed
+- CodeQL failed on every run while the repository is private (code scanning unavailable): the job now runs only on a public repository
+- CI and release workflows moved from Node.js 20 (end of life) to Node.js 22 LTS
 - Flaky e2e suite (~50 % of runs): the harness evaluated code in the extension service worker before Chromium had injected `chrome.*` bindings; it now waits for `chrome.storage` (0 failures over 12 full runs)
 
 ### Added
