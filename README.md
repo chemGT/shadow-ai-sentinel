@@ -4,9 +4,10 @@
 [![CodeQL](https://github.com/chemGT/shadow-ai-sentinel/actions/workflows/codeql.yml/badge.svg)](https://github.com/chemGT/shadow-ai-sentinel/actions/workflows/codeql.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
-**Open-source browser DLP for public AI chatbots.** Shadow AI Sentinel stops secrets and personal
-data **before** they are sent to ChatGPT, Claude, Gemini and five other assistants — by blocking the
-message or redacting the sensitive value in place.
+**Open-source prompt redactor for ChatGPT, Claude, Gemini and 5 other AI chatbots.**
+Shadow AI Sentinel is a browser extension (local DLP) that catches secrets and personal data in your
+prompt **before** it is sent — then redacts the sensitive value in place (`[REDACTED_IBAN]`) or
+blocks the message.
 
 - **100 % local.** Detection runs in your browser. The extension makes **no network request at all**:
   no backend, no analytics, no telemetry.
@@ -37,6 +38,11 @@ An **allowlist** silences known-safe values (test keys, your own public email…
 
 **Attachments** are scanned too: text/code files (`.env`, `.json`, `.csv`, source files…) and
 **PDF / DOCX** (text extracted locally with pdf.js and mammoth).
+
+**How the prompt redactor works:** each match is replaced by a typed token
+(`[REDACTED_API_KEY]`, `[REDACTED_IBAN]`, `[REDACTED_CARD]`…) directly in the message box, so you
+can still send the rest of your prompt. Attached text files are redacted the same way; PDF/DOCX
+cannot be rewritten, so a redact rule blocks them instead.
 
 **Evasion hardening:** input is normalized before scanning — zero-width characters and BOMs are
 removed, Unicode spaces (NBSP, narrow NBSP) folded, Cyrillic/Greek look-alike letters and

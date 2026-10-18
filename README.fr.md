@@ -3,9 +3,10 @@
 [![CI](https://github.com/chemGT/shadow-ai-sentinel/actions/workflows/ci.yml/badge.svg)](https://github.com/chemGT/shadow-ai-sentinel/actions/workflows/ci.yml)
 [![Licence : Apache-2.0](https://img.shields.io/badge/licence-Apache--2.0-blue.svg)](LICENSE)
 
-**DLP navigateur open source pour les IA publiques.** Shadow AI Sentinel arrête les secrets et les
-données personnelles **avant** leur envoi à ChatGPT, Claude, Gemini et cinq autres assistants — en
-bloquant le message ou en caviardant la valeur sensible sur place.
+**Prompt redactor open source pour ChatGPT, Claude, Gemini et 5 autres IA.** Shadow AI Sentinel
+est une extension navigateur (DLP locale) qui repère les secrets et les données personnelles dans
+votre prompt **avant** l'envoi — puis caviarde la valeur sensible sur place (`[REDACTED_IBAN]`) ou
+bloque le message.
 
 - **100 % local.** La détection tourne dans votre navigateur. L'extension **n'émet aucune requête
   réseau** : pas de backend, pas d'analytics, pas de télémétrie.
