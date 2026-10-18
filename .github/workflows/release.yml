@@ -59,7 +59,7 @@ jobs:
           (cd release && sha256sum * > SHA256SUMS.txt)
 
       - name: Build provenance attestation
-        uses: actions/attest-build-provenance@v1
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: 'release/*.zip, release/*.xpi'
 
