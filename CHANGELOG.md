@@ -29,6 +29,10 @@ evasion hardening, 8 supported AI sites, Chromium and Firefox builds.
 - CI: e2e Playwright job, CodeQL (security-extended), OpenSSF Scorecard (public repo only), tag-triggered release workflow (Chromium zip + unsigned Firefox xpi, SHA256SUMS, build provenance attestation), Dependabot (npm + actions), least-privilege workflow permissions
 
 ### Security
+- `pdfjs-dist` 6.0.227 → 6.4.299: fixes arbitrary JavaScript execution when opening a malicious PDF (affected < 6.2.108) — the extension parses user-attached PDFs
+- `@xmldom/xmldom` 0.8.13 → 0.8.15 (DOCX parsing via mammoth): XML injection advisories
+- `vitest` / `@vitest/coverage-v8` 4.1.6 → 4.1.11 (dev only): `@vitest/mocker` path traversal
+- Known, not applicable: `sprintf-js` (moderate) via mammoth's CLI dependency `argparse` — the CLI is not part of the extension bundle
 - Defensive Unicode normalization before scanning (`src/core/detection/normalize.ts`): zero-width/BOM/soft-hyphen removed, Unicode spaces (NBSP, narrow NBSP…) folded to ASCII space, strict Cyrillic/Greek homoglyphs folded to Latin, NFKC on ASCII-lookalike compatibility forms (fullwidth, ligatures, superscripts, circled digits, math alphanumerics). Match offsets are mapped back to the original text so redaction covers what the user actually typed
 - IBAN detection accepts dash separators (`DE89-3704-…`)
 - Closes known bypasses B1 (IBAN dash/NBSP), B2 (card NBSP/narrow NBSP), B4 (zero-width, BOM, homoglyphs, fullwidth)

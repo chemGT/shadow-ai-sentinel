@@ -46,7 +46,7 @@
   "homepage": "https://github.com/chemGT/shadow-ai-sentinel#readme",
   "dependencies": {
     "mammoth": "^1.13.0",
-    "pdfjs-dist": "^6.0.227",
+    "pdfjs-dist": "^6.4.299",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
   },
@@ -58,13 +58,13 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",
-    "@vitest/coverage-v8": "^4.1.6",
+    "@vitest/coverage-v8": "4.1.11",
     "autoprefixer": "^10.6.1",
     "happy-dom": "^21.0.1",
     "postcss": "^8.5.14",
     "tailwindcss": "^4.3.0",
     "typescript": "^6.0.3",
     "vite": "^8.3.4",
-    "vitest": "^4.1.6"
+    "vitest": "4.1.11"
   }
 }
