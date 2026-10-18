@@ -15,8 +15,8 @@ objectif = **réputation professionnelle** (portfolio sécurité / DLP / gouvern
 | Point | État | Bloquant ? |
 |-------|------|-----------|
 | Secrets dans l'historique git (66 commits) | Seulement des **fixtures factices** (`AKIA…EXAMPLE`, `ghp_1234…`, `sk-ant-api03-e2e-fixture…`, JWT d'exemple). `.env` jamais committé. | Non |
-| Données perso dans les fichiers suivis | `86713914+chemGT@users.noreply.github.com` (privacy policy, voulu). Aucune IP homelab/Tailscale/Hetzner. | Non |
-| Identités de commit | `chemGT <noreply>` (62) + `Alfred (Hermes) <86713914+chemGT@users.noreply.github.com>` (4) — exposé publiquement. | À trancher |
+| Données perso dans les fichiers suivis | Email perso dans la privacy policy, nom réel dans 2 docs. | Corrigé (L1 + réécriture) |
+| Identités de commit | `chemGT <noreply>` (62) + 4 commits agent signés avec un email du domaine perso. | Corrigé (réécriture) |
 | Licence | `package.json` = `"ISC"`, **aucun fichier `LICENSE`**. Sans LICENSE = tous droits réservés. | **Oui** |
 | Licences des dépendances | Toutes permissives (React/Express/Clerk MIT, pdfjs-dist & drizzle Apache-2.0, mammoth BSD-2, postgres Unlicense). | Non — aucune contrainte sur le choix |
 | Code de licensing | ~666 lignes : `src/core/licensing/*`, `license-manager.ts`, `config.ts`, branchements popup/options/content/background. | Oui (incohérent avec OSS) |
@@ -76,7 +76,7 @@ licence permissive ne la gêne pas — la valeur vendable devient **ton expertis
 
 | Fichier | Contenu |
 |---------|---------|
-| `LICENSE` | Apache-2.0 texte intégral, copyright « 2026 chemGT » (ou pseudo — voir §6). |
+| `LICENSE` | Apache-2.0 texte intégral, copyright au pseudo `chemGT` (cf. `NOTICE`). |
 | `README.md` | **EN en premier** (FR en `README.fr.md`). Pitch 1 phrase, GIF de démo (block + redact), tableau détecteurs, sites couverts, « What it does NOT do » (lien threat model), install CWS/AMO/dev, badges CI + licence + version. |
 | `SECURITY.md` | Politique de divulgation (GitHub Private Vulnerability Reporting), périmètre, lien threat model. Indispensable pour un outil sécu. |
 | `CONTRIBUTING.md` | Setup, `npm test`/`tsc`/e2e, **comment ajouter un détecteur** (fichier + tests positifs/négatifs + corpus d'évasion + audit ReDoS). |
@@ -104,13 +104,13 @@ licence permissive ne la gêne pas — la valeur vendable devient **ton expertis
 
 ---
 
-## 6. Décisions à prendre par toi
+## 6. Décisions
 
-1. **Identité publique** : nom réel (« chemGT », bénéfice carrière direct, LinkedIn) vs pseudo
-   `chemGT`. Pour l'objectif annoncé → **nom réel** dans `LICENSE`/README, compte GitHub inchangé.
-2. **Commits `Alfred (Hermes) <86713914+chemGT@users.noreply.github.com>`** : laisser (transparence sur l'usage d'agents
-   IA — cohérent avec ton profil « AI agent orchestration ») ou réécrire via `git filter-repo
-   --mailmap` (implique force-push, à faire avant toute publication).
+1. **Identité publique** : ✅ pseudo `chemGT` uniquement (vie privée).
+2. **Historique** : ✅ réécrit (`git filter-repo` : mailmap + replace-text + replace-message) pour
+   retirer domaine perso, nom réel et chemins locaux. ⚠️ Le dépôt privé actuel conserve
+   `refs/pull/1/head` (ancien SHA, non supprimable côté utilisateur) → publier l'historique réécrit
+   dans un **nouveau dépôt public**, l'ancien restant privé (ou supprimé).
 3. **Backend télémétrie** : garder en « self-hosted optionnel » ou archiver.
 4. **Langue** : EN principal (visibilité internationale) + FR secondaire (marché FR/RGPD/NIS2 =
    ton différenciateur).
