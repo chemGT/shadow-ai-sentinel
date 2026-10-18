@@ -1,6 +1,5 @@
 import { STORAGE_KEYS } from '../../core/constants.js';
 import type { Policy, TelemetryQueueItem, TenantCredentials } from '../../core/types.js';
-import type { Entitlement } from '../../core/licensing/entitlement.js';
 import type { PersistedAdapterHealth } from '../../core/adapter-health.js';
 import { createDefaultPolicy } from '../../core/defaults.js';
 
@@ -92,50 +91,7 @@ export async function setTenantCredentials(credentials: TenantCredentials): Prom
   await storageSet({ [STORAGE_KEYS.credentials]: credentials });
 }
 
-export async function getStoredEntitlement(): Promise<Entitlement | null> {
-  const result = await storageGet<Entitlement>(STORAGE_KEYS.entitlement);
-  const value = result[STORAGE_KEYS.entitlement];
-  if (value && (value.tier === 'free' || value.tier === 'pro')) {
-    return value;
-  }
-  return null;
-}
-
-export async function setStoredEntitlement(entitlement: Entitlement): Promise<void> {
-  await storageSet({ [STORAGE_KEYS.entitlement]: entitlement });
-}
-
-export async function getStoredLicenseKey(): Promise<string | null> {
-  const result = await storageGet<string>(STORAGE_KEYS.licenseKey);
-  const value = result[STORAGE_KEYS.licenseKey];
-  return typeof value === 'string' && value.length > 0 ? value : null;
-}
-
-export async function setStoredLicenseKey(key: string): Promise<void> {
-  await storageSet({ [STORAGE_KEYS.licenseKey]: key });
-}
-
-/** Identifiant d'instance Lemon Squeezy (créé à l'activation, requis pour les re-checks). */
-export async function getStoredLicenseInstanceId(): Promise<string | null> {
-  const result = await storageGet<string>(STORAGE_KEYS.licenseInstanceId);
-  const value = result[STORAGE_KEYS.licenseInstanceId];
-  return typeof value === 'string' && value.length > 0 ? value : null;
-}
-
-export async function setStoredLicenseInstanceId(id: string): Promise<void> {
-  await storageSet({ [STORAGE_KEYS.licenseInstanceId]: id });
-}
-
-export async function clearStoredLicense(): Promise<void> {
-  const api = getExtensionApi();
-  await (api.storage.local.remove([
-    STORAGE_KEYS.licenseKey,
-    STORAGE_KEYS.licenseInstanceId,
-    STORAGE_KEYS.entitlement,
-  ]) as Promise<void>);
-}
-
-/** Valeurs allowlistées (Pro) : matches dont la valeur exacte ne doit pas déclencher la policy. */
+/** Valeurs allowlistées : matches dont la valeur exacte ne doit pas déclencher la policy. */
 export async function getAllowlist(): Promise<string[]> {
   const result = await storageGet<unknown>(STORAGE_KEYS.allowlist);
   const value = result[STORAGE_KEYS.allowlist];

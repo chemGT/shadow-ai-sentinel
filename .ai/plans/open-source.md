@@ -2,7 +2,11 @@
 
 **Date :** 2026-10-18 · **Décision de départ :** abandon de la vente (Lemon Squeezy, freemium),
 objectif = **réputation professionnelle** (portfolio sécurité / DLP / gouvernance IA).
-**Statut :** étude — rien n'est encore modifié dans le code.
+**Statut :** L1 fait (18/10). Décisions prises :
+- Licence **Apache-2.0**, copyright au pseudo **`chemGT`** (vie privée : pas de nom réel).
+- Stores CWS/AMO : **plus tard**, rien d'actif pour l'instant.
+- **Historique réécrit** pour retirer le domaine perso (emails, nom réel) — voir §6.2.
+- Backend télémétrie (auth Clerk JWT, jobs dunning) : **en attente** de décision.
 
 ---
 

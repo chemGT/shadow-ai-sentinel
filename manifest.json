@@ -19,8 +19,7 @@
     "*://perplexity.ai/*",
     "*://www.perplexity.ai/*",
     "*://grok.com/*",
-    "*://copilot.microsoft.com/*",
-    "https://api.lemonsqueezy.com/*"
+    "*://copilot.microsoft.com/*"
   ],
   "background": {
     "service_worker": "src/extension/background/index.ts",

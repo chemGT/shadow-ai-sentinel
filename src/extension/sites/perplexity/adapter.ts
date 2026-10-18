@@ -9,7 +9,6 @@ import {
 
 export type PerplexityAdapterOptions = {
   getPolicy: () => Policy;
-  isFileScanEnabled?: () => boolean;
   getAllowlist?: () => readonly string[];
 };
 
@@ -25,7 +24,6 @@ export function attachPerplexityAdapter(options: PerplexityAdapterOptions): () =
     host: 'perplexity.ai',
     dom,
     label: 'Perplexity',
-    isFileScanEnabled: options.isFileScanEnabled,
     getAllowlist: options.getAllowlist,
   });
 }

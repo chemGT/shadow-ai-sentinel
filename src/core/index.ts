@@ -7,4 +7,3 @@ export {
   assertNoForbiddenTelemetryFields,
 } from './validation/telemetry.js';
 export { detectSensitiveData } from './regex-engine.js';
-export * from './licensing/index.js';

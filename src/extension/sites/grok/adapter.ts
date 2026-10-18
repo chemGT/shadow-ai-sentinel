@@ -9,7 +9,6 @@ import {
 
 export type GrokAdapterOptions = {
   getPolicy: () => Policy;
-  isFileScanEnabled?: () => boolean;
   getAllowlist?: () => readonly string[];
 };
 
@@ -25,7 +24,6 @@ export function attachGrokAdapter(options: GrokAdapterOptions): () => void {
     host: 'grok.com',
     dom,
     label: 'Grok',
-    isFileScanEnabled: options.isFileScanEnabled,
     getAllowlist: options.getAllowlist,
   });
 }

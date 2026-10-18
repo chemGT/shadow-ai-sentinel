@@ -31,9 +31,7 @@ import {
 export type FileGuardOptions = {
   getPolicy: () => Policy;
   host: LlmHost;
-  /** Scan des pièces jointes (Pro). Si absent ou `true`, le scan est actif. */
-  isFileScanEnabled?: () => boolean;
-  /** Valeurs allowlistées (Pro) à exclure des détections. Si absent, aucune exclusion. */
+  /** Valeurs allowlistées à exclure des détections. Si absent, aucune exclusion. */
   getAllowlist?: () => readonly string[];
 };
 
@@ -196,11 +194,6 @@ export async function guardFileList(
   files: File[],
   options: FileGuardOptions,
 ): Promise<{ allowed: File[]; blocked: boolean }> {
-  // Scan des pièces jointes réservé au Pro : en Free, on laisse tout passer.
-  if (options.isFileScanEnabled && !options.isFileScanEnabled()) {
-    return { allowed: files, blocked: false };
-  }
-
   const policy = options.getPolicy();
   const allowlist = options.getAllowlist?.();
   const allowed: File[] = [];

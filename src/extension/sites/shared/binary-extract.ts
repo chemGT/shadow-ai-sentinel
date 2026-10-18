@@ -2,7 +2,7 @@ import { isDocxFile, isPdfFile } from '../../../core/binary-file.js';
 
 /**
  * Import dynamique : pdfjs-dist/mammoth ne sont chargés (et n'alourdissent le bundle du content
- * script) que lorsqu'un utilisateur Pro dépose effectivement un PDF/DOCX.
+ * script) que lorsqu'un utilisateur dépose effectivement un PDF/DOCX.
  */
 let pdfWorkerConfigured = false;
 

@@ -27,9 +27,9 @@ Screenshots must be captured from the real, running extension.
 Suggested shots:
 1. **Block modal** on ChatGPT — an API key detected, message stopped.
 2. **Redact in action** — a secret masked inline on Claude.
-3. **Popup** — Free tier: tier badge, blocked/redacted counters, "Upgrade to Pro" CTA.
-4. **Popup / Options** — Pro tier active: license activated, PII rules toggled on.
-5. **Options page** — allowlist textarea (Pro), custom rules.
+3. **Popup** — blocked/redacted counters, link to source code.
+4. **Options page** — rules table (Block/Redact per type), PII rules toggled on.
+5. **Options page** — allowlist textarea, custom rules.
 
 Store icon (CWS marketing): 128×128 → use `icons/icon-128.png`.
 Small promo tile (optional): 440×280.
@@ -39,5 +39,4 @@ open a supported AI site → trigger detection → screenshot.
 
 ## ⬜ Before publishing
 - Host `privacy-policy.md` at a public URL (landing page or GitHub Pages) and paste that URL into CWS + AMO.
-- Set `VITE_LEMONSQUEEZY_STORE_ID`, `VITE_LEMONSQUEEZY_PRODUCT_ID` and `VITE_LEMONSQUEEZY_CHECKOUT_URL` at build time once the Lemon Squeezy product exists.
 - Bump `version` in `manifest.json` / `manifest.firefox.json` from `0.1.0` to the release version.

@@ -9,7 +9,6 @@ import {
 
 export type MistralAdapterOptions = {
   getPolicy: () => Policy;
-  isFileScanEnabled?: () => boolean;
   getAllowlist?: () => readonly string[];
 };
 
@@ -25,7 +24,6 @@ export function attachMistralAdapter(options: MistralAdapterOptions): () => void
     host: 'chat.mistral.ai',
     dom,
     label: 'Le Chat',
-    isFileScanEnabled: options.isFileScanEnabled,
     getAllowlist: options.getAllowlist,
   });
 }

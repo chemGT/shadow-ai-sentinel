@@ -15,14 +15,14 @@ detection regexes so you can trigger each rule for the store screenshots.
 **Suggested Block-modal prompt (screenshot #1):**
 > `Please debug this: my AWS key AKIAIOSFODNN7EXAMPLE returns AccessDenied`
 
-## Pro tier (no config needed once a Pro license is active)
+## PII rules (no config needed)
 | Rule | Paste this |
 |------|-----------|
 | `iban` | `DE89370400440532013000` or spaced `FR76 3000 6000 0112 3456 7890 189` (both checksum-valid, both detected) |
 | `internal_ip` | `192.168.1.42` (also try `10.0.0.5`, `172.16.4.9`) |
 | `phone` | `+33 6 12 34 56 78` |
 
-## Pro tier (requires config in Options → custom)
+## PII rules (requires config in Options → custom)
 | Rule | Setup |
 |------|-------|
 | `pro_email` | Add a domain (e.g. `acme.com`) in Options, then paste `john.doe@acme.com` |
@@ -37,9 +37,9 @@ Name the raw files by their scene number so the order is predictable:
 
 1. `01-block-modal.png` — on chatgpt.com, paste the Block-modal prompt above → capture the block warning.
 2. `02-redact.png` — on claude.ai, paste a secret and let it be masked inline.
-3. `03-popup-free.png` — click the extension icon: Free badge, blocked/redacted counters, "Upgrade to Pro" CTA.
-4. `04-popup-pro.png` — with a Pro license active: license activated state.
-5. `05-options-allowlist.png` — Options page: Pro license section + allowlist textarea.
+3. `03-popup.png` — click the extension icon: "Open source" badge, blocked/redacted counters, source link.
+4. `04-options-rules.png` — Options page: rules table (Block/Redact per type).
+5. `05-options-allowlist.png` — Options page: allowlist textarea.
 
 Tips for clean shots:
 - Use a fresh chat with no personal history visible.

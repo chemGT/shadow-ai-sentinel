@@ -9,7 +9,6 @@ import {
 
 export type DeepSeekAdapterOptions = {
   getPolicy: () => Policy;
-  isFileScanEnabled?: () => boolean;
   getAllowlist?: () => readonly string[];
 };
 
@@ -25,7 +24,6 @@ export function attachDeepSeekAdapter(options: DeepSeekAdapterOptions): () => vo
     host: 'chat.deepseek.com',
     dom,
     label: 'DeepSeek',
-    isFileScanEnabled: options.isFileScanEnabled,
     getAllowlist: options.getAllowlist,
   });
 }

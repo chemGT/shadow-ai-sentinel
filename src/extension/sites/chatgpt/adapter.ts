@@ -9,7 +9,6 @@ import {
 
 export type ChatGptAdapterOptions = {
   getPolicy: () => Policy;
-  isFileScanEnabled?: () => boolean;
   getAllowlist?: () => readonly string[];
 };
 
@@ -25,7 +24,6 @@ export function attachChatGptAdapter(options: ChatGptAdapterOptions): () => void
     host: 'chatgpt.com',
     dom,
     label: 'ChatGPT',
-    isFileScanEnabled: options.isFileScanEnabled,
     getAllowlist: options.getAllowlist,
   });
 }

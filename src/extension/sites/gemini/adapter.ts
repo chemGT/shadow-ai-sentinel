@@ -9,7 +9,6 @@ import {
 
 export type GeminiAdapterOptions = {
   getPolicy: () => Policy;
-  isFileScanEnabled?: () => boolean;
   getAllowlist?: () => readonly string[];
 };
 
@@ -25,7 +24,6 @@ export function attachGeminiAdapter(options: GeminiAdapterOptions): () => void {
     host: 'gemini.google.com',
     dom,
     label: 'Gemini',
-    isFileScanEnabled: options.isFileScanEnabled,
     getAllowlist: options.getAllowlist,
   });
 }

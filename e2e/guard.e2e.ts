@@ -4,7 +4,7 @@
  * DOM des vrais sites (qui reste une recette manuelle ponctuelle).
  *
  * Couverture par site (×8) : block sur Enter · block sur clic envoi · passage
- * d'un texte anodin. Plus : redact Pro (IBAN) et file-guard Pro (.txt avec clé).
+ * d'un texte anodin. Plus : redact (IBAN) et file-guard (.txt avec clé).
  */
 import { test, expect, type BrowserContext, type Page } from '@playwright/test';
 import { SITE_FIXTURES } from './fixtures.js';
@@ -18,13 +18,12 @@ import {
   redactToastVisible,
   SECRET_API_KEY,
   SECRET_AWS_KEY,
-  seedProEntitlement,
   setComposerText,
 } from './harness.js';
 
 test.describe.configure({ mode: 'serial' });
 
-test.describe('guard Free — 8 sites', () => {
+test.describe('guard — 8 sites', () => {
   let context: BrowserContext;
   let page: Page;
 
@@ -69,14 +68,13 @@ test.describe('guard Free — 8 sites', () => {
   }
 });
 
-test.describe('guard Pro — redact + fichiers', () => {
+test.describe('guard — redact + fichiers', () => {
   let context: BrowserContext;
   let page: Page;
 
   test.beforeAll(async () => {
     context = await launchWithExtension();
     await ackFirstRunNotice(context);
-    await seedProEntitlement(context);
     page = await context.newPage();
   });
 
@@ -84,9 +82,8 @@ test.describe('guard Pro — redact + fichiers', () => {
     await context?.close();
   });
 
-  test('Copilot — IBAN caviardé sur Enter (Pro)', async () => {
+  test('Copilot — IBAN caviardé sur Enter', async () => {
     await gotoFixture(page, 'copilot.microsoft.com');
-    await seedProEntitlement(context, page);
     await setComposerText(page, 'textarea#userInput', 'textarea', IBAN_FR);
     await page.locator('textarea#userInput').press('Enter');
 
@@ -97,9 +94,8 @@ test.describe('guard Pro — redact + fichiers', () => {
     expect(await page.evaluate(() => (window as any).__enterReached)).toBe(0);
   });
 
-  test('Grok — IBAN caviardé sur clic envoi (Pro)', async () => {
+  test('Grok — IBAN caviardé sur clic envoi', async () => {
     await gotoFixture(page, 'grok.com');
-    await seedProEntitlement(context, page);
     await setComposerText(page, 'textarea[aria-label*="Grok"]', 'textarea', IBAN_FR);
     await page.locator('form button[type="submit"]').dispatchEvent('click');
 
@@ -109,9 +105,8 @@ test.describe('guard Pro — redact + fichiers', () => {
     expect(await page.evaluate(() => (window as any).__sent)).toBe(0);
   });
 
-  test('Copilot — fichier .txt avec clé AWS bloqué (Pro)', async () => {
+  test('Copilot — fichier .txt avec clé AWS bloqué', async () => {
     await gotoFixture(page, 'copilot.microsoft.com');
-    await seedProEntitlement(context, page);
     await page.locator('input[data-fixture-file]').setInputFiles({
       name: 'secrets.txt',
       mimeType: 'text/plain',
@@ -125,9 +120,8 @@ test.describe('guard Pro — redact + fichiers', () => {
     expect(fileCount, 'le fichier ne doit pas rester attaché').toBe(0);
   });
 
-  test('DeepSeek — fichier .txt sain non bloqué (Pro)', async () => {
+  test('DeepSeek — fichier .txt sain non bloqué', async () => {
     await gotoFixture(page, 'chat.deepseek.com');
-    await seedProEntitlement(context, page);
     await page.locator('input[data-fixture-file]').setInputFiles({
       name: 'notes.txt',
       mimeType: 'text/plain',

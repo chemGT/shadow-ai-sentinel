@@ -73,7 +73,6 @@ function options(overrides: Partial<FileGuardOptions> = {}): FileGuardOptions {
   return {
     getPolicy: () => createDefaultPolicy(),
     host: 'claude.ai',
-    isFileScanEnabled: () => true,
     ...overrides,
   };
 }
@@ -93,7 +92,7 @@ describe('hasScannableInList (régression du gate texte-only)', () => {
   });
 });
 
-describe('guardFileList — PDF/DOCX (Pro)', () => {
+describe('guardFileList — PDF/DOCX', () => {
   it('bloque un PDF contenant une clé AWS/OpenAI', async () => {
     const result = await guardFileList([pdfSensitive()], options());
     expect(result.blocked).toBe(true);
@@ -137,15 +136,6 @@ describe('guardFileList — PDF/DOCX (Pro)', () => {
   it('applique le scan DLP à une liste 100% PDF (régression texte-only)', async () => {
     const result = await guardFileList([pdfSensitive()], options());
     expect(result.blocked).toBe(true);
-  });
-
-  it('laisse passer sans scan en Free tier, même avec un PDF sensible', async () => {
-    const result = await guardFileList(
-      [pdfSensitive()],
-      options({ isFileScanEnabled: () => false }),
-    );
-    expect(result.blocked).toBe(false);
-    expect(result.allowed).toHaveLength(1);
   });
 
   it('laisse passer un binaire trop volumineux avec avertissement (pas de blocage)', async () => {

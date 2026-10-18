@@ -9,7 +9,6 @@ import {
 
 export type CopilotAdapterOptions = {
   getPolicy: () => Policy;
-  isFileScanEnabled?: () => boolean;
   getAllowlist?: () => readonly string[];
 };
 
@@ -25,7 +24,6 @@ export function attachCopilotAdapter(options: CopilotAdapterOptions): () => void
     host: 'copilot.microsoft.com',
     dom,
     label: 'Copilot',
-    isFileScanEnabled: options.isFileScanEnabled,
     getAllowlist: options.getAllowlist,
   });
 }

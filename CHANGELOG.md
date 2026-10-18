@@ -7,7 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased] — Sprint 1 (Make it sellable)
+## [Unreleased] — Open source
+
+### Changed
+- Project relicensed under **Apache-2.0** (`LICENSE`, `NOTICE`); previously unlicensed/ISC
+- All features are available to everyone: PII rules (IBAN, card, internal IP, work email, phone), PDF/DOCX/text attachment scanning and allowlist no longer require a license
+- Popup shows an "Open source" badge and a source-code link instead of the upgrade CTA
+- Store listings, privacy policy and permission justifications updated: no third-party service, no network request by default
+
+### Removed
+- Lemon Squeezy licensing: `src/core/licensing/*`, background `license-manager`, daily license alarm, `GET_ENTITLEMENT` / `ACTIVATE_LICENSE` / `DEACTIVATE_LICENSE` messages, `VITE_LEMONSQUEEZY_*` build config, license UI in popup and options
+- `https://api.lemonsqueezy.com/*` host permission (Chromium + Firefox manifests)
+- Next.js Clerk portal skeleton (`apps/portal`) and the `@clerk/nextjs` dependency — archived on branch `archive/saas-portal`
+- Store screenshots showing the former Free/Pro UI
+
+## Sprint 1 (Make it sellable) — superseded by the open-source pivot
 
 ### Added
 - Support for 5 new LLM sites: Mistral Le Chat (chat.mistral.ai), DeepSeek (chat.deepseek.com), Perplexity (perplexity.ai), Grok (grok.com), Microsoft Copilot (copilot.microsoft.com) — prompt + text/code attachment interception with the same guard as Claude/ChatGPT/Gemini (8 sites total)

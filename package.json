@@ -1,7 +1,7 @@
 {
   "name": "shadow-ai-sentinel",
   "version": "1.0.0",
-  "description": "",
+  "description": "Open-source browser DLP: blocks or redacts secrets and personal data before they reach public LLMs (ChatGPT, Claude, Gemini…). 100% local.",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -19,12 +19,31 @@
     "test:e2e": "npm run build && playwright test",
     "ci": "npm run test:ci && npm run build && npm run build:firefox"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "dlp",
+    "browser-extension",
+    "manifest-v3",
+    "llm",
+    "chatgpt",
+    "claude",
+    "gemini",
+    "secrets",
+    "pii",
+    "privacy",
+    "security"
+  ],
+  "author": "chemGT",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chemGT/shadow-ai-sentinel.git"
+  },
+  "bugs": {
+    "url": "https://github.com/chemGT/shadow-ai-sentinel/issues"
+  },
+  "homepage": "https://github.com/chemGT/shadow-ai-sentinel#readme",
   "dependencies": {
     "@clerk/backend": "^3.7.0",
-    "@clerk/nextjs": "^7.5.2",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "drizzle-orm": "^0.45.2",

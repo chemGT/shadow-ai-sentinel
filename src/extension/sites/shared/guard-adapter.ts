@@ -16,9 +16,7 @@ export type GuardAdapterOptions = {
   dom: SiteDom;
   /** Libellé console (ex. « Claude », « ChatGPT »). */
   label: string;
-  /** Scan des pièces jointes (Pro). Si absent ou `true`, le scan est actif. */
-  isFileScanEnabled?: () => boolean;
-  /** Valeurs allowlistées (Pro) à exclure des détections. Si absent, aucune exclusion. */
+  /** Valeurs allowlistées à exclure des détections. Si absent, aucune exclusion. */
   getAllowlist?: () => readonly string[];
 };
 
@@ -170,7 +168,6 @@ export function attachGuardAdapter(options: GuardAdapterOptions): () => void {
   const detachFile = attachFileGuard({
     getPolicy: options.getPolicy,
     host: options.host,
-    isFileScanEnabled: options.isFileScanEnabled,
     getAllowlist: options.getAllowlist,
   });
 

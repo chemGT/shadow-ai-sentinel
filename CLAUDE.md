@@ -11,18 +11,17 @@ détection **100 % locale** des données sensibles **avant envoi**, modes **Bloc
 Aucun contenu de prompt ne quitte le navigateur ; la télémétrie serveur (optionnelle, tier tenant)
 ne porte que des métadonnées.
 
-**Modèle commercial — freemium :**
-- **Free** (produit d'appel, zéro config, zéro réseau) : `api_key` + `generic_secret`, Block/Redact.
-- **Pro** (clé de licence **Lemon Squeezy**, abo 5 €/mois · 49 €/an) : PII (`iban`, `internal_ip`,
-  `pro_email`, `phone`) + scan fichiers **texte/code + PDF/DOCX** + allowlist.
-- L'extension est **gratuite sur les stores** ; Lemon Squeezy vend une **clé de licence** vérifiée côté client.
+**Modèle : open source (Apache-2.0)** — décision du 18/10, vente abandonnée. Toutes les
+fonctionnalités (secrets, PII `iban`/`card`/`internal_ip`/`pro_email`/`phone`, scan fichiers
+texte/code + PDF/DOCX, allowlist) sont disponibles sans licence. Identité publique = pseudo `chemGT`
+(pas de nom réel, pas de domaine perso). Étude + plan L1–L6 : `.ai/plans/open-source.md`.
 
 ## Commandes & garde-fous
 
 | Commande | Rôle |
 |----------|------|
-| `npm test` | Vitest — **273 tests, doit être vert** |
-| `npm run test:e2e` | Playwright — extension réelle (`dist/`) + fixtures des 8 sites (28 tests) |
+| `npm test` | Vitest — **298 tests, doit être vert** |
+| `npm run test:e2e` | Playwright — extension réelle (`dist/`) + fixtures des 8 sites (30 tests) |
 | `npx tsc --noEmit` | Typecheck — doit être vide |
 | `npm run build` | Typecheck + build extension Chromium → `dist/` |
 | `npm run build:firefox` | Build Firefox → `dist-firefox/` |
@@ -30,40 +29,28 @@ ne porte que des métadonnées.
 | `npm run backend` | API Express locale (port 3000) |
 
 **Reprise à froid :** les 3 premiers verts, puis charger `dist/` via `chrome://extensions`
-(mode dev → « charger l'extension non empaquetée ») pour tester popup + gating + allowlist.
+(mode dev → « charger l'extension non empaquetée ») pour tester popup + allowlist.
 
-## Architecture de gating freemium (l'essentiel)
+## Architecture (l'essentiel)
 
-- Côté content, tout passe par `getPolicy()` → **`applyEntitlementToPolicy`**
-  (`src/core/licensing/entitlement.ts`) produit la **policy effective** (désactive les règles Pro en Free).
-- **Entitlement** dans `chrome.storage.local` clé **`sentinel_entitlement`** (défaut = Free) : lu par le
-  content + la popup, écrit par le **license-manager background**
-  (`src/extension/background/license-manager.ts`) — grâce offline `LICENSE_GRACE_DAYS = 7`,
-  re-check quotidien `LICENSE_REFRESH_ALARM`.
-- **Allowlist** dans clé **`sentinel_allowlist`**, appliquée **uniquement en Pro** (`effectiveAllowlist()`).
-- **Vérif licence côté client** (`src/core/licensing/verify.ts`, API publique Lemon Squeezy,
-  `activate`/`validate`, pas de secret) — soft-DRM prosumer assumé, contournable.
-- **Config build** (env `.env` gitignoré, préfixe `VITE_`) : `src/extension/config.ts` →
-  `VITE_LEMONSQUEEZY_STORE_ID`, `VITE_LEMONSQUEEZY_PRODUCT_ID`, `VITE_LEMONSQUEEZY_CHECKOUT_URL`.
+- Côté content, `getPolicy()` renvoie la policy stockée telle quelle (plus de gating Free/Pro).
+- **Allowlist** dans clé **`sentinel_allowlist`**, toujours appliquée.
+- Le code de licence (Lemon Squeezy, `src/core/licensing`, `license-manager`) a été **supprimé** (L1).
 
 ## État sprint & prochaine action
 
-- **`master` = référence** (la branche `sprint/s1-make-sellable` a été **fusionnée le 29/08**, merge `e0f6e78`).
-  Pivot **Gumroad → Lemon Squeezy** committé (`9b39038`).
-- **Prochaine action = Jalon 4** → runbook exécutable **`.ai/plans/plan-vente-lemonsqueezy.md`**
-  (créer le produit LS, remplir `.env`, héberger la privacy page, landing 1 page, soumission CWS + AMO).
-- Reprise détaillée à froid : **`.ai/plans/checkpoint.md`**.
-- ⚠️ Le chantier **portail SaaS Clerk** (`apps/portal/**`, `src/backend/{schema,queries,config,tenant}`,
-  `migrations/0003_users_table`) est **committé sur master (décision 29/08 : on le garde — la doc
-  précédente « non committé » était erronée)** mais **hors périmètre S1 extension** (squelette non
-  fonctionnel, dashboard placeholder) — **ne pas le mélanger** aux commits extension.
+- **Open source en cours** : plan **`.ai/plans/open-source.md`** (L1 nettoyage fait ; L2 correctifs
+  B1/B2/B4 ; L3 hygiène OSS ; L4 tri `.ai/` ; L5 publication ; stores CWS/AMO : plus tard).
+- Le portail Next.js Clerk (`apps/portal`) est archivé (branche `archive/saas-portal`). Le backend
+  Express garde encore l'auth Clerk JWT + jobs (dunning) : décision keep/archive en attente.
+- Reprise détaillée à froid : **`.ai/plans/checkpoint.md`** (antérieur au pivot OSS).
 
 ## Renvois documentation (`.ai/`)
 
 | Fichier | Rôle |
 |---------|------|
 | `.ai/plans/checkpoint.md` | **Reprise à froid** (statuts, journal, archi gating) |
-| `.ai/plans/plan-vente-lemonsqueezy.md` | **Runbook Jalon 4** (vente + déploiement stores) |
+| `.ai/plans/open-source.md` | **Plan open source** (audit, licence, lots L1–L6) |
 | `.ai/context.md` | Vision technique + doc projet + agents |
 | `.ai/agents/orchestrator.md` | Délégation multi-agents (tâche large) |
 | `.ai/SUIVI-ACTIONS.md` | Suivi des actions / avancement |

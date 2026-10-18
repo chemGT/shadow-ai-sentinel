@@ -1,6 +1,6 @@
 # Privacy Policy — Shadow AI Sentinel
 
-**Last updated: 2 July 2026**
+**Last updated: 18 October 2026**
 
 Shadow AI Sentinel is a browser extension that helps you avoid pasting sensitive
 data into public AI assistants (Claude, ChatGPT, Gemini, Mistral Le Chat,
@@ -9,27 +9,19 @@ exactly what the extension does — and does not do — with your data.
 
 ## The short version
 - Your prompts are analysed **entirely on your own device**.
-- On the free tier, **the extension makes no network requests at all**. Nothing you type leaves your browser.
+- By default, **the extension makes no network requests at all**. Nothing you type leaves your browser.
 - We do not sell your data, show ads, or track you across the web.
 
 ## What is processed locally (and never transmitted)
 When you type or paste text on a supported AI site, the extension scans that text
-**in memory, on your device** to detect secrets and (in the Pro tier) personal
-data. The text is not stored and is not sent to us or to any third party. Only
+**in memory, on your device** to detect secrets and personal data. The text is not stored and is not sent to us or to any third party. Only
 small, non-sensitive settings are saved in your browser's local storage:
-your rule configuration, Pro entitlement status, license key, allowlist, and
+your rule configuration, allowlist, and
 anonymous local counters (e.g. "12 secrets blocked").
 
 ## Network requests
 
-**Free tier:** none. The extension does not contact any server.
-
-**Pro tier:** when you enter a license key, the extension sends **only that
-license key and the public product identifier** to Lemon Squeezy's license
-verification API (`api.lemonsqueezy.com`) to confirm your purchase. It re-checks
-periodically so that refunded or cancelled licenses are downgraded. No prompt
-content is ever included. See Lemon Squeezy's privacy policy for how they handle
-this request: https://www.lemonsqueezy.com/privacy
+**By default:** none. The extension does not contact any server.
 
 **Optional enterprise mode (off by default):** if — and only if — an administrator
 configures the extension with a managed backend, it may send **anonymous DLP
@@ -44,17 +36,19 @@ This mode requires explicit configuration and is not active for standard users.
 - Any personally identifying analytics or advertising identifiers.
 
 ## Data sharing
-We do not sell, rent, or share your data with third parties. The only external
-service involved is Lemon Squeezy, and only for license verification as described
-above.
+We do not sell, rent, or share your data with third parties. No external service
+is involved.
 
 ## Your control
-You can disable any rule, remove your license, or uninstall the extension at any
+You can disable any rule or uninstall the extension at any
 time. Uninstalling removes all locally stored settings.
 
 ## Contact
-Questions about this policy: **86713914+chemGT@users.noreply.github.com**
+Questions about this policy: open an issue at
+https://github.com/chemGT/shadow-ai-sentinel/issues
+
+The source code is public (Apache-2.0): every claim above can be verified in it.
 
 ---
 *Shadow AI Sentinel is not affiliated with Anthropic, OpenAI, Google, Mistral AI,
-DeepSeek, Perplexity, xAI, Microsoft, or Lemon Squeezy.*
+DeepSeek, Perplexity, xAI, or Microsoft.*

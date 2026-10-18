@@ -19,7 +19,7 @@ export function isDocxFile(file: File): boolean {
   return file.type.toLowerCase() === DOCX_MIME || file.name.toLowerCase().endsWith('.docx');
 }
 
-/** Formats binaires pris en charge par l'extraction locale (Pro). */
+/** Formats binaires pris en charge par l'extraction locale. */
 export function isBinaryScannableFile(file: File): boolean {
   return isPdfFile(file) || isDocxFile(file);
 }

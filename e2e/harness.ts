@@ -53,32 +53,6 @@ export async function ackFirstRunNotice(context: BrowserContext): Promise<void> 
 }
 
 /**
- * Simule un palier Pro valide (clé `sentinel_entitlement` du storage extension).
- * ⚠️ À appeler APRÈS le chargement de la page fixture : chaque réveil du service
- * worker relance `refreshEntitlement()` qui, sans clé de licence, réécrit un
- * entitlement Free. Le content script, lui, réagit en live via `storage.onChanged`.
- */
-export async function seedProEntitlement(context: BrowserContext, page?: Page): Promise<void> {
-  const sw = await extensionServiceWorker(context);
-  await sw.evaluate(async () => {
-    const now = new Date().toISOString();
-    await chrome.storage.local.set({
-      sentinel_entitlement: {
-        tier: 'pro',
-        valid: true,
-        checkedAt: now,
-        lastValidAt: now,
-        message: 'e2e seed',
-      },
-    });
-  });
-  if (page) {
-    // Laisse l'événement storage.onChanged atteindre le content script.
-    await page.waitForTimeout(500);
-  }
-}
-
-/**
  * Force un `fail_mode` de policy via le message `POLICY_UPDATED` (et non une
  * écriture directe dans le storage) : `background/index.ts` sert `GET_POLICY`
  * depuis le cache mémoire `cachedPolicy`, qui n'est mis à jour que par ce

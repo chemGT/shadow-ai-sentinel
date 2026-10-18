@@ -1,7 +1,6 @@
 import { validatePolicy } from '../../core/validation/policy.js';
 import { ALL_RULE_TYPES } from '../../core/constants.js';
 import type { Policy, Rule, RuleAction, RuleType, TenantCredentials } from '../../core/types.js';
-import { isProEntitlement, type Entitlement } from '../../core/licensing/entitlement.js';
 import { ensureApiHostPermission } from '../platform/permissions.js';
 import {
   getAllowlist,
@@ -12,11 +11,6 @@ import {
   setTenantCredentials,
 } from '../platform/storage.js';
 import { sendMessage } from '../platform/runtime.js';
-
-interface EntitlementResponse {
-  ok: boolean;
-  entitlement: Entitlement;
-}
 
 const RULE_LABELS: Record<RuleType, string> = {
   api_key: 'Clé API',
@@ -33,8 +27,6 @@ const apiKeyEl = document.getElementById('apiKey') as HTMLInputElement;
 const apiBaseUrlEl = document.getElementById('apiBaseUrl') as HTMLInputElement;
 const policyJsonEl = document.getElementById('policyJson') as HTMLTextAreaElement;
 const allowlistEl = document.getElementById('allowlist') as HTMLTextAreaElement;
-const licenseKeyEl = document.getElementById('licenseKeyOpt') as HTMLInputElement;
-const tierStatusEl = document.getElementById('tierStatus') as HTMLElement;
 const rulesTableBodyEl = document.getElementById('rulesTableBody') as HTMLTableSectionElement;
 
 const toastEl = document.getElementById('toast') as HTMLElement;
@@ -74,10 +66,6 @@ function showToast(kind: 'ok' | 'error', message: string): void {
 }
 
 toastDismissEl.addEventListener('click', hideToast);
-
-function renderTier(entitlement: Entitlement): void {
-  tierStatusEl.textContent = isProEntitlement(entitlement) ? 'Palier : Pro ✓' : 'Palier : Free';
-}
 
 function makeSwitch(rule: Rule): HTMLButtonElement {
   const btn = document.createElement('button');
@@ -187,13 +175,6 @@ async function loadForm(): Promise<void> {
 
   const allowlist = await getAllowlist();
   allowlistEl.value = allowlist.join('\n');
-
-  try {
-    const res = await sendMessage<EntitlementResponse>({ type: 'GET_ENTITLEMENT' });
-    renderTier(res.entitlement);
-  } catch {
-    renderTier({ tier: 'free', valid: false, checkedAt: new Date().toISOString() });
-  }
 }
 
 document.getElementById('saveAllowlist')?.addEventListener('click', async () => {
@@ -202,37 +183,6 @@ document.getElementById('saveAllowlist')?.addEventListener('click', async () => 
   const stored = await getAllowlist();
   allowlistEl.value = stored.join('\n');
   showToast('ok', `Allowlist enregistrée (${stored.length} valeur(s)).`);
-});
-
-document.getElementById('activateLicenseOpt')?.addEventListener('click', async () => {
-  const key = licenseKeyEl.value.trim();
-  if (!key) {
-    showToast('error', 'Saisissez votre clé de licence.');
-    return;
-  }
-  try {
-    const res = await sendMessage<EntitlementResponse>({
-      type: 'ACTIVATE_LICENSE',
-      payload: { key },
-    });
-    if (res.ok && isProEntitlement(res.entitlement)) {
-      renderTier(res.entitlement);
-      showToast('ok', 'Licence Pro activée. Merci !');
-    } else if (res.entitlement.message === 'network_error') {
-      showToast('error', 'Vérification impossible (réseau).');
-    } else {
-      showToast('error', 'Clé invalide ou non reconnue.');
-    }
-  } catch {
-    showToast('error', 'Vérification impossible (réseau).');
-  }
-});
-
-document.getElementById('deactivateLicenseOpt')?.addEventListener('click', async () => {
-  const res = await sendMessage<EntitlementResponse>({ type: 'DEACTIVATE_LICENSE' });
-  licenseKeyEl.value = '';
-  renderTier(res.entitlement);
-  showToast('ok', 'Licence retirée.');
 });
 
 document.getElementById('saveCredentials')?.addEventListener('click', async () => {
