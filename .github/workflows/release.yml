@@ -59,15 +59,30 @@ jobs:
           (cd release && sha256sum * > SHA256SUMS.txt)
 
       - name: Build provenance attestation
+        # Attestations : dépôt public requis (ou GitHub Enterprise Cloud).
+        if: github.event.repository.private != true
         uses: actions/attest-build-provenance@v4
         with:
           subject-path: 'release/*.zip, release/*.xpi'
+
+      - name: Extract release notes from CHANGELOG
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          awk -v ver="$TAG" '
+            $0 ~ "^## \\[" ver "\\]" { found = 1; next }
+            found && /^## / { exit }
+            found { print }
+          ' CHANGELOG.md > release-notes.md
+          if [ ! -s release-notes.md ]; then
+            echo "::error file=CHANGELOG.md::no section for $TAG"
+            exit 1
+          fi
 
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "$GITHUB_REF_NAME" release/* \
-            --title "$GITHUB_REF_NAME" \
-            --generate-notes \
+            --title "Shadow AI Sentinel $GITHUB_REF_NAME" \
+            --notes-file release-notes.md \
             --verify-tag

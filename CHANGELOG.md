@@ -7,7 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased] — Open source
+## [Unreleased]
+
+## [1.0.0] — 2026-10-18 — First open-source release
+
+Shadow AI Sentinel is now free and open source (Apache-2.0). Every feature is available to
+everyone, and the extension makes **no network request at all**: detection, policy and allowlist are
+100 % local. Highlights: 7 detectors (API keys, generic secrets, IBAN, payment cards, phone numbers,
+internal IPs, work emails) with checksum validation, PDF/DOCX/text attachment scanning, Unicode
+evasion hardening, 8 supported AI sites, Chromium and Firefox builds.
 
 ### Fixed
 - CodeQL failed on every run while the repository is private (code scanning unavailable): the job now runs only on a public repository
@@ -27,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Allowlist matching applies the same normalization
 
 ### Changed
+- Dependencies: React 19.3, mammoth 1.13, Vite 8.3, Playwright 1.64, happy-dom 21, GitHub Actions (checkout/setup-node v7, codeql-action v4, attest-build-provenance v4, scorecard-action 2.5)
 - First-run notice no longer claims that metadata is shared with the organization (nothing is transmitted)
 - `CLAUDE.md` rewritten in English for contributors using coding agents
 - Project relicensed under **Apache-2.0** (`LICENSE`, `NOTICE`); previously unlicensed/ISC
@@ -44,7 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Next.js Clerk portal skeleton (`apps/portal`) and the `@clerk/nextjs` dependency — archived on branch `archive/saas-portal`
 - Store screenshots showing the former Free/Pro UI
 
-## Sprint 1 (Make it sellable) — superseded by the open-source pivot
+## Sprint 1 (Make it sellable) — unreleased, superseded by 1.0.0
 
 ### Added
 - Support for 5 new LLM sites: Mistral Le Chat (chat.mistral.ai), DeepSeek (chat.deepseek.com), Perplexity (perplexity.ai), Grok (grok.com), Microsoft Copilot (copilot.microsoft.com) — prompt + text/code attachment interception with the same guard as Claude/ChatGPT/Gemini (8 sites total)

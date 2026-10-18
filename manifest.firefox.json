@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Shadow AI Sentinel",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "DLP local pour LLM publics — Claude, ChatGPT, Gemini, Le Chat, DeepSeek, Perplexity, Grok, Copilot",
   "browser_specific_settings": {
     "gecko": {
