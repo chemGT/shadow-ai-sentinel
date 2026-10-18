@@ -1,16 +1,17 @@
 import type { RawMatch } from './types.js';
 
 /**
- * IBAN contigu OU formaté en groupes de 4 séparés par des espaces (format usuel
- * du copier-coller, ex. `FR76 3000 6000 0112 3456 7890 189`). Le découpage en
+ * IBAN contigu OU formaté en groupes de 4 séparés par des espaces ou des tirets
+ * (format usuel du copier-coller, ex. `FR76 3000 6000 0112 3456 7890 189`). Les espaces
+ * Unicode (NBSP…) sont repliés en amont par `normalize.ts`. Le découpage en
  * groupes de 4 empêche le regex d'avaler les mots suivants (contrairement à un
- * `[ ]?` par caractère). Borné (≤ 7 groupes), pas de quantificateurs imbriqués
- * dangereux. `isValidIbanChecksum` strippe les espaces avant validation.
+ * `[ -]?` par caractère). Borné (≤ 7 groupes), pas de quantificateurs imbriqués
+ * dangereux. `isValidIbanChecksum` strippe espaces et tirets avant validation.
  */
-const IBAN_PATTERN = /\b([A-Z]{2}\d{2}(?:[ ]?[A-Z0-9]{4}){2,7}(?:[ ]?[A-Z0-9]{1,3})?)\b/gi;
+const IBAN_PATTERN = /\b([A-Z]{2}\d{2}(?:[ -]?[A-Z0-9]{4}){2,7}(?:[ -]?[A-Z0-9]{1,3})?)\b/gi;
 
 export function isValidIbanChecksum(iban: string): boolean {
-  const clean = iban.replace(/\s/g, '').toUpperCase();
+  const clean = iban.replace(/[\s-]/g, '').toUpperCase();
   if (clean.length < 15 || clean.length > 34) {
     return false;
   }

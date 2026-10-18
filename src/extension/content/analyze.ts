@@ -1,4 +1,5 @@
 import { wasTextTruncated } from '../../core/detection/limits.js';
+import { normalizeForScan } from '../../core/detection/normalize.js';
 import { detectSensitiveData } from '../../core/regex-engine.js';
 import type { DetectionMatch, Policy, RuleAction, RuleType } from '../../core/types.js';
 
@@ -12,9 +13,13 @@ function getRuleAction(policy: Policy, ruleType: RuleType): RuleAction | null {
   return rule?.action ?? null;
 }
 
-/** Normalise une valeur pour comparaison d'allowlist (insensible casse/espaces). */
+/**
+ * Normalise une valeur pour comparaison d'allowlist (insensible casse/espaces). Même repli
+ * Unicode que le scan : une valeur allowlistée reste reconnue si elle est saisie avec un NBSP,
+ * un zero-width ou en pleine chasse.
+ */
 export function normalizeAllowlistValue(value: string): string {
-  return value.trim().toLowerCase();
+  return normalizeForScan(value).text.trim().toLowerCase();
 }
 
 /** Applique la policy aux correspondances détectées, hors valeurs allowlistées. */

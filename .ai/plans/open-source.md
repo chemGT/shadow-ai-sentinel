@@ -2,7 +2,7 @@
 
 **Date :** 2026-10-18 · **Décision de départ :** abandon de la vente (Lemon Squeezy, freemium),
 objectif = **réputation professionnelle** (portfolio sécurité / DLP / gouvernance IA).
-**Statut :** L1 fait (18/10). Décisions prises :
+**Statut :** L1 + L2 faits (18/10). Décisions prises :
 - Licence **Apache-2.0**, copyright au pseudo **`chemGT`** (vie privée : pas de nom réel).
 - Stores CWS/AMO : **plus tard**, rien d'actif pour l'instant.
 - **Historique réécrit** pour retirer le domaine perso (emails, nom réel) — voir §6.2.
@@ -149,7 +149,7 @@ licence permissive ne la gêne pas — la valeur vendable devient **ton expertis
 | Lot | Contenu | Effort |
 |-----|---------|--------|
 | **L1 — Nettoyage code** | Retrait licensing + Lemon Squeezy, popup/options, archivage portail Clerk, tests adaptés (doivent rester verts). | ~0,5 j |
-| **L2 — Correctifs sécu** | B1, B2, B4 + normalisation commune, tests de verrou. | ~0,5–1 j |
+| **L2 — Correctifs sécu** ✅ | B1, B2, B4 + normalisation commune (`normalize.ts`), tests de verrou. | fait |
 | **L3 — Hygiène OSS** | LICENSE, README EN/FR, SECURITY, CONTRIBUTING, CoC, templates, Dependabot, CodeQL, Scorecard, release workflow. | ~1 j |
 | **L4 — Tri docs** | `.ai/` → `docs/` (public) / suppression (commercial). Décision §6.2 sur l'historique. | ~0,5 j |
 | **L5 — Publication** | Repo public, v1.0.0 taguée, GitHub Release, soumission CWS + AMO, issues `good first issue` (B3, B5, C1, C2). | ~0,5 j + délais review stores |

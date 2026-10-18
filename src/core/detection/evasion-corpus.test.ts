@@ -163,37 +163,60 @@ describe('[BYPASS CONNU] manipulations de chaîne — 2026-09-15', () => {
 });
 
 // ---------------------------------------------------------------------------
-// [BYPASS CONNU] — Unicode (aucune normalisation avant scan)
+// CORRECTIF — Unicode : normalisation défensive avant scan (detection/normalize.ts)
+// Fermé le 2026-10-18 (B1, B2, B4 de bypasses-2026-09.md).
+// ---------------------------------------------------------------------------
+describe('CORRECTIF — unicode normalisé avant scan (B1/B2/B4)', () => {
+  it('zero-width (U+200B) dans une clé', () => {
+    expect(detects(`AKIA${ZWSP}IOSFODNN7EXAMPLE`, 'api_key')).toBe(true);
+  });
+  it('BOM/ZWNBSP (U+FEFF) dans une carte', () => {
+    expect(detects(`4111${FEFF}1111${FEFF}1111${FEFF}1111`, 'card')).toBe(true);
+  });
+  it('IBAN séparé par NBSP', () => {
+    const nbsp = `DE89${NBSP}3704${NBSP}0044${NBSP}0532${NBSP}0130${NBSP}00`;
+    expect(detects(nbsp, 'iban')).toBe(true);
+  });
+  it('IBAN séparé par tirets', () => {
+    expect(detects('DE89-3704-0044-0532-0130-00', 'iban')).toBe(true);
+  });
+  it('IBAN à tirets au checksum faux toujours rejeté (mod-97)', () => {
+    expect(detects('DE88-3704-0044-0532-0130-00', 'iban')).toBe(false);
+  });
+  it('carte séparée par NBSP', () => {
+    expect(detects(`4111${NBSP}1111${NBSP}1111${NBSP}1111`, 'card')).toBe(true);
+  });
+  it('carte séparée par NNBSP fine (U+202F)', () => {
+    expect(detects(`4111${NNBSP}1111${NNBSP}1111${NNBSP}1111`, 'card')).toBe(true);
+  });
+  it('homoglyphe cyrillique dans une clé (А = U+0410)', () => {
+    expect(detects('АKIAIOSFODNN7EXAMPLE', 'api_key')).toBe(true);
+  });
+  it('chiffre pleine chasse dans une carte (U+FF14)', () => {
+    expect(detects('４111111111111111', 'card')).toBe(true);
+  });
+  it('clé entièrement en pleine chasse', () => {
+    const fullwidth = [...AWS_KEY]
+      .map((c) => String.fromCodePoint(c.codePointAt(0)! + 0xfee0))
+      .join('');
+    expect(detects(fullwidth, 'api_key')).toBe(true);
+  });
+  it('offsets ramenés au texte ORIGINAL (caviardage du segment réellement saisi)', () => {
+    const text = `x ${ZWSP}АKIA${ZWSP}IOSFODNN7EXAMPLE y`;
+    const [match] = detectSensitiveData(text, allRules()).filter((m) => m.ruleType === 'api_key');
+    expect(text.slice(match.start, match.end)).toBe(`АKIA${ZWSP}IOSFODNN7EXAMPLE`);
+  });
+  it('pas de faux positif sur du texte cyrillique/grec ordinaire', () => {
+    expect(types('Привет, как дела ? Καλημέρα σας. ＡＢＣ　テスト')).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// [BYPASS CONNU] — Unicode résiduel
 // ---------------------------------------------------------------------------
 describe('[BYPASS CONNU] unicode — 2026-09-15', () => {
-  it('[BYPASS CONNU] zero-width (U+200B) dans une clé (non couvert par \\s)', () => {
-    expect(detects(`AKIA${ZWSP}IOSFODNN7EXAMPLE`, 'api_key')).toBe(false);
-  });
-  it('[BYPASS CONNU] BOM/ZWNBSP (U+FEFF) dans une carte', () => {
-    expect(detects(`4111${FEFF}1111${FEFF}1111${FEFF}1111`, 'card')).toBe(false);
-  });
-  it('[BYPASS CONNU] IBAN séparé par NBSP (iban.ts:10, classe [ ] littérale)', () => {
-    const nbsp = `DE89${NBSP}3704${NBSP}0044${NBSP}0532${NBSP}0130${NBSP}00`;
-    expect(detects(nbsp, 'iban')).toBe(false);
-  });
-  it('[BYPASS CONNU] IBAN séparé par tirets (iban.ts:10)', () => {
-    expect(detects('DE89-3704-0044-0532-0130-00', 'iban')).toBe(false);
-  });
-  it('[BYPASS CONNU] carte séparée par NBSP (card.ts:12, classe [ -] littérale)', () => {
-    expect(detects(`4111${NBSP}1111${NBSP}1111${NBSP}1111`, 'card')).toBe(false);
-  });
-  it('[BYPASS CONNU] carte séparée par NNBSP fine (U+202F)', () => {
-    expect(detects(`4111${NNBSP}1111${NNBSP}1111${NNBSP}1111`, 'card')).toBe(false);
-  });
   it('[BYPASS CONNU] carte séparée par des points (card.ts:12) — NE PAS corriger (FP versions)', () => {
     expect(detects('4111.1111.1111.1111', 'card')).toBe(false);
-  });
-  it('[BYPASS CONNU] homoglyphe cyrillique dans une clé (А = U+0410)', () => {
-    expect(detects('АKIAIOSFODNN7EXAMPLE', 'api_key')).toBe(false);
-  });
-  it('[BYPASS CONNU] chiffre pleine chasse dans une carte (U+FF14)', () => {
-    // Le préfixe pleine-chasse casse \d ; le reste (15 chiffres) ne forme pas un Luhn valide ici.
-    expect(detects('４111111111111111', 'card')).toBe(false);
   });
 });
 

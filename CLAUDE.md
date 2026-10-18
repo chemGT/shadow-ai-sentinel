@@ -20,7 +20,7 @@ texte/code + PDF/DOCX, allowlist) sont disponibles sans licence. Identité publi
 
 | Commande | Rôle |
 |----------|------|
-| `npm test` | Vitest — **298 tests, doit être vert** |
+| `npm test` | Vitest — **310 tests, doit être vert** |
 | `npm run test:e2e` | Playwright — extension réelle (`dist/`) + fixtures des 8 sites (30 tests) |
 | `npx tsc --noEmit` | Typecheck — doit être vide |
 | `npm run build` | Typecheck + build extension Chromium → `dist/` |
@@ -40,7 +40,7 @@ texte/code + PDF/DOCX, allowlist) sont disponibles sans licence. Identité publi
 ## État sprint & prochaine action
 
 - **Open source en cours** : plan **`.ai/plans/open-source.md`** (L1 nettoyage fait ; L2 correctifs
-  B1/B2/B4 ; L3 hygiène OSS ; L4 tri `.ai/` ; L5 publication ; stores CWS/AMO : plus tard).
+  B1/B2/B4 fait — `src/core/detection/normalize.ts` ; L3 hygiène OSS ; L4 tri `.ai/` ; L5 publication ; stores CWS/AMO : plus tard).
 - Le portail Next.js Clerk (`apps/portal`) est archivé (branche `archive/saas-portal`). Le backend
   Express garde encore l'auth Clerk JWT + jobs (dunning) : décision keep/archive en attente.
 - Reprise détaillée à froid : **`.ai/plans/checkpoint.md`** (antérieur au pivot OSS).

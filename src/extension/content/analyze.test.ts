@@ -62,6 +62,15 @@ describe('evaluateGuard — allowlist', () => {
     expect(decision.kind).toBe('block');
   });
 
+  it('reconnaît la valeur allowlistée malgré un repli Unicode (NBSP, zero-width)', () => {
+    const decision = evaluateGuard(
+      'key=AKIA\u200BIOSFODNN7EXAMPLE',
+      createDefaultPolicy(),
+      ['AKIAIOSFODNN7EXAMPLE'],
+    );
+    expect(decision.kind).toBe('allow');
+  });
+
   it('allowlist vide = comportement inchangé', () => {
     const decision = evaluateGuard('key=AKIAIOSFODNN7EXAMPLE', createDefaultPolicy(), []);
     expect(decision.kind).toBe('block');
@@ -82,5 +91,23 @@ describe('applyRedactionsToText', () => {
       { ruleType: 'iban', start: 4, end: 7, replacementToken: '[B]' },
     ]);
     expect(result).toBe('[A] [B]');
+  });
+
+  it('caviarde intégralement un IBAN séparé par NBSP (offsets du texte original)', () => {
+    const policy = {
+      ...createDefaultPolicy(),
+      rules: createDefaultPolicy().rules.map((r) =>
+        r.type === 'api_key' ? { ...r, enabled: false } : r,
+      ),
+    };
+    const nbsp = '\u00A0';
+    const iban = ['DE89', '3704', '0044', '0532', '0130', '00'].join(nbsp);
+    const text = `virement ${iban} merci`;
+    const decision = evaluateGuard(text, policy);
+    expect(decision.kind).toBe('redact');
+    if (decision.kind === 'redact') {
+      const result = applyRedactionsToText(text, decision.matches);
+      expect(result).toBe(`virement ${decision.matches[0].replacementToken} merci`);
+    }
   });
 });

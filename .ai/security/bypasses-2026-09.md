@@ -29,7 +29,9 @@ contourner (encodage/outil), le produit ne prétend pas l'arrêter.
 
 ## B. Contournements confirmés — à corriger (correctif proposé, non implémenté)
 
-### B1 — [MOYENNE] IBAN séparé par tirets ou NBSP échappe
+### B1 — [MOYENNE] IBAN séparé par tirets ou NBSP échappe — **CORRIGÉ (2026-10-18)**
+- **Correctif appliqué** : séparateur IBAN `[ -]?` + strip `[\s-]` dans le mod-97 (`iban.ts`) ;
+  NBSP replié par la normalisation **D**. Verrou : `CORRECTIF — unicode normalisé avant scan`.
 - **Repro** : tests `[BYPASS CONNU] IBAN séparé par tirets` et `… par NBSP`
   (`DE89-3704-0044-0532-0130-00`, `DE89 3704 …` en U+00A0) → non détecté, alors que la version
   espaces ASCII et la version contiguë le sont.
@@ -38,7 +40,9 @@ contourner (encodage/outil), le produit ne prétend pas l'arrêter.
   ex. `(?:[   -]?[A-Z0-9]{4}){2,7}`. Le garde-fou mod-97 (`iban.ts:12`) rend le risque de
   faux positif négligeable. (Mieux : normalisation défensive commune — voir **D**.)
 
-### B2 — [MOYENNE] Carte bancaire séparée par NBSP / espace fine échappe
+### B2 — [MOYENNE] Carte bancaire séparée par NBSP / espace fine échappe — **CORRIGÉ (2026-10-18)**
+- **Correctif appliqué** : normalisation **D** (espaces Unicode → ASCII, BOM supprimé). Le point
+  reste exclu (C2).
 - **Repro** : tests `[BYPASS CONNU] carte séparée par NBSP` et `… par NNBSP fine`
   (`4111 1111 1111 1111` en U+00A0 / U+202F) → non détecté.
 - **Cause racine** : `src/core/detection/card.ts:12` — séparateur `[ -]` (espace ASCII / tiret).
@@ -54,7 +58,9 @@ contourner (encodage/outil), le produit ne prétend pas l'arrêter.
   `@(?:[a-z0-9-]+\.)*(?:${domainPart})`. Vérifier qu'un domaine `acme.com` ne matche pas
   `evilacme.com` (le `.` littéral l'empêche déjà).
 
-### B4 — [MOYENNE] Zero-width / BOM / homoglyphes / pleine chasse dans un secret
+### B4 — [MOYENNE] Zero-width / BOM / homoglyphes / pleine chasse dans un secret — **CORRIGÉ (2026-10-18)**
+- **Correctif appliqué** : normalisation **D** + table d'homoglyphes cyrilliques/grecs stricts
+  (NFKC seul ne replie pas `А` cyrillique).
 - **Repro** : tests `[BYPASS CONNU] zero-width … dans une clé`, `BOM … dans une carte`,
   `homoglyphe cyrillique …`, `chiffre pleine chasse …`.
 - **Cause racine** : aucune **normalisation Unicode** avant scan (pipeline `run-detectors.ts` /
@@ -94,7 +100,20 @@ contourner (encodage/outil), le produit ne prétend pas l'arrêter.
 
 ---
 
-## D. Recommandation transverse à plus fort levier (non implémentée)
+## D. Recommandation transverse à plus fort levier — **IMPLÉMENTÉE (2026-10-18)**
+
+> Implémentation : `src/core/detection/normalize.ts`, appelée par `detectSensitiveData`
+> (`regex-engine.ts`). Option retenue pour les offsets : **carte d'index creuse** (seuls les
+> points de code dont le repli change la longueur sont enregistrés, recherche dichotomique) →
+> `start/end` désignent le texte original, le caviardage couvre le segment réellement saisi
+> (invisibles intercalés inclus). NFKC limité aux formes de compatibilité imitant l'ASCII
+> (pleine chasse, ligatures, exposants, chiffres cerclés, alphanumériques mathématiques).
+> L'allowlist applique le même repli. Coût mesuré (2 Mo, conteneur CI) : ASCII/français
+> ~15 ms (inchangé), cyrillique dense ~150–200 ms, une seule passe à l'envoi.
+> Tests : `normalize.test.ts`, `evasion-corpus.test.ts`, `analyze.test.ts`.
+
+Texte d'origine de la recommandation :
+
 
 Une **normalisation défensive avant scan** — insérée en tête de `runAllDetectors`
 (`src/core/detection/run-detectors.ts`) ou dans `detectSensitiveData`

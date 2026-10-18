@@ -1,5 +1,6 @@
 import { mergeRawMatches } from './detection/merge-matches.js';
 import { chunkRanges, truncateForDetection } from './detection/limits.js';
+import { normalizeForScan } from './detection/normalize.js';
 import { runAllDetectors } from './detection/run-detectors.js';
 import type { RawMatch } from './detection/types.js';
 import type { DetectionMatch, Policy } from './types.js';
@@ -10,6 +11,8 @@ import type { DetectionMatch, Policy } from './types.js';
  * anti-blocage UI). Les correspondances de chaque fenêtre sont réindexées en offsets absolus
  * avant fusion — les doublons produits par le chevauchement sont éliminés par
  * `mergeRawMatches` (deux correspondances identiques se chevauchent, la seconde est écartée).
+ * Le scan porte sur une version normalisée du texte (`detection/normalize.ts` : invisibles,
+ * espaces Unicode, homoglyphes, NFKC) ; les offsets renvoyés sont ramenés au texte ORIGINAL.
  * Ne jamais transmettre `text` ou les correspondances brutes à l'API.
  */
 export function detectSensitiveData(text: string, policy: Policy): DetectionMatch[] {
@@ -17,12 +20,14 @@ export function detectSensitiveData(text: string, policy: Policy): DetectionMatc
     return [];
   }
 
-  const scoped = truncateForDetection(text);
+  const normalized = normalizeForScan(truncateForDetection(text));
+  const scoped = normalized.text;
   const raw: RawMatch[] = [];
   for (const { start, end } of chunkRanges(scoped.length)) {
     const chunkMatches = runAllDetectors(scoped.slice(start, end), policy);
     for (const match of chunkMatches) {
-      raw.push({ ruleType: match.ruleType, start: match.start + start, end: match.end + start });
+      const original = normalized.toOriginal(match.start + start, match.end + start);
+      raw.push({ ruleType: match.ruleType, start: original.start, end: original.end });
     }
   }
   return mergeRawMatches(raw);

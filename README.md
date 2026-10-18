@@ -61,7 +61,7 @@ curl http://localhost:3000/health
 |----------|-------------|
 | `npm run dev` | Vite + rebuild extension (watch) |
 | `npm run build` | Typecheck + build extension → `dist/` |
-| `npm test` | Tests unitaires (298 tests) |
+| `npm test` | Tests unitaires (310 tests) |
 | `npm run test:ci` | Tests + couverture (CI) |
 | `npm run ci` | Tests + build (comme GitHub Actions) |
 | `npm run backend` | API Express locale (port 3000) |

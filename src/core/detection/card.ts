@@ -8,6 +8,9 @@ import type { RawMatch } from './types.js';
  * donc pas de ReDoS (même style que le motif IBAN). `isValidCardChecksum` (Luhn) est le filet
  * principal anti-faux-positifs : un numéro de commande ou un timestamp de 16 chiffres a ~1
  * chance sur 10 de passer Luhn par hasard.
+ * Les espaces Unicode (NBSP, espace fine) et les invisibles (BOM, zero-width) sont repliés en
+ * amont par `normalize.ts` : la classe `[ -]` reste ASCII. Le point n'est volontairement PAS
+ * séparateur (numéros de version `4111.1111…` → faux positifs, cf. bypass C2).
  */
 const CARD_PATTERN = /\b(?:\d[ -]?){12,18}\d\b/g;
 

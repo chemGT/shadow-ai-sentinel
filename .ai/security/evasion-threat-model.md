@@ -15,11 +15,10 @@ l'identique et exécutées) ; les cas confirmés par exécution sont repris dans
 - Le texte analysé est celui **extrait du composer** (`extractTextFromInput` :
   `textarea.value` ou `innerText/textContent` — `input-text.ts:1-6`).
 - Détection = **regex + validateurs** (Luhn pour carte, mod-97 pour IBAN, format FR pour phone),
-  **aucune** couche de décodage (base64/hex/URL), **aucune** normalisation Unicode, **aucun** OCR.
-- Modèle freemium : en **Free**, seules `api_key` + `generic_secret` sont actives et **le scan de
-  fichiers est entièrement désactivé** (`file-guard.ts:199-201`). Tout le reste (IBAN, carte,
-  téléphone, IP, e-mail, fichiers) ne s'active qu'en **Pro**. Ce n'est pas un contournement mais la
-  surface d'exposition par défaut à garder en tête.
+  **aucune** couche de décodage (base64/hex/URL), **aucun** OCR. Depuis le 2026-10-18 : une
+  **normalisation Unicode défensive** précède le scan (`normalize.ts`, cf. §3 et bypasses D).
+- Depuis le passage open source (2026-10-18), plus de palier Free/Pro : toutes les règles et le
+  scan de fichiers sont disponibles ; leur activation dépend uniquement de la policy.
 
 **Faisabilité** — barème utilisé : *Accidentel* (fuite sans intention, ex. format de copier-coller
 courant) · *Facile* (une manipulation triviale, sans outil) · *Délibéré* (nécessite un encodage /
@@ -220,7 +219,7 @@ qu'un texte collé > 2 Mo est fail-open **avec avertissement**. Incohérence à 
 
 ---
 
-## 7. Fichiers (Pro uniquement)
+## 7. Fichiers
 
 Références : `file-guard.ts`, `binary-extract.ts`, `text-file.ts`, `binary-file.ts`.
 
@@ -233,7 +232,6 @@ Références : `file-guard.ts`, `binary-extract.ts`, `text-file.ts`, `binary-fil
 | **DOCX : suivi de modifications** | texte **supprimé** (`w:delText`) n'est pas rendu par `extractRawText` ; le secret « supprimé » mais présent dans le fichier échappe | Délibéré | Part | ❌ Non* |
 | **Secret scindé corps + PJ** | chaque flux est scanné isolément (`file-guard.ts` vs `guard-adapter.ts`) ; une moitié dans le message, l'autre dans un `.txt` → aucun ne matche | Facile | Part | ❌ Non |
 | **Extension trompeuse** | un binaire renommé `.txt` → `readFileAsText` le lit comme texte (souvent illisible → pas de match) ; un `.pdf` réel non affecté | Variable | Part | ⚠️ |
-| **Free tier** | scan fichiers **désactivé** (`file-guard.ts:199-201`) → tout fichier passe en Free | — (gating) | Part | ❌ (par design) |
 
 *DOCX commentaires / suivi de modifications : gap **architectural** déduit du comportement de
 `mammoth.extractRawText` ; marqué « à confirmer par fixture » dans le corpus (non confirmé par
@@ -246,9 +244,9 @@ tests existants `file-guard.test.ts`).
 
 **Confirmés par exécution, corrigeables proprement (faible risque FP) :**
 1. `+33…` téléphone (tous formats) — **corrigé** dans ce lot.
-2. IBAN séparé par tirets / NBSP — normalisation défensive recommandée.
-3. Carte séparée par NBSP (pas le point) — normalisation défensive recommandée.
-4. Zero-width / homoglyphes de compatibilité — fermés par une passe NFKC + strip zero-width.
+2. IBAN séparé par tirets / NBSP — **corrigé** le 2026-10-18 (`normalize.ts` + séparateur `[ -]`).
+3. Carte séparée par NBSP (pas le point) — **corrigé** le 2026-10-18 (`normalize.ts`).
+4. Zero-width / homoglyphes / pleine chasse — **corrigé** le 2026-10-18 (`normalize.ts`).
 
 **Confirmés, à documenter (correctif risqué ou hors regex) :**
 5. `pro_email` sous-domaines.
@@ -257,7 +255,7 @@ tests existants `file-guard.test.ts`).
 
 **Limites assumées (ne pas « corriger », documenter comme périmètre) :**
 8. Encodages (base64/hex/URL), inversion, découpage volontaire, `fetch` direct, iframe/shadow DOM,
-   envoi par modificateur clavier, `fail_mode` par défaut fail-open, Free tier.
+   envoi par modificateur clavier, `fail_mode` par défaut fail-open.
 
 La ligne directrice : le produit protège contre la **fuite par inadvertance** et l'utilisateur
 négligent, **pas** contre un initié déterminé. Les corrections à mener en priorité sont celles qui
