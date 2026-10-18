@@ -3,6 +3,15 @@ name: Release
 on:
   push:
     tags: ['v*.*.*']
+  # Déclenchement manuel (onglet Actions → Release → Run workflow) depuis master : le workflow
+  # crée lui-même le tag vX.Y.Z sur le commit courant. Un tag créé par GITHUB_TOKEN ne relance
+  # pas ce workflow (pas de double release).
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release, without "v" (must match manifests, package.json and a CHANGELOG section), e.g. 1.0.0'
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -27,16 +36,39 @@ jobs:
           node-version: '22'
           cache: npm
 
+      - name: Resolve release tag
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            if [ "$GITHUB_REF" != "refs/heads/master" ]; then
+              echo "::error::manual releases must run from master (got $GITHUB_REF)"
+              exit 1
+            fi
+            if ! printf '%s' "$INPUT_VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+              echo "::error::invalid version '$INPUT_VERSION' (expected X.Y.Z)"
+              exit 1
+            fi
+            TAG="v$INPUT_VERSION"
+            if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null; then
+              echo "::error::tag $TAG already exists"
+              exit 1
+            fi
+          else
+            TAG="$GITHUB_REF_NAME"
+          fi
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
+          echo "VERSION=${TAG#v}" >> "$GITHUB_ENV"
+
       - name: Install dependencies
         run: npm ci
 
       - name: Check tag matches manifest versions
         run: |
-          TAG="${GITHUB_REF_NAME#v}"
           for f in manifest.json manifest.firefox.json package.json; do
             V=$(node -p "require('./$f').version")
-            if [ "$V" != "$TAG" ]; then
-              echo "::error file=$f::version $V != tag $TAG"
+            if [ "$V" != "$VERSION" ]; then
+              echo "::error file=$f::version $V != release $VERSION"
               exit 1
             fi
           done
@@ -54,8 +86,8 @@ jobs:
       - name: Package
         run: |
           mkdir -p release
-          (cd dist && zip -qr "../release/shadow-ai-sentinel-${GITHUB_REF_NAME}-chromium.zip" .)
-          (cd dist-firefox && zip -qr "../release/shadow-ai-sentinel-${GITHUB_REF_NAME}-firefox-unsigned.xpi" .)
+          (cd dist && zip -qr "../release/shadow-ai-sentinel-${TAG}-chromium.zip" .)
+          (cd dist-firefox && zip -qr "../release/shadow-ai-sentinel-${TAG}-firefox-unsigned.xpi" .)
           (cd release && sha256sum * > SHA256SUMS.txt)
 
       - name: Build provenance attestation
@@ -67,14 +99,13 @@ jobs:
 
       - name: Extract release notes from CHANGELOG
         run: |
-          TAG="${GITHUB_REF_NAME#v}"
-          awk -v ver="$TAG" '
+          awk -v ver="$VERSION" '
             $0 ~ "^## \\[" ver "\\]" { found = 1; next }
             found && /^## / { exit }
             found { print }
           ' CHANGELOG.md > release-notes.md
           if [ ! -s release-notes.md ]; then
-            echo "::error file=CHANGELOG.md::no section for $TAG"
+            echo "::error file=CHANGELOG.md::no section for $VERSION"
             exit 1
           fi
 
@@ -82,7 +113,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" release/* \
-            --title "Shadow AI Sentinel $GITHUB_REF_NAME" \
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            # Crée le tag sur le commit testé et construit ci-dessus.
+            TARGET=(--target "$GITHUB_SHA")
+          else
+            TARGET=(--verify-tag)
+          fi
+          gh release create "$TAG" release/* \
+            --title "Shadow AI Sentinel $TAG" \
             --notes-file release-notes.md \
-            --verify-tag
+            "${TARGET[@]}"

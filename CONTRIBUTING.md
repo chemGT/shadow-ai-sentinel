@@ -70,6 +70,17 @@ The adversarial corpus (`src/core/detection/evasion-corpus.test.ts`) uses two ki
 Closing a known bypass = flip its test to a positive assertion and update
 `docs/security/bypasses-2026-09.md`.
 
+## Releasing (maintainers)
+
+1. On a branch: bump `version` in `manifest.json`, `manifest.firefox.json` and `package.json`, and
+   rename `## [Unreleased]` in `CHANGELOG.md` to `## [X.Y.Z] — YYYY-MM-DD` (keep an empty
+   `[Unreleased]` above). Merge the PR.
+2. Either push a `vX.Y.Z` tag on `master`, or run **Actions → Release → Run workflow** on `master`
+   with `X.Y.Z` — the workflow then creates the tag itself.
+3. The workflow refuses mismatched versions, a missing CHANGELOG section or an existing tag, then
+   publishes the Chromium zip, the unsigned Firefox `.xpi`, `SHA256SUMS.txt` and a build-provenance
+   attestation.
+
 ## Commits and pull requests
 
 - One logical change per PR; describe **what** and **why**, link the issue.
