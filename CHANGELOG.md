@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] — Open source
 
+### Added
+- English README (+ `README.fr.md`), `SECURITY.md` (private vulnerability reporting), `CONTRIBUTING.md` (incl. how to add a detector), `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1)
+- Issue forms (false positive — prefilled by the extension —, missed detection, new detector, broken site adapter, bug) and a pull-request template
+- CI: e2e Playwright job, CodeQL (security-extended), OpenSSF Scorecard (public repo only), tag-triggered release workflow (Chromium zip + unsigned Firefox xpi, SHA256SUMS, build provenance attestation), Dependabot (npm + actions), least-privilege workflow permissions
+
 ### Security
 - Defensive Unicode normalization before scanning (`src/core/detection/normalize.ts`): zero-width/BOM/soft-hyphen removed, Unicode spaces (NBSP, narrow NBSP…) folded to ASCII space, strict Cyrillic/Greek homoglyphs folded to Latin, NFKC on ASCII-lookalike compatibility forms (fullwidth, ligatures, superscripts, circled digits, math alphanumerics). Match offsets are mapped back to the original text so redaction covers what the user actually typed
 - IBAN detection accepts dash separators (`DE89-3704-…`)

@@ -10,6 +10,9 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   quality:
     name: Tests & build
@@ -29,7 +32,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Unit & integration tests
+      - name: Unit tests + coverage
         run: npm run test:ci
 
       - name: Typecheck & Chromium extension build
@@ -44,5 +47,26 @@ jobs:
       - name: Verify Firefox dist
         run: node scripts/verify-dist-firefox.mjs
 
-      - name: API smoke tests
-        run: npm run test:api
+  e2e:
+    name: E2E (real extension, 8 site fixtures)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Build & run E2E
+        run: npm run test:e2e

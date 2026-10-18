@@ -1,0 +1,47 @@
+name: False positive
+description: Something harmless was blocked or redacted.
+title: '[False positive] '
+labels: [false-positive, detection]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping tune the detectors.
+        **Never paste a real secret or real personal data here** — this issue is public.
+        If you need an example, replace digits/letters with look-alike fake values that still trigger the rule.
+  - type: input
+    id: rule
+    attributes:
+      label: Rule
+      description: Rule type shown in the alert (api_key, generic_secret, iban, card, phone, pro_email, internal_ip).
+      placeholder: iban
+    validations:
+      required: true
+  - type: input
+    id: site
+    attributes:
+      label: AI site
+      placeholder: claude.ai
+    validations:
+      required: true
+  - type: input
+    id: context
+    attributes:
+      label: Context
+      description: What you were typing (code, prose, json, url, other).
+      placeholder: code
+  - type: input
+    id: version
+    attributes:
+      label: Extension version
+      placeholder: 1.0.0
+  - type: textarea
+    id: sample
+    attributes:
+      label: Sanitized sample (optional)
+      description: A FAKE value with the same shape as the one that was flagged.
+      render: text
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes

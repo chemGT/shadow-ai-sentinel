@@ -1,0 +1,73 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    name: Build & publish GitHub Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check tag matches manifest versions
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          for f in manifest.json manifest.firefox.json package.json; do
+            V=$(node -p "require('./$f').version")
+            if [ "$V" != "$TAG" ]; then
+              echo "::error file=$f::version $V != tag $TAG"
+              exit 1
+            fi
+          done
+
+      - name: Tests
+        run: npm test
+
+      - name: Build Chromium + Firefox
+        run: |
+          npm run build
+          node scripts/verify-dist.mjs
+          npm run build:firefox
+          node scripts/verify-dist-firefox.mjs
+
+      - name: Package
+        run: |
+          mkdir -p release
+          (cd dist && zip -qr "../release/shadow-ai-sentinel-${GITHUB_REF_NAME}-chromium.zip" .)
+          (cd dist-firefox && zip -qr "../release/shadow-ai-sentinel-${GITHUB_REF_NAME}-firefox-unsigned.xpi" .)
+          (cd release && sha256sum * > SHA256SUMS.txt)
+
+      - name: Build provenance attestation
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: 'release/*.zip, release/*.xpi'
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" release/* \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes \
+            --verify-tag

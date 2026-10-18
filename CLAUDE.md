@@ -39,7 +39,8 @@ texte/code + PDF/DOCX, allowlist) sont disponibles sans licence. Identité publi
 ## État sprint & prochaine action
 
 - **Open source en cours** : plan **`.ai/plans/open-source.md`** (L1 nettoyage fait ; L2 correctifs
-  B1/B2/B4 fait — `src/core/detection/normalize.ts` ; L3 hygiène OSS ; L4 tri `.ai/` ; L5 publication ; stores CWS/AMO : plus tard).
+  B1/B2/B4 fait — `src/core/detection/normalize.ts` ; L3 hygiène OSS fait (README EN/FR, SECURITY,
+  CONTRIBUTING, CoC, issue forms, CodeQL, Scorecard, release) ; L4 tri `.ai/` ; L5 publication ; stores CWS/AMO : plus tard).
 - **Portail Clerk + backend Express** (API policies/télémétrie, auth Clerk, jobs dunning) **archivés**
   sur la branche `archive/saas-portal`. L'extension n'a plus aucun code réseau : policy et allowlist
   100 % locales ; « faux positif » = issue GitHub pré-remplie (`content/reporting.ts`).

@@ -1,107 +1,134 @@
 # Shadow AI Sentinel
 
-Extension navigateur **B2B** (Manifest V3) qui agit comme un **DLP** sur les LLM publics : détection **100 % locale** des données sensibles avant envoi, avec modes **Block** ou **Redact**.
+[![CI](https://github.com/chemGT/shadow-ai-sentinel/actions/workflows/ci.yml/badge.svg)](https://github.com/chemGT/shadow-ai-sentinel/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/chemGT/shadow-ai-sentinel/actions/workflows/codeql.yml/badge.svg)](https://github.com/chemGT/shadow-ai-sentinel/actions/workflows/codeql.yml)
+[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
-**Sites couverts :** [Claude](https://claude.ai), [ChatGPT](https://chatgpt.com), [Gemini](https://gemini.google.com), [Mistral Le Chat](https://chat.mistral.ai), [DeepSeek](https://chat.deepseek.com), [Perplexity](https://www.perplexity.ai), [Grok](https://grok.com), [Microsoft Copilot](https://copilot.microsoft.com).
+**Open-source browser DLP for public AI chatbots.** Shadow AI Sentinel stops secrets and personal
+data **before** they are sent to ChatGPT, Claude, Gemini and five other assistants — by blocking the
+message or redacting the sensitive value in place.
+
+- **100 % local.** Detection runs in your browser. The extension makes **no network request at all**:
+  no backend, no analytics, no telemetry.
+- **Auditable.** Every line that touches your prompt is in this repository.
+- **Built for "shadow AI".** Employees paste logs, configs and customer data into public LLMs every
+  day. This is a seatbelt for that moment, not a corporate surveillance tool.
+
+[Français](README.fr.md)
+
+![Block modal on an AI chat](store-assets/screenshots/01-block-modal.png)
 
 ---
 
-## Fonctionnalités cibles (MVP)
+## What it detects
 
-| Capacité | Statut |
-|----------|--------|
-| Détection locale (clés API, IBAN, IP interne, emails pro, téléphones, secrets) | ✅ Moteur regex |
-| Policies par type (Block / Redact) | ✅ Phase 3 |
-| Interception envoi (Claude, ChatGPT, Gemini + Le Chat, DeepSeek, Perplexity, Grok, Copilot) | ✅ Phase 7 / S1 |
-| API policies + télémétrie anonymisée | ✅ Phase 4 (rate limit, rétention 90 j) |
-| Télémétrie par `host` (8 hôtes LLM) | ✅ Phase 7 |
+| Rule | Examples | Validation | Default |
+|------|----------|------------|---------|
+| `api_key` | AWS `AKIA…`/`ASIA…`, OpenAI `sk-…`, Anthropic `sk-ant-…`, Stripe `sk_live_…`, GitHub `ghp_…`/`github_pat_…`, GitLab `glpat-…`, Slack `xox…`, Azure storage connection strings | Fixed prefixes, bounded lengths | Block |
+| `generic_secret` | `Bearer …`, `Basic …`, JWTs | Bounded patterns | Block |
+| `iban` | `FR76 3000 6000 0112 3456 7890 189`, `DE89-3704-…` | ISO 13616 mod-97 | Redact |
+| `card` | Visa/Mastercard/Amex, contiguous or grouped | Luhn | Redact |
+| `phone` | French national and `+33` formats, E.164 | Format | Redact |
+| `internal_ip` | RFC 1918 addresses (`10.x`, `172.16–31.x`, `192.168.x`) | Range check | Redact |
+| `pro_email` | Addresses on domains **you** configure | Exact domain | Off (needs a domain) |
 
-**Principe :** aucun contenu de prompt ne quitte le navigateur. La télémétrie serveur ne contient que des métadonnées (type de règle, action, horodatage).
+Every rule can be switched between **Block** and **Redact**, or disabled, from the options page.
+An **allowlist** silences known-safe values (test keys, your own public email…).
 
----
+**Attachments** are scanned too: text/code files (`.env`, `.json`, `.csv`, source files…) and
+**PDF / DOCX** (text extracted locally with pdf.js and mammoth).
 
-## Démarrage rapide
+**Evasion hardening:** input is normalized before scanning — zero-width characters and BOMs are
+removed, Unicode spaces (NBSP, narrow NBSP) folded, Cyrillic/Greek look-alike letters and
+full-width characters folded to ASCII. Redaction still applies to exactly what you typed.
 
-### Prérequis
+## Supported sites
 
-- Node.js 18+ (20 LTS recommandé)
-- Chrome ou Edge (Chromium)
+Claude · ChatGPT · Gemini · Mistral Le Chat · DeepSeek · Perplexity · Grok · Microsoft Copilot
 
-### Installation
+If a site changes its DOM and the adapter can no longer find the message box, the extension says so
+(popup warning + configurable `fail_mode`: `open`, `warn` or `closed`) instead of failing silently.
+
+## How it works
+
+```mermaid
+flowchart LR
+  A[You press Enter / click Send<br/>or attach a file] --> B[Content script intercepts]
+  B --> C[Unicode normalization]
+  C --> D[Detectors + validators<br/>Luhn, mod-97, prefixes]
+  D -->|nothing found| E[Message sent unchanged]
+  D -->|block rule| F[Message stopped + alert]
+  D -->|redact rule| G[Value replaced by a token<br/>e.g. REDACTED_IBAN]
+```
+
+Scanning is bounded (overlapping 100 k windows, 2 M characters max with a visible warning beyond)
+and every regex is audited against ReDoS.
+
+## Install
+
+Store listings (Chrome Web Store, Firefox Add-ons) are planned. Until then, build from source:
 
 ```bash
-git clone git@github.com:chemGT/shadow-ai-sentinel.git
+git clone https://github.com/chemGT/shadow-ai-sentinel.git
 cd shadow-ai-sentinel
 npm ci
-npm run build
-npm test
+npm run build            # Chromium → dist/
+npm run build:firefox    # Firefox  → dist-firefox/
 ```
 
-### Charger l’extension (développement)
+- **Chrome / Edge / Brave:** `chrome://extensions` → Developer mode → *Load unpacked* → `dist/`
+- **Firefox:** `about:debugging` → This Firefox → *Load Temporary Add-on* → `dist-firefox/manifest.json`
 
-1. `npm run build`
-2. Ouvrir `chrome://extensions` → **Mode développeur** → **Charger l’extension non empaquetée**
-3. Sélectionner le dossier `dist/`
-4. Ouvrir un LLM supporté et vérifier `Adaptateur <Site> actif` dans la console
+Tagged releases also ship ready-made archives on the
+[Releases page](https://github.com/chemGT/shadow-ai-sentinel/releases).
 
-> Recette : [.ai/docs/matrice-tests-multi-llm.md](.ai/docs/matrice-tests-multi-llm.md) · Install : [.ai/guides/INSTALLATION.md](.ai/guides/INSTALLATION.md)
+## What it does **not** do
 
-### API (healthcheck uniquement)
+Shadow AI Sentinel protects against **accidental** leaks — the pasted log, the forgotten key in a
+config file. It is not designed to stop a determined insider:
 
-```bash
-npm run backend
-curl http://localhost:3000/health
-```
+- encoded secrets (base64, hex, URL-encoding), reversed or deliberately split values are not decoded;
+- images, XLSX/PPTX, archives and scanned (image-only) PDFs are not inspected;
+- requests sent outside the page's message box (direct API calls, other apps) are out of reach.
 
----
+The full threat model and the adversarial test corpus are public:
+[`.ai/security/evasion-threat-model.md`](.ai/security/evasion-threat-model.md) ·
+[`src/core/detection/evasion-corpus.test.ts`](src/core/detection/evasion-corpus.test.ts).
 
-## Scripts npm
+## Privacy
 
-| Commande | Description |
-|----------|-------------|
-| `npm run dev` | Vite + rebuild extension (watch) |
-| `npm run build` | Typecheck + build extension → `dist/` |
-| `npm test` | Tests unitaires (310 tests) |
-| `npm run test:ci` | Tests + couverture (CI) |
-| `npm run ci` | Tests + build (comme GitHub Actions) |
-| `npm run backend` | API Express locale (port 3000) |
-| `docker compose up -d` | API conteneurisée (Phase 4+) |
+No account, no server, no analytics. Settings and local counters live in `chrome.storage.local`.
+The only outbound action is one **you** trigger: *Report false positive* opens a prefilled GitHub
+issue (rule, site, context, version — never your text). See the
+[privacy policy](store-assets/privacy-policy.md).
 
----
+## Development
 
-## Structure du projet
+| Command | Purpose |
+|---------|---------|
+| `npm test` | Unit tests (Vitest) |
+| `npm run test:ci` | Unit tests + coverage |
+| `npm run test:e2e` | Builds, then runs Playwright against the real extension on fixtures of the 8 sites |
+| `npx tsc --noEmit` | Typecheck |
+| `npm run build` / `npm run build:firefox` | Extension builds |
+| `npm run package:firefox` | Unsigned `.xpi` for AMO |
 
 ```
 src/
-├── core/                 # Moteur DLP (regex, policy, validation)
-├── extension/            # MV3 : background, content, platform/
-├── ui/                   # Composants React (modales)
-└── backend/              # API Node.js stateless
-.ai/                      # Plan MVP, suivi, guides, ADR, sécurité
+├── core/        # Detection engine (pure TS, no DOM): detectors, normalization, validators, policy
+├── extension/   # MV3: background, content script, site adapters, popup, options
+└── ui/          # React alert components, i18n (EN/FR)
+e2e/             # Playwright suite + site fixtures
 ```
 
----
+Stack: TypeScript, React 19, Vite + CRXJS, Vitest, Playwright, pdf.js, mammoth.
 
-## Documentation
+## Contributing
 
-| Document | Description |
-|----------|-------------|
-| [.ai/guides/INSTALLATION.md](.ai/guides/INSTALLATION.md) | Guide d’installation (mis à jour par phase) |
-| [.ai/SUIVI-ACTIONS.md](.ai/SUIVI-ACTIONS.md) | Suivi des tâches et avancement |
-| [.ai/plans/mvp-pilote-claude.md](.ai/plans/mvp-pilote-claude.md) | Plan MVP détaillé |
-| [.ai/schemas/policy.example.json](.ai/schemas/policy.example.json) | Exemple de policy client |
+Bug reports, false positives, new detectors and site-adapter fixes are welcome — see
+[CONTRIBUTING.md](CONTRIBUTING.md). Security issues: [SECURITY.md](SECURITY.md).
+This project follows the [Contributor Covenant](CODE_OF_CONDUCT.md).
 
----
+## License
 
-## Stack technique
-
-- **Extension :** TypeScript, React, Vite, [@crxjs/vite-plugin](https://crxjs.dev/)
-- **Manifest :** V3 (service worker module)
-- **Backend :** Express 5, Docker
-- **Tests :** Vitest
-
----
-
-## Licence
-
-[Apache-2.0](LICENSE) — voir aussi [NOTICE](NOTICE).
+[Apache-2.0](LICENSE) · see [NOTICE](NOTICE).

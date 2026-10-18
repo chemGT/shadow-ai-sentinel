@@ -1,0 +1,44 @@
+name: Site adapter broken
+description: Protection is inactive or the alert misbehaves on a supported AI site.
+title: '[Site] '
+labels: [bug, site-adapter]
+body:
+  - type: dropdown
+    id: site
+    attributes:
+      label: AI site
+      options:
+        - claude.ai
+        - chatgpt.com
+        - gemini.google.com
+        - chat.mistral.ai
+        - chat.deepseek.com
+        - perplexity.ai
+        - grok.com
+        - copilot.microsoft.com
+    validations:
+      required: true
+  - type: dropdown
+    id: browser
+    attributes:
+      label: Browser
+      options: [Chrome, Edge, Brave, Firefox, Other Chromium]
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Extension version
+  - type: textarea
+    id: what
+    attributes:
+      label: What happens
+      description: e.g. popup shows "Protection inactive on this site", Enter is not intercepted, file upload not scanned.
+    validations:
+      required: true
+  - type: textarea
+    id: console
+    attributes:
+      label: Console output
+      description: DevTools console lines starting with `[Shadow AI Sentinel]`. Remove anything personal.
+      render: text

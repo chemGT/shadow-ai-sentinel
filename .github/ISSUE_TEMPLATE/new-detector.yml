@@ -1,0 +1,30 @@
+name: New detector proposal
+description: Propose detecting a new kind of sensitive data.
+title: '[Detector] '
+labels: [enhancement, detection]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What should be detected
+      description: Data type, who issues it, why leaking it to an LLM is a risk.
+    validations:
+      required: true
+  - type: textarea
+    id: format
+    attributes:
+      label: Format specification
+      description: Prefix, length, charset, checksum/validator (Luhn, mod-97…), public reference.
+    validations:
+      required: true
+  - type: textarea
+    id: false-positives
+    attributes:
+      label: False-positive risk
+      description: What legitimate text could look the same, and how a validator can rule it out.
+  - type: checkboxes
+    id: contribute
+    attributes:
+      label: Contribution
+      options:
+        - label: I am willing to open a PR (see CONTRIBUTING.md, "Adding a detector").

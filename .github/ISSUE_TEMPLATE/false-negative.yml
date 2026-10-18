@@ -1,0 +1,32 @@
+name: Missed detection (false negative)
+description: A common format of sensitive data was not detected.
+title: '[Missed detection] '
+labels: [false-negative, detection]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this for **ordinary formats** that slip through (e.g. a provider's API key prefix, a national IBAN layout).
+        For a **deliberate evasion technique**, report it privately via
+        [a security advisory](https://github.com/chemGT/shadow-ai-sentinel/security/advisories/new).
+        **Never paste a real secret** — use a fake value with the same format.
+  - type: input
+    id: rule
+    attributes:
+      label: Expected rule
+      placeholder: api_key
+    validations:
+      required: true
+  - type: textarea
+    id: format
+    attributes:
+      label: Format and fake example
+      description: Describe the format (prefix, length, charset, checksum) and give a fake example.
+      render: text
+    validations:
+      required: true
+  - type: input
+    id: reference
+    attributes:
+      label: Public reference
+      description: Link to the provider's documentation of the format, if any.
