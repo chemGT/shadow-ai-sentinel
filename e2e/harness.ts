@@ -33,12 +33,26 @@ export async function launchWithExtension(): Promise<BrowserContext> {
   return context;
 }
 
+/**
+ * Service worker de l'extension, prêt à l'emploi. Playwright peut exposer le worker avant que
+ * Chromium y ait injecté les bindings `chrome.*` : un `evaluate` immédiat échoue alors sur
+ * `chrome.storage` indéfini (flaky ~1 lancement sur 2). On attend donc que l'API soit présente.
+ */
 async function extensionServiceWorker(context: BrowserContext) {
   const existing = context.serviceWorkers();
-  if (existing.length > 0) {
-    return existing[0];
+  const sw =
+    existing.length > 0
+      ? existing[0]
+      : await context.waitForEvent('serviceworker', { timeout: 15_000 });
+
+  const deadline = Date.now() + 10_000;
+  while (!(await sw.evaluate(() => typeof chrome !== 'undefined' && !!chrome.storage?.local))) {
+    if (Date.now() > deadline) {
+      throw new Error('Service worker sans API chrome.storage après 10 s');
+    }
+    await new Promise((resolve) => setTimeout(resolve, 100));
   }
-  return context.waitForEvent('serviceworker', { timeout: 15_000 });
+  return sw;
 }
 
 /**
