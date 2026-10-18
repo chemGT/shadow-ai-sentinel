@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Release workflow can be started manually (Actions → Release → Run workflow, from `master`): it validates the version, builds, tests and creates the `vX.Y.Z` tag and GitHub Release itself — no local tag push needed
+
 ## [1.0.0] — 2026-10-18 — First open-source release
 
 Shadow AI Sentinel is now free and open source (Apache-2.0). Every feature is available to
