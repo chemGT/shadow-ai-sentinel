@@ -55,7 +55,7 @@
     "@vitejs/plugin-react": "^6.1.2",
     "@vitest/coverage-v8": "^4.1.6",
     "autoprefixer": "^10.6.1",
-    "happy-dom": "^20.9.0",
+    "happy-dom": "^21.0.1",
     "postcss": "^8.5.14",
     "tailwindcss": "^4.3.0",
     "typescript": "^6.0.3",
