@@ -1,5 +1,5 @@
 import { STORAGE_KEYS } from '../../core/constants.js';
-import type { Policy, TelemetryQueueItem, TenantCredentials } from '../../core/types.js';
+import type { Policy } from '../../core/types.js';
 import type { PersistedAdapterHealth } from '../../core/adapter-health.js';
 import { createDefaultPolicy } from '../../core/defaults.js';
 
@@ -17,8 +17,7 @@ import { getExtensionApi } from './browser-api.js';
  * (API historique) ET retournent une Promise (MV3). `browser.storage.local.*` (Firefox)
  * est Promise-only : le callback passé en dernier argument est silencieusement ignoré,
  * jamais invoqué. Utiliser le pattern callback fait donc pendre indéfiniment la Promise
- * wrapper sur Firefox (policy jamais lue, allowlist jamais chargée, device id jamais
- * généré, etc.) — d'où l'usage exclusif de la forme Promise native, supportée nativement
+ * wrapper sur Firefox (policy jamais lue, allowlist jamais chargée, etc.) — d'où l'usage exclusif de la forme Promise native, supportée nativement
  * par les deux navigateurs.
  */
 function storageGet<T>(keys: string | string[]): Promise<Record<string, T>> {
@@ -51,44 +50,6 @@ export async function setStoredPolicy(policy: Policy): Promise<void> {
     throw new Error(`Policy invalide: ${validated.errors.join(', ')}`);
   }
   await storageSet({ [STORAGE_KEYS.policy]: validated.policy });
-}
-
-export async function getTelemetryQueue(): Promise<TelemetryQueueItem[]> {
-  const result = await storageGet<TelemetryQueueItem[]>(STORAGE_KEYS.telemetryQueue);
-  return result[STORAGE_KEYS.telemetryQueue] ?? [];
-}
-
-export async function setTelemetryQueue(queue: TelemetryQueueItem[]): Promise<void> {
-  await storageSet({ [STORAGE_KEYS.telemetryQueue]: queue });
-}
-
-export async function getOrCreateDeviceId(): Promise<string> {
-  const result = await storageGet<string>(STORAGE_KEYS.deviceId);
-  const existing = result[STORAGE_KEYS.deviceId];
-  if (typeof existing === 'string' && existing.length > 0) {
-    return existing;
-  }
-  const deviceId = crypto.randomUUID();
-  await storageSet({ [STORAGE_KEYS.deviceId]: deviceId });
-  return deviceId;
-}
-
-export async function getTenantCredentials(): Promise<TenantCredentials | null> {
-  const result = await storageGet<TenantCredentials>(STORAGE_KEYS.credentials);
-  const creds = result[STORAGE_KEYS.credentials];
-  if (
-    creds &&
-    typeof creds.tenantId === 'string' &&
-    typeof creds.apiKey === 'string' &&
-    typeof creds.apiBaseUrl === 'string'
-  ) {
-    return creds;
-  }
-  return null;
-}
-
-export async function setTenantCredentials(credentials: TenantCredentials): Promise<void> {
-  await storageSet({ [STORAGE_KEYS.credentials]: credentials });
 }
 
 /** Valeurs allowlistées : matches dont la valeur exacte ne doit pas déclencher la policy. */

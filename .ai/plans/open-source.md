@@ -6,7 +6,7 @@ objectif = **réputation professionnelle** (portfolio sécurité / DLP / gouvern
 - Licence **Apache-2.0**, copyright au pseudo **`chemGT`** (vie privée : pas de nom réel).
 - Stores CWS/AMO : **plus tard**, rien d'actif pour l'instant.
 - **Historique réécrit** pour retirer le domaine perso (emails, nom réel) — voir §6.2.
-- Backend télémétrie (auth Clerk JWT, jobs dunning) : **en attente** de décision.
+- Backend télémétrie : **archivé** (branche `archive/saas-portal`) ; extension sans aucun appel réseau.
 
 ---
 

@@ -22,6 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Store listings, privacy policy and permission justifications updated: no third-party service, no network request by default
 
 ### Removed
+- Express backend (policies API, telemetry ingestion, API keys, Postgres/Drizzle schema and migrations, Clerk JWT auth, dunning jobs), Dockerfile and docker-compose — archived on branch `archive/saas-portal`
+- Extension network code: policy sync, telemetry queue, feedback sender, tenant credentials in options, background alarms; `alarms` permission and optional `http://localhost/*` host permission
+- "Report false positive" now opens a prefilled GitHub issue (rule, site, chosen context, version — never typed text) instead of sending an event to a backend
 - Lemon Squeezy licensing: `src/core/licensing/*`, background `license-manager`, daily license alarm, `GET_ENTITLEMENT` / `ACTIVATE_LICENSE` / `DEACTIVATE_LICENSE` messages, `VITE_LEMONSQUEEZY_*` build config, license UI in popup and options
 - `https://api.lemonsqueezy.com/*` host permission (Chromium + Firefox manifests)
 - Next.js Clerk portal skeleton (`apps/portal`) and the `@clerk/nextjs` dependency — archived on branch `archive/saas-portal`

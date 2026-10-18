@@ -366,10 +366,10 @@ export function feedbackCopy(locale: Locale): FeedbackCopy {
     return {
       triggerLabel: 'Signaler un faux positif',
       prompt: 'Dans quel contexte tapiez-vous cette donnée ?',
-      hint: 'Aucun texte saisi n’est envoyé — uniquement le type de règle et le contexte choisi.',
-      submitLabel: 'Envoyer le signalement',
+      hint: 'Ouvre une issue GitHub publique pré-remplie (règle, site, contexte). Aucun texte saisi n’y figure.',
+      submitLabel: 'Ouvrir sur GitHub',
       cancelLabel: 'Annuler',
-      thanksLabel: 'Signalement envoyé. Merci.',
+      thanksLabel: 'Issue ouverte dans un nouvel onglet. Merci.',
       choices: {
         code: 'Code source',
         prose: 'Texte / prose',
@@ -383,10 +383,10 @@ export function feedbackCopy(locale: Locale): FeedbackCopy {
   return {
     triggerLabel: 'Report false positive',
     prompt: 'What were you typing when this was flagged?',
-    hint: 'No typed text is sent — only the rule type and chosen context.',
-    submitLabel: 'Send report',
+    hint: 'Opens a prefilled public GitHub issue (rule, site, context). None of your typed text is included.',
+    submitLabel: 'Open on GitHub',
     cancelLabel: 'Cancel',
-    thanksLabel: 'Report sent. Thank you.',
+    thanksLabel: 'Issue opened in a new tab. Thank you.',
     choices: {
       code: 'Source code',
       prose: 'Plain text / prose',

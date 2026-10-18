@@ -15,7 +15,7 @@ import {
   evaluateGuard,
   type GuardDecision,
 } from '../../content/analyze.js';
-import { reportDlpAction, reportTruncation } from '../../content/telemetry-reporter.js';
+import { reportDlpAction, reportTruncation } from '../../content/reporting.js';
 import { showBlockAlert } from '../../content/ui-host.js';
 import { extractBinaryText } from './binary-extract.js';
 import {

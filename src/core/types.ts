@@ -64,79 +64,12 @@ export interface DetectionMatch {
   replacementToken: string;
 }
 
-/** Événement télémétrie — schéma RGPD minimal (sans contenu utilisateur). */
-export interface TelemetryEvent {
-  eventId: string;
-  tenantId: string;
-  deviceId: string;
-  occurredAt: string;
-  ruleType: RuleType;
-  action: RuleAction;
-  host: LlmHost;
-  extensionVersion: string;
-  policyVersion: string;
-  locale: Locale;
-  browser: BrowserFamily;
-  departmentId?: string;
-}
-
 /** Contexte de saisie déclaré par l'utilisateur lors d'un signalement faux positif. */
 export type FeedbackContextChoice = 'code' | 'prose' | 'json' | 'url' | 'other';
 
-/**
- * Signalement faux positif — schéma RGPD minimal.
- * Ne contient JAMAIS le texte d'origine, le contenu de la saisie, ou un extrait.
- */
-export interface FeedbackEvent {
-  eventId: string;
-  tenantId: string;
-  deviceId: string;
-  occurredAt: string;
-  ruleType: RuleType;
-  contextChoice: FeedbackContextChoice;
-  host: LlmHost;
-  extensionVersion: string;
-  policyVersion: string;
-  locale: Locale;
-  browser: BrowserFamily;
-}
-
-/** Enveloppe API POST /feedback */
-export interface FeedbackBatchRequest {
-  events: FeedbackEvent[];
-}
-
-/** Credentials install (page Options / intégration). */
-export interface TenantCredentials {
-  tenantId: string;
-  apiKey: string;
-  apiBaseUrl: string;
-}
-
-/** File d'attente offline — métadonnées de sync. */
-export interface TelemetryQueueItem {
-  event: TelemetryEvent;
-  queuedAt: string;
-  retryCount: number;
-}
-
-/** Enveloppe API GET /policies */
-export interface PoliciesResponse {
-  policy: Policy;
-}
-
-/** Enveloppe API POST /telemetry */
-export interface TelemetryBatchRequest {
-  events: TelemetryEvent[];
-}
-
 export type MessageType =
   | 'GET_POLICY'
-  | 'POLICY_UPDATED'
-  | 'QUEUE_TELEMETRY'
-  | 'QUEUE_FEEDBACK'
-  | 'FLUSH_TELEMETRY'
-  | 'SYNC_POLICY';
+  | 'POLICY_UPDATED';
 
 export interface ExtensionMessage<T = unknown> {
   type: MessageType;

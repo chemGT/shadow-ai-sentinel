@@ -1,14 +1,11 @@
 import { validatePolicy } from '../../core/validation/policy.js';
 import { ALL_RULE_TYPES } from '../../core/constants.js';
-import type { Policy, Rule, RuleAction, RuleType, TenantCredentials } from '../../core/types.js';
-import { ensureApiHostPermission } from '../platform/permissions.js';
+import type { Policy, Rule, RuleAction, RuleType } from '../../core/types.js';
 import {
   getAllowlist,
   getStoredPolicy,
-  getTenantCredentials,
   setAllowlist,
   setStoredPolicy,
-  setTenantCredentials,
 } from '../platform/storage.js';
 import { sendMessage } from '../platform/runtime.js';
 
@@ -22,9 +19,6 @@ const RULE_LABELS: Record<RuleType, string> = {
   card: 'Carte bancaire',
 };
 
-const tenantIdEl = document.getElementById('tenantId') as HTMLInputElement;
-const apiKeyEl = document.getElementById('apiKey') as HTMLInputElement;
-const apiBaseUrlEl = document.getElementById('apiBaseUrl') as HTMLInputElement;
 const policyJsonEl = document.getElementById('policyJson') as HTMLTextAreaElement;
 const allowlistEl = document.getElementById('allowlist') as HTMLTextAreaElement;
 const rulesTableBodyEl = document.getElementById('rulesTableBody') as HTMLTableSectionElement;
@@ -160,15 +154,6 @@ async function updateRule(type: RuleType, patch: Partial<Pick<Rule, 'enabled' | 
 }
 
 async function loadForm(): Promise<void> {
-  const credentials = await getTenantCredentials();
-  if (credentials) {
-    tenantIdEl.value = credentials.tenantId;
-    apiKeyEl.value = credentials.apiKey;
-    apiBaseUrlEl.value = credentials.apiBaseUrl;
-  } else {
-    apiBaseUrlEl.value = 'http://localhost:3000';
-  }
-
   const policy = await getStoredPolicy();
   policyJsonEl.value = JSON.stringify(policy, null, 2);
   renderRulesTable(policy);
@@ -183,56 +168,6 @@ document.getElementById('saveAllowlist')?.addEventListener('click', async () => 
   const stored = await getAllowlist();
   allowlistEl.value = stored.join('\n');
   showToast('ok', `Allowlist enregistrée (${stored.length} valeur(s)).`);
-});
-
-document.getElementById('saveCredentials')?.addEventListener('click', async () => {
-  const credentials: TenantCredentials = {
-    tenantId: tenantIdEl.value.trim(),
-    apiKey: apiKeyEl.value.trim(),
-    apiBaseUrl: apiBaseUrlEl.value.trim(),
-  };
-
-  if (!credentials.tenantId || !credentials.apiKey || !credentials.apiBaseUrl) {
-    showToast('error', 'Renseignez tenantId, clé API et URL.');
-    return;
-  }
-
-  const granted = await ensureApiHostPermission(credentials.apiBaseUrl);
-  if (!granted) {
-    showToast('error', 'Permission réseau refusée pour l’URL API.');
-    return;
-  }
-
-  await setTenantCredentials(credentials);
-  showToast('ok', 'Credentials enregistrés.');
-});
-
-document.getElementById('syncPolicy')?.addEventListener('click', async () => {
-  try {
-    const result = (await sendMessage({ type: 'SYNC_POLICY' })) as {
-      ok?: boolean;
-      policy?: Policy;
-    };
-    if (result?.policy) {
-      policyJsonEl.value = JSON.stringify(result.policy, null, 2);
-      renderRulesTable(result.policy);
-    }
-    showToast('ok', 'Policy synchronisée depuis l’API.');
-  } catch (error) {
-    showToast('error', error instanceof Error ? error.message : 'Sync échouée');
-  }
-});
-
-document.getElementById('flushTelemetry')?.addEventListener('click', async () => {
-  try {
-    const result = (await sendMessage({ type: 'FLUSH_TELEMETRY' })) as {
-      sent?: number;
-      remaining?: number;
-    };
-    showToast('ok', `Télémétrie : ${result.sent ?? 0} envoyé(s), ${result.remaining ?? 0} en file.`);
-  } catch (error) {
-    showToast('error', error instanceof Error ? error.message : 'Flush échoué');
-  }
 });
 
 document.getElementById('importPolicy')?.addEventListener('click', async () => {

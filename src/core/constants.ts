@@ -3,9 +3,6 @@ import type { FailMode, Rule, RuleType } from './types.js';
 /** Clés `chrome.storage` / `browser.storage`. */
 export const STORAGE_KEYS = {
   policy: 'sentinel_policy',
-  credentials: 'sentinel_credentials',
-  deviceId: 'sentinel_device_id',
-  telemetryQueue: 'sentinel_telemetry_queue',
   noticeAckAt: 'sentinel_notice_ack_at',
   locale: 'sentinel_locale',
   stats: 'sentinel_stats',
@@ -14,6 +11,9 @@ export const STORAGE_KEYS = {
 } as const;
 
 export const POLICY_VERSION_INITIAL = '1.0.0';
+
+/** Dépôt public du projet (lien popup, signalement de faux positif). */
+export const PROJECT_REPO_URL = 'https://github.com/chemGT/shadow-ai-sentinel';
 
 export const FAIL_MODES: FailMode[] = ['open', 'warn', 'closed'];
 

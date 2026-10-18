@@ -8,8 +8,8 @@ Les préférences globales de chemGT (style FR, RTK, conventions) s'appliquent e
 Extension navigateur **MV3 B2B** = **DLP** sur les LLM publics (Claude / ChatGPT / Gemini /
 Le Chat / DeepSeek / Perplexity / Grok / Copilot) :
 détection **100 % locale** des données sensibles **avant envoi**, modes **Block** ou **Redact**.
-Aucun contenu de prompt ne quitte le navigateur ; la télémétrie serveur (optionnelle, tier tenant)
-ne porte que des métadonnées.
+Aucun contenu de prompt ne quitte le navigateur ; **aucun appel réseau** (pas de backend, pas de
+télémétrie — backend archivé le 18/10).
 
 **Modèle : open source (Apache-2.0)** — décision du 18/10, vente abandonnée. Toutes les
 fonctionnalités (secrets, PII `iban`/`card`/`internal_ip`/`pro_email`/`phone`, scan fichiers
@@ -20,13 +20,12 @@ texte/code + PDF/DOCX, allowlist) sont disponibles sans licence. Identité publi
 
 | Commande | Rôle |
 |----------|------|
-| `npm test` | Vitest — **310 tests, doit être vert** |
+| `npm test` | Vitest — **202 tests, doit être vert** |
 | `npm run test:e2e` | Playwright — extension réelle (`dist/`) + fixtures des 8 sites (30 tests) |
 | `npx tsc --noEmit` | Typecheck — doit être vide |
 | `npm run build` | Typecheck + build extension Chromium → `dist/` |
 | `npm run build:firefox` | Build Firefox → `dist-firefox/` |
 | `npm run package:firefox` | .xpi signable pour AMO |
-| `npm run backend` | API Express locale (port 3000) |
 
 **Reprise à froid :** les 3 premiers verts, puis charger `dist/` via `chrome://extensions`
 (mode dev → « charger l'extension non empaquetée ») pour tester popup + allowlist.
@@ -41,8 +40,9 @@ texte/code + PDF/DOCX, allowlist) sont disponibles sans licence. Identité publi
 
 - **Open source en cours** : plan **`.ai/plans/open-source.md`** (L1 nettoyage fait ; L2 correctifs
   B1/B2/B4 fait — `src/core/detection/normalize.ts` ; L3 hygiène OSS ; L4 tri `.ai/` ; L5 publication ; stores CWS/AMO : plus tard).
-- Le portail Next.js Clerk (`apps/portal`) est archivé (branche `archive/saas-portal`). Le backend
-  Express garde encore l'auth Clerk JWT + jobs (dunning) : décision keep/archive en attente.
+- **Portail Clerk + backend Express** (API policies/télémétrie, auth Clerk, jobs dunning) **archivés**
+  sur la branche `archive/saas-portal`. L'extension n'a plus aucun code réseau : policy et allowlist
+  100 % locales ; « faux positif » = issue GitHub pré-remplie (`content/reporting.ts`).
 - Reprise détaillée à froid : **`.ai/plans/checkpoint.md`** (antérieur au pivot OSS).
 
 ## Renvois documentation (`.ai/`)

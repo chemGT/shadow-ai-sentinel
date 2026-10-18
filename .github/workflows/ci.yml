@@ -31,8 +31,6 @@ jobs:
 
       - name: Unit & integration tests
         run: npm run test:ci
-        env:
-          API_KEYS: acme-corp:dev-secret-change-me
 
       - name: Typecheck & Chromium extension build
         run: npm run build

@@ -3,7 +3,7 @@ import {
   applyRedactionsToText,
   evaluateGuard,
 } from '../../content/analyze.js';
-import { reportDlpAction, reportTruncation } from '../../content/telemetry-reporter.js';
+import { reportDlpAction, reportTruncation } from '../../content/reporting.js';
 import { showBlockAlert } from '../../content/ui-host.js';
 import { redactNotice, resolveLocale, truncationNotice } from '../../../ui/i18n/messages.js';
 import { startAdapterHealthMonitor } from './adapter-health-monitor.js';

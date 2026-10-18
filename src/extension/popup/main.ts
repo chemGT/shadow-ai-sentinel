@@ -1,6 +1,7 @@
 import { getAdapterHealth, getLocalStats } from '../platform/storage.js';
 import { getExtensionApi } from '../platform/browser-api.js';
 import { resolveLocale } from '../../ui/i18n/messages.js';
+import { PROJECT_REPO_URL } from '../../core/constants.js';
 
 const locale = resolveLocale();
 
@@ -51,6 +52,7 @@ function applyStaticCopy(): void {
   setText('redactedText', copy.redacted);
   setText('optionsBtn', copy.options);
   setText('sourceLink', copy.source);
+  ($('sourceLink') as HTMLAnchorElement).href = PROJECT_REPO_URL;
 }
 
 function wireEvents(): void {

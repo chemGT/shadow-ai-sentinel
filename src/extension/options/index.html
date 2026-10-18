@@ -253,7 +253,7 @@
   </head>
   <body>
     <h1>Shadow AI Sentinel</h1>
-    <p class="hint">Configuration locale — credentials API et policy DLP.</p>
+    <p class="hint">Configuration locale — règles DLP et allowlist. Rien ne quitte votre navigateur.</p>
 
     <fieldset>
       <legend>Allowlist</legend>
@@ -267,27 +267,6 @@
       </label>
       <div class="actions">
         <button type="button" id="saveAllowlist">Enregistrer l’allowlist</button>
-      </div>
-    </fieldset>
-
-    <fieldset>
-      <legend>API entreprise</legend>
-      <label>
-        Tenant ID
-        <input id="tenantId" type="text" autocomplete="off" placeholder="acme-corp" />
-      </label>
-      <label>
-        Clé API (Bearer)
-        <input id="apiKey" type="password" autocomplete="off" />
-      </label>
-      <label>
-        URL API
-        <input id="apiBaseUrl" type="url" placeholder="http://localhost:3000" />
-      </label>
-      <div class="actions">
-        <button type="button" id="saveCredentials">Enregistrer</button>
-        <button type="button" id="syncPolicy" class="secondary">Synchroniser la policy</button>
-        <button type="button" id="flushTelemetry" class="secondary">Envoyer télémétrie</button>
       </div>
     </fieldset>
 

@@ -6,11 +6,5 @@ export {
 export {
   getStoredPolicy,
   setStoredPolicy,
-  getTelemetryQueue,
-  setTelemetryQueue,
-  getOrCreateDeviceId,
-  getTenantCredentials,
-  setTenantCredentials,
 } from './storage.js';
 export { sendMessage, onMessage } from './runtime.js';
-export { ensureApiHostPermission, apiOriginPattern } from './permissions.js';

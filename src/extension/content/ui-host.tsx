@@ -9,7 +9,7 @@ import {
 } from '../../ui/i18n/messages.js';
 import { resolveLlmHost } from '../../core/llm-hosts.js';
 import type { FeedbackContextChoice, Locale, RuleType } from '../../core/types.js';
-import { reportFalsePositive } from './telemetry-reporter.js';
+import { reportFalsePositive } from './reporting.js';
 
 const HOST_ID = 'shadow-ai-sentinel-ui-host';
 

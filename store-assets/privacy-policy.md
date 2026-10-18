@@ -9,7 +9,7 @@ exactly what the extension does — and does not do — with your data.
 
 ## The short version
 - Your prompts are analysed **entirely on your own device**.
-- By default, **the extension makes no network requests at all**. Nothing you type leaves your browser.
+- **The extension makes no network requests at all.** Nothing you type leaves your browser.
 - We do not sell your data, show ads, or track you across the web.
 
 ## What is processed locally (and never transmitted)
@@ -21,13 +21,13 @@ anonymous local counters (e.g. "12 secrets blocked").
 
 ## Network requests
 
-**By default:** none. The extension does not contact any server.
+**None.** The extension never contacts any server: there is no backend, no
+analytics and no telemetry.
 
-**Optional enterprise mode (off by default):** if — and only if — an administrator
-configures the extension with a managed backend, it may send **anonymous DLP
-event counters** (the type of rule triggered, the action taken, the AI host, and
-the interface language) to that backend. **The captured text is never included.**
-This mode requires explicit configuration and is not active for standard users.
+The only exception is a link you click yourself: "Report false positive" opens a
+prefilled GitHub issue form in a new tab (rule type, AI site, the context you chose,
+extension version). None of your typed text is included, and nothing is sent unless
+you submit the form on GitHub.
 
 ## What we never collect
 - The content of your prompts or the AI's responses.
