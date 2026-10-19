@@ -49,14 +49,16 @@ contourner (encodage/outil), le produit ne prétend pas l'arrêter.
 - **Correctif proposé** : ajouter NBSP + NNBSP à la classe, ex. `(?:\d[   -]?){12,18}\d`.
   **Ne pas** ajouter le point (voir C2). Luhn (`card.ts:15`) borne les FP.
 
-### B3 — [MOYENNE] `pro_email` : les sous-domaines du domaine configuré échappent
+### B3 — [MOYENNE] `pro_email` : les sous-domaines du domaine configuré échappent — ✅ **CORRIGÉ 2026-10-19 (issue #11)**
 - **Repro** : test `[BYPASS CONNU] sous-domaine du domaine configuré`
   (`jean@mail.acme.com`, `jean@eu.acme.com` avec policy `acme.com`) → non détecté.
 - **Cause racine** : `src/core/detection/pro-email.ts:14` — le `@` doit précéder immédiatement le
   domaine ; aucun préfixe de sous-domaine n'est autorisé.
-- **Correctif proposé** : insérer `(?:[a-z0-9-]+\.)*` avant le domaine :
+- **Correctif appliqué 2026-10-19** (issue #11) : insérer `(?:[a-z0-9-]+\.)*` avant le domaine :
   `@(?:[a-z0-9-]+\.)*(?:${domainPart})`. Vérifier qu'un domaine `acme.com` ne matche pas
-  `evilacme.com` (le `.` littéral l'empêche déjà).
+  `evilacme.com` (le `.` littéral l'empêche déjà) — vérifié par les tests
+  `CORRECTIF — pro_email sous-domaines (B3)` dans `src/core/detection/evasion-corpus.test.ts`
+  (le test `[BYPASS CONNU]` correspondant est passé en positif).
 
 ### B4 — [MOYENNE] Zero-width / BOM / homoglyphes / pleine chasse dans un secret — **CORRIGÉ (2026-10-18)**
 - **Correctif appliqué** : normalisation **D** + table d'homoglyphes cyrilliques/grecs stricts

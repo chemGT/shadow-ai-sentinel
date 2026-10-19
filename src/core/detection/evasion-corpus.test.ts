@@ -221,13 +221,22 @@ describe('[BYPASS CONNU] unicode — 2026-09-15', () => {
 });
 
 // ---------------------------------------------------------------------------
-// [BYPASS CONNU] — pro_email sous-domaines
+// CORRECTIF 2026-10-19 — pro_email sous-domaines (bypass B3 corrigé, issue #11)
+// Auparavant NON détecté (cf. `.ai/security/bypasses-2026-09.md` B3). Ces tests verrouillent
+// le correctif `pro-email.ts` : ils DOIVENT passer.
 // ---------------------------------------------------------------------------
-describe('[BYPASS CONNU] pro_email — 2026-09-15', () => {
-  it('[BYPASS CONNU] sous-domaine du domaine configuré (pro-email.ts:14)', () => {
-    // Domaine policy = acme.com ; un e-mail @mail.acme.com / @eu.acme.com échappe.
-    expect(detects('contact jean@mail.acme.com', 'pro_email')).toBe(false);
-    expect(detects('contact jean@eu.acme.com', 'pro_email')).toBe(false);
+describe('CORRECTIF — pro_email sous-domaines (B3)', () => {
+  it('sous-domaine du domaine configuré désormais détecté', () => {
+    expect(detects('contact jean@mail.acme.com', 'pro_email')).toBe(true);
+    expect(detects('contact jean@eu.acme.com', 'pro_email')).toBe(true);
+    expect(detects('contact jean@a.b.c.acme.com', 'pro_email')).toBe(true);
+  });
+  it('ne matche pas un domaine qui se termine par le domaine configuré', () => {
+    expect(detects('contact jean@evilmacme.com', 'pro_email')).toBe(false);
+    expect(detects('contact jean@notacme.com', 'pro_email')).toBe(false);
+  });
+  it('hors allowlist toujours ignoré (contrôle)', () => {
+    expect(detects('perso@gmail.com', 'pro_email')).toBe(false);
   });
 });
 
