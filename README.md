@@ -2,7 +2,7 @@
 <div align="center">
 
 <h1>
-<img src="store-assets/banner.jpg" alt="Shadow AI Sentinel, privacy browser extension" width="100%">
+<img src="assets/banner.jpg" alt="Shadow AI Sentinel, privacy browser extension" width="100%">
 </h1>
 
 **The prompt redactor that keeps your secrets away from ChatGPT, Claude, Gemini and 5 other AI chatbots.**<br>
