@@ -4,8 +4,10 @@
  * DOM des vrais sites (qui reste une recette manuelle ponctuelle).
  *
  * Couverture par site (×8) : block sur Enter · block sur clic envoi · passage
- * d'un texte anodin. Plus : redact (IBAN) et file-guard (.txt avec clé).
+ * d'un texte anodin. Plus : redact (IBAN) et file-guard (.txt avec clé, .xlsx avec IBAN).
  */
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { test, expect, type BrowserContext, type Page } from '@playwright/test';
 import { SITE_FIXTURES } from './fixtures.js';
 import {
@@ -111,6 +113,21 @@ test.describe('guard — redact + fichiers', () => {
       name: 'secrets.txt',
       mimeType: 'text/plain',
       buffer: Buffer.from(`config de prod\naws_access_key_id=${SECRET_AWS_KEY}\n`),
+    });
+
+    expect(await blockModalVisible(page), 'modale de blocage fichier attendue').toBe(true);
+    const fileCount = await page
+      .locator('input[data-fixture-file]')
+      .evaluate((el) => (el as HTMLInputElement).files?.length ?? 0);
+    expect(fileCount, 'le fichier ne doit pas rester attaché').toBe(0);
+  });
+
+  test('Copilot — classeur .xlsx avec IBAN bloqué (extraction OOXML dans le navigateur)', async () => {
+    await gotoFixture(page, 'copilot.microsoft.com');
+    await page.locator('input[data-fixture-file]').setInputFiles({
+      name: 'budget.xlsx',
+      mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      buffer: readFileSync(join(process.cwd(), 'test', 'fixtures', 'xlsx-sensitive.xlsx')),
     });
 
     expect(await blockModalVisible(page), 'modale de blocage fichier attendue').toBe(true);

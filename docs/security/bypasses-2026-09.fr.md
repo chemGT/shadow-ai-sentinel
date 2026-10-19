@@ -71,15 +71,21 @@ contourner (encodage/outil), le produit ne prétend pas l'arrêter.
 - **Correctif proposé** : passe de normalisation défensive avant `runAllDetectors` (voir **D**).
   Ferme d'un coup B1, B2 et B4 (zero-width, NBSP, pleine chasse, homoglyphes de compatibilité NFKC).
 
-### B5 — [MOYENNE] Formats de fichier non scannés (XLSX, PPTX, RTF, ZIP, images)
-- **Repro** : test `[BYPASS CONNU] XLSX / PPTX / archives / images ne sont ni texte ni binaire
+### B5 — [MOYENNE] Formats de fichier non scannés (RTF, ODF, ZIP, images) — **XLSX/PPTX CORRIGÉ (2026-10-19)**
+- **Correctif appliqué (partiel)** : XLSX et PPTX sont extraits localement
+  (`src/extension/sites/shared/ooxml-extract.ts` : lecteur ZIP minimal + `DecompressionStream`
+  natif, sans dépendance ; cellules via chaînes partagées, chaînes inline, nombres, commentaires de
+  cellule, diapositives et notes de l'orateur) puis passent par le pipeline binaire (limite de
+  taille, redact → block). Garde-fou zip bomb : plafond de 50 Mo décompressés, contrôlé en flux.
+  Tests `CORRECTIF (B5)` dans `evasion-corpus.test.ts` et `ooxml-extract.test.ts`.
+- **Repro (restant)** : test `[BYPASS CONNU] RTF / archives / images ne sont ni texte ni binaire
   scannable` — `isTextLikeFile` et `isBinaryScannableFile` renvoient tous deux `false` → le fichier
   passe **sans aucun scan**.
-- **Cause racine** : `src/extension/sites/shared/file-guard.ts:277-284` (`isScannableFile`) +
-  `src/core/binary-file.ts:23` + `src/core/text-file.ts:44` — seuls texte/PDF/DOCX sont couverts.
+- **Cause racine** : `src/extension/sites/shared/file-guard.ts` (`isScannableFile`) +
+  `src/core/binary-file.ts` + `src/core/text-file.ts` — seuls texte/PDF/DOCX/XLSX/PPTX sont couverts.
 - **Correctif proposé** : a minima **bloquer par défaut** (ou avertir explicitement) les formats
-  bureautiques non extractibles (XLSX/PPTX/ODT) plutôt que les laisser passer en silence ; à terme,
-  ajouter un extracteur XLSX (`sheetjs`) au pipeline binaire. Décision produit — coût vs surface.
+  bureautiques non extractibles (RTF/ODT/ODS) plutôt que les laisser passer en silence ; l'ODF
+  pourrait réutiliser le lecteur ZIP de `ooxml-extract.ts`. Décision produit — coût vs surface.
 
 ---
 

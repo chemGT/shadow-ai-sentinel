@@ -1,8 +1,8 @@
-import { isDocxFile, isPdfFile } from '../../../core/binary-file.js';
+import { isDocxFile, isPdfFile, isPptxFile, isXlsxFile } from '../../../core/binary-file.js';
 
 /**
- * Import dynamique : pdfjs-dist/mammoth ne sont chargés (et n'alourdissent le bundle du content
- * script) que lorsqu'un utilisateur dépose effectivement un PDF/DOCX.
+ * Import dynamique : pdfjs-dist/mammoth/ooxml-extract ne sont chargés (et n'alourdissent le bundle
+ * du content script) que lorsqu'un utilisateur dépose effectivement un PDF/DOCX/XLSX/PPTX.
  */
 let pdfWorkerConfigured = false;
 
@@ -61,13 +61,29 @@ export async function extractDocxText(file: File): Promise<string> {
   return result.value;
 }
 
-/** Extrait le texte d'un fichier binaire pris en charge (PDF ou DOCX). */
+export async function extractXlsxText(file: File): Promise<string> {
+  const { extractXlsxText: extract } = await import('./ooxml-extract.js');
+  return extract(file);
+}
+
+export async function extractPptxText(file: File): Promise<string> {
+  const { extractPptxText: extract } = await import('./ooxml-extract.js');
+  return extract(file);
+}
+
+/** Extrait le texte d'un fichier binaire pris en charge (PDF, DOCX, XLSX ou PPTX). */
 export function extractBinaryText(file: File): Promise<string> {
   if (isPdfFile(file)) {
     return extractPdfText(file);
   }
   if (isDocxFile(file)) {
     return extractDocxText(file);
+  }
+  if (isXlsxFile(file)) {
+    return extractXlsxText(file);
+  }
+  if (isPptxFile(file)) {
+    return extractPptxText(file);
   }
   return Promise.reject(new Error('Unsupported binary file'));
 }

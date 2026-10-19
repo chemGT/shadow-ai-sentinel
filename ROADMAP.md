@@ -13,7 +13,8 @@ are the best entry points.
 
 ## Later
 
-- [ ] **More file formats** (B5): XLSX, PPTX, RTF, ZIP archives.
+- [x] **XLSX / PPTX attachments** (B5, partial) — extracted locally, no new dependency.
+- [ ] **More file formats** (B5, remainder): RTF, ODF, ZIP archives.
 - [ ] **Custom rules**: user-defined patterns with validation and a template library.
 - [ ] **More secret formats**: provider keys requested through
       [missed-detection issues](https://github.com/chemGT/shadow-ai-sentinel/issues/new?template=false-negative.yml).

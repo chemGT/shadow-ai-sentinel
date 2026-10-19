@@ -10,7 +10,7 @@ Copilot.
 
 ## Ce que fait l'extension
 
-- Analyse votre saisie et vos pièces jointes (texte, code, PDF, DOCX) **localement, dans votre
+- Analyse votre saisie et vos pièces jointes (texte, code, PDF, DOCX, XLSX, PPTX) **localement, dans votre
   navigateur**, avant envoi.
 - Peut **bloquer** le message ou **remplacer** une valeur sensible par un jeton (`[REDACTED_…]`).
 

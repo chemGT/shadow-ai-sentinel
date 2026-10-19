@@ -148,7 +148,7 @@ async function processTextFile(
 }
 
 /**
- * PDF/DOCX : même pipeline de décision que le texte brut, mais une décision "redact" est
+ * PDF/DOCX/XLSX/PPTX : même pipeline de décision que le texte brut, mais une décision "redact" est
  * impossible à appliquer fidèlement sur un binaire (pas de réécriture en place) — elle est donc
  * traitée comme un blocage. Taille excessive ou échec de parsing (corrompu/chiffré) : le fichier
  * passe, avec un avertissement, plutôt qu'un blocage (on ne bloque jamais sur une incertitude).
@@ -271,7 +271,7 @@ function isScannableFile(file: File): boolean {
   return isTextLikeFile(file) || isBinaryScannableFile(file);
 }
 
-/** Au moins un fichier scannable (texte, PDF ou DOCX) dans la liste. */
+/** Au moins un fichier scannable (texte, PDF, DOCX, XLSX ou PPTX) dans la liste. */
 export function hasScannableInList(files: File[]): boolean {
   return files.some(isScannableFile);
 }

@@ -256,10 +256,25 @@ describe('[BYPASS CONNU] formats de fichier non scannés — 2026-09-15', () => 
     expect(isPdfFile(file('secret.pdf', 'application/pdf'))).toBe(true);
   });
 
-  it('[BYPASS CONNU] XLSX / PPTX / archives / images ne sont ni texte ni binaire scannable', () => {
+  // CORRECTIF B5 (partiel, 2026-10-19) : XLSX/PPTX extraits localement (ooxml-extract.ts).
+  it('CORRECTIF (B5) : XLSX et PPTX SONT reconnus scannables', () => {
+    expect(
+      isBinaryScannableFile(
+        file('budget.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'),
+      ),
+    ).toBe(true);
+    expect(
+      isBinaryScannableFile(
+        file(
+          'deck.pptx',
+          'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        ),
+      ),
+    ).toBe(true);
+  });
+
+  it('[BYPASS CONNU] RTF / archives / images ne sont ni texte ni binaire scannable', () => {
     const cases: Array<[string, string]> = [
-      ['budget.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
-      ['deck.pptx', 'application/vnd.openxmlformats-officedocument.presentationml.presentation'],
       ['export.rtf', 'application/rtf'],
       ['data.zip', 'application/zip'],
       ['scan.png', 'image/png'],

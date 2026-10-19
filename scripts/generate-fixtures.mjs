@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 /**
- * Génère les fixtures PDF/DOCX de test/fixtures/ (pas de dépendance externe : PDF et ZIP/DOCX
- * sont écrits à la main, formats minimaux mais valides). Ré-exécuter après modification :
+ * Génère les fixtures PDF/DOCX/XLSX/PPTX de test/fixtures/ (pas de dépendance externe : PDF et
+ * ZIP/OOXML sont écrits à la main, formats minimaux mais valides ; XLSX en deflate comme Office,
+ * DOCX/PPTX en stored). Ré-exécuter après modification :
  *   node scripts/generate-fixtures.mjs
  */
 import { mkdirSync, writeFileSync } from 'node:fs';
+import { deflateRawSync } from 'node:zlib';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -88,25 +90,27 @@ function crc32(buf) {
   return (crc ^ 0xffffffff) >>> 0;
 }
 
-function buildZip(entries) {
+function buildZip(entries, { deflate = false } = {}) {
   const localChunks = [];
   const centralChunks = [];
   let offset = 0;
+  const method = deflate ? 8 : 0;
 
-  for (const { name, content } of entries) {
+  for (const { name, content: raw } of entries) {
     const nameBuf = Buffer.from(name, 'utf8');
-    const crc = crc32(content);
-    const size = content.length;
+    const crc = crc32(raw);
+    const size = raw.length;
+    const content = deflate ? deflateRawSync(raw) : raw;
 
     const localHeader = Buffer.alloc(30);
     localHeader.writeUInt32LE(0x04034b50, 0);
     localHeader.writeUInt16LE(20, 4); // version needed
     localHeader.writeUInt16LE(0, 6); // flags
-    localHeader.writeUInt16LE(0, 8); // method = stored
+    localHeader.writeUInt16LE(method, 8); // 0 = stored, 8 = deflate
     localHeader.writeUInt16LE(0, 10); // mod time
     localHeader.writeUInt16LE(0, 12); // mod date
     localHeader.writeUInt32LE(crc, 14);
-    localHeader.writeUInt32LE(size, 18);
+    localHeader.writeUInt32LE(content.length, 18);
     localHeader.writeUInt32LE(size, 22);
     localHeader.writeUInt16LE(nameBuf.length, 26);
     localHeader.writeUInt16LE(0, 28);
@@ -118,11 +122,11 @@ function buildZip(entries) {
     centralHeader.writeUInt16LE(20, 4); // version made by
     centralHeader.writeUInt16LE(20, 6); // version needed
     centralHeader.writeUInt16LE(0, 8); // flags
-    centralHeader.writeUInt16LE(0, 10); // method = stored
+    centralHeader.writeUInt16LE(method, 10);
     centralHeader.writeUInt16LE(0, 12); // mod time
     centralHeader.writeUInt16LE(0, 14); // mod date
     centralHeader.writeUInt32LE(crc, 16);
-    centralHeader.writeUInt32LE(size, 20);
+    centralHeader.writeUInt32LE(content.length, 20);
     centralHeader.writeUInt32LE(size, 24);
     centralHeader.writeUInt16LE(nameBuf.length, 28);
     centralHeader.writeUInt16LE(0, 30); // extra length
@@ -153,6 +157,9 @@ function buildZip(entries) {
   return Buffer.concat([...localChunks, centralBuf, end]);
 }
 
+const xmlEscape = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const XML_DECL = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
+
 function buildDocx(paragraphs) {
   const contentTypes = Buffer.from(
     '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' +
@@ -175,8 +182,6 @@ function buildDocx(paragraphs) {
     'utf8',
   );
 
-  const xmlEscape = (s) =>
-    s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const body = paragraphs
     .map((p) => `<w:p><w:r><w:t xml:space="preserve">${xmlEscape(p)}</w:t></w:r></w:p>`)
     .join('');
@@ -194,6 +199,135 @@ function buildDocx(paragraphs) {
     { name: '_rels/.rels', content: rels },
     { name: 'word/document.xml', content: documentXml },
   ]);
+}
+
+// ---------------------------------------------------------------------------
+// XLSX : sheets = [[cellule, …], …] par feuille. Les chaînes passent par sharedStrings.xml (cas
+// Office courant), sauf celles préfixées « inline: » (inlineStr) ; les nombres restent en <v>.
+// `comment` : commentaire de cellule (xl/comments1.xml).
+// ---------------------------------------------------------------------------
+
+function buildXlsx(sheets, { comment } = {}) {
+  const shared = [];
+  const sheetEntries = sheets.map((rows, index) => {
+    const rowsXml = rows
+      .map((cells, r) => {
+        const cellsXml = cells
+          .map((value, c) => {
+            const ref = `${String.fromCharCode(65 + c)}${r + 1}`;
+            if (typeof value === 'number') {
+              return `<c r="${ref}"><v>${value}</v></c>`;
+            }
+            if (value.startsWith('inline:')) {
+              return `<c r="${ref}" t="inlineStr"><is><t>${xmlEscape(value.slice(7))}</t></is></c>`;
+            }
+            shared.push(value);
+            return `<c r="${ref}" t="s"><v>${shared.length - 1}</v></c>`;
+          })
+          .join('');
+        return `<row r="${r + 1}">${cellsXml}</row>`;
+      })
+      .join('');
+    return {
+      name: `xl/worksheets/sheet${index + 1}.xml`,
+      content: Buffer.from(
+        XML_DECL +
+          '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+          `<sheetData>${rowsXml}<row r="${rows.length + 1}"/></sheetData></worksheet>`,
+        'utf8',
+      ),
+    };
+  });
+
+  const sharedXml = shared
+    .map((s) => {
+      // Texte riche : une chaîne coupée en deux runs, comme Excel après une mise en forme partielle.
+      const mid = Math.floor(s.length / 2);
+      return `<si><r><t xml:space="preserve">${xmlEscape(s.slice(0, mid))}</t></r><r><rPr><b/></rPr><t xml:space="preserve">${xmlEscape(s.slice(mid))}</t></r></si>`;
+    })
+    .join('');
+
+  const entries = [
+    {
+      name: '[Content_Types].xml',
+      content: Buffer.from(
+        XML_DECL +
+          '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+          '<Default Extension="xml" ContentType="application/xml"/></Types>',
+        'utf8',
+      ),
+    },
+    {
+      name: 'xl/sharedStrings.xml',
+      content: Buffer.from(
+        XML_DECL +
+          `<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="${shared.length}">` +
+          `${sharedXml}</sst>`,
+        'utf8',
+      ),
+    },
+    ...sheetEntries,
+  ];
+  if (comment) {
+    entries.push({
+      name: 'xl/comments1.xml',
+      content: Buffer.from(
+        XML_DECL +
+          '<comments xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+          `<commentList><comment ref="A1"><text><t>${xmlEscape(comment)}</t></text></comment></commentList></comments>`,
+        'utf8',
+      ),
+    });
+  }
+  return buildZip(entries, { deflate: true });
+}
+
+// ---------------------------------------------------------------------------
+// PPTX : slides = [[paragraphe, …], …] ; `notes` = notes de l'orateur de la diapo 1.
+// ---------------------------------------------------------------------------
+
+function pptxParagraphs(paragraphs) {
+  return paragraphs
+    .map((p) => `<a:p><a:r><a:rPr lang="en-US"/><a:t>${xmlEscape(p)}</a:t></a:r></a:p><a:p/>`)
+    .join('');
+}
+
+function buildPptx(slides, { notes } = {}) {
+  const ns =
+    'xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" ' +
+    'xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"';
+  const entries = [
+    {
+      name: '[Content_Types].xml',
+      content: Buffer.from(
+        XML_DECL +
+          '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+          '<Default Extension="xml" ContentType="application/xml"/></Types>',
+        'utf8',
+      ),
+    },
+    ...slides.map((paragraphs, index) => ({
+      name: `ppt/slides/slide${index + 1}.xml`,
+      content: Buffer.from(
+        XML_DECL +
+          `<p:sld ${ns}><p:cSld><p:spTree><p:sp><p:txBody><a:bodyPr/>` +
+          `${pptxParagraphs(paragraphs)}</p:txBody></p:sp></p:spTree></p:cSld></p:sld>`,
+        'utf8',
+      ),
+    })),
+  ];
+  if (notes) {
+    entries.push({
+      name: 'ppt/notesSlides/notesSlide1.xml',
+      content: Buffer.from(
+        XML_DECL +
+          `<p:notes ${ns}><p:cSld><p:spTree><p:sp><p:txBody>` +
+          `${pptxParagraphs([notes])}</p:txBody></p:sp></p:spTree></p:cSld></p:notes>`,
+        'utf8',
+      ),
+    });
+  }
+  return buildZip(entries);
 }
 
 // ---------------------------------------------------------------------------
@@ -228,6 +362,42 @@ const fixtures = [
   {
     file: 'docx-benign.docx',
     build: () => buildDocx(['Meeting notes', 'Nothing sensitive here.', 'See you next week.']),
+  },
+  {
+    file: 'xlsx-sensitive.xlsx',
+    build: () =>
+      buildXlsx(
+        [
+          [
+            ['Supplier', 'IBAN', 'Amount'],
+            ['ACME & Co', IBAN, 1200],
+          ],
+          [['Ops'], ['inline:AWS key', `inline:${AWS_KEY}`]],
+        ],
+        { comment: 'Reviewed by finance' },
+      ),
+  },
+  {
+    file: 'xlsx-benign.xlsx',
+    build: () =>
+      buildXlsx([
+        [
+          ['Quarter', 'Revenue'],
+          ['Q1', 1000],
+          ['Q2', 1500],
+        ],
+      ]),
+  },
+  {
+    file: 'pptx-sensitive.pptx',
+    build: () =>
+      buildPptx([['Roadmap 2027', 'Launch in Q2'], ['Infra', 'Use the shared account']], {
+        notes: `Speaker notes: OpenAI key ${OPENAI_KEY}`,
+      }),
+  },
+  {
+    file: 'pptx-benign.pptx',
+    build: () => buildPptx([['Team offsite'], ['Agenda', 'Nothing sensitive here.']]),
   },
 ];
 

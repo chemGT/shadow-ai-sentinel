@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **XLSX and PPTX attachments are scanned** (closes the XLSX/PPTX part of bypass B5): cells, all sheets, cell comments, slides and speaker notes are extracted locally by a built-in Office Open XML reader (no new dependency, zip-bomb guard). As with PDF/DOCX, a redact rule blocks the file since it cannot be rewritten
 - Release workflow can be started manually (Actions → Release → Run workflow, from `master`): it validates the version, builds, tests and creates the `vX.Y.Z` tag and GitHub Release itself — no local tag push needed
 
 ### Changed

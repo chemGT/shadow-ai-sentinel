@@ -19,7 +19,7 @@ Tout s'exécute **localement sur votre appareil**. Aucun compte, aucune inscript
 - 🔑 **Clés d'API & jetons** (AWS, OpenAI, GitHub, Stripe, secrets génériques…)
 - 🧩 **Secrets génériques à haute entropie** collés par mégarde
 - 🪪 **Données personnelles (PII)** — IBAN, cartes bancaires, téléphones, e-mails pro, adresses IP internes
-- 📎 **Pièces jointes** — secrets dans les fichiers texte, code, PDF et DOCX avant l'upload
+- 📎 **Pièces jointes** — secrets dans les fichiers texte, code, PDF, Word, Excel et PowerPoint avant l'upload
 - ⚙️ **Listes d'autorisation** — faites taire les faux positifs pour votre équipe
 
 ### Comment il vous protège
