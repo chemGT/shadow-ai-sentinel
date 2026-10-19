@@ -1,5 +1,7 @@
 # Shadow AI Sentinel
 
+<p align="center"><img src="assets/banner.jpg" alt="Shadow AI Sentinel, extension navigateur de confidentialité" width="100%"></p>
+
 [![CI](https://github.com/chemGT/shadow-ai-sentinel/actions/workflows/ci.yml/badge.svg)](https://github.com/chemGT/shadow-ai-sentinel/actions/workflows/ci.yml)
 [![Licence : Apache-2.0](https://img.shields.io/badge/licence-Apache--2.0-blue.svg)](LICENSE)
 
