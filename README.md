@@ -88,6 +88,9 @@ npm run build:firefox    # Firefox  → dist-firefox/
 Tagged releases also ship ready-made archives on the
 [Releases page](https://github.com/chemGT/shadow-ai-sentinel/releases).
 
+Rolling this out across a fleet via Chrome/Edge/Firefox enterprise policy? See the
+[managed deployment guide](docs/deployment.md).
+
 ## What it does **not** do
 
 Shadow AI Sentinel protects against **accidental** leaks — the pasted log, the forgotten key in a
