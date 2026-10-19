@@ -10,8 +10,11 @@ function buildProEmailPattern(domains: string[]): RegExp | null {
     return null;
   }
   const domainPart = domains.map(escapeRegex).join('|');
+  // Chaîne de sous-domaines optionnelle avant le domaine configuré (bypass B3) :
+  // `jean@mail.acme.com` matche `acme.com`, mais `evilmacme.com` ne peut pas (le `.`
+  // précédent le domaine est littéral, exigé par le préfixe `(?:label\.)*`).
   return new RegExp(
-    `\\b([a-zA-Z0-9._%+-]{1,64}@(?:${domainPart}))\\b`,
+    `\\b([a-zA-Z0-9._%+-]{1,64}@(?:[a-zA-Z0-9-]+\\.)*(?:${domainPart}))\\b`,
     'gi',
   );
 }
