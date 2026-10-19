@@ -4,8 +4,8 @@ import { LLM_TAB_URL_PATTERNS } from '../../core/llm-hosts.js';
 import type { ExtensionMessage, Policy } from '../../core/types.js';
 import {
   getBrowserFamily,
+  getEffectivePolicy,
   getExtensionVersion,
-  getStoredPolicy,
   onMessage,
   setStoredPolicy,
 } from '../platform/index.js';
@@ -28,7 +28,7 @@ async function broadcastPolicyUpdate(policy: Policy): Promise<void> {
 }
 
 async function bootstrap(): Promise<void> {
-  cachedPolicy = await getStoredPolicy();
+  cachedPolicy = await getEffectivePolicy();
   console.info('[Shadow AI Sentinel] Service worker prêt', {
     supportedHosts: SUPPORTED_LLM_HOSTS,
     policyVersion: cachedPolicy.version,
@@ -42,15 +42,26 @@ onMessage(async (message: ExtensionMessage) => {
     case 'GET_POLICY':
       return { policy: cachedPolicy };
     case 'POLICY_UPDATED': {
-      const next = message.payload as Policy;
-      await setStoredPolicy(next);
-      cachedPolicy = next;
-      await broadcastPolicyUpdate(next);
+      await setStoredPolicy(message.payload as Policy);
+      // La policy gérée reste prioritaire sur ce que l'utilisateur vient d'enregistrer.
+      cachedPolicy = await getEffectivePolicy();
+      await broadcastPolicyUpdate(cachedPolicy);
       return { ok: true };
     }
     default:
       return { ok: false, reason: 'Unhandled message type' };
   }
+});
+
+// Policy gérée modifiée par l'admin (GPO/MDM rechargé) : recalcul et diffusion immédiate.
+getExtensionApi().storage.onChanged.addListener((_changes, area) => {
+  if (area !== 'managed') {
+    return;
+  }
+  void getEffectivePolicy().then((policy) => {
+    cachedPolicy = policy;
+    return broadcastPolicyUpdate(policy);
+  });
 });
 
 void bootstrap();

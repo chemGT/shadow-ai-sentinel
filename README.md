@@ -69,12 +69,13 @@ Every rule can be switched between **Block** and **Redact**, or disabled, from t
 An **allowlist** silences known-safe values (test keys, your own public email…).
 
 **Attachments** are scanned too: text/code files (`.env`, `.json`, `.csv`, source files…) and
-**PDF / DOCX** (text extracted locally with pdf.js and mammoth).
+**PDF / DOCX / XLSX / PPTX** (text extracted locally with pdf.js, mammoth and a built-in
+Office Open XML reader — cells, sheets, comments, slides and speaker notes).
 
 **How the prompt redactor works:** each match is replaced by a typed token
 (`[REDACTED_API_KEY]`, `[REDACTED_IBAN]`, `[REDACTED_CARD]`…) directly in the message box, so you
-can still send the rest of your prompt. Attached text files are redacted the same way; PDF/DOCX
-cannot be rewritten, so a redact rule blocks them instead.
+can still send the rest of your prompt. Attached text files are redacted the same way; PDF and
+Office files cannot be rewritten, so a redact rule blocks them instead.
 
 **Evasion hardening:** input is normalized before scanning — zero-width characters and BOMs are
 removed, Unicode spaces (NBSP, narrow NBSP) folded, Cyrillic/Greek look-alike letters and
@@ -120,8 +121,8 @@ npm run build:firefox    # Firefox  → dist-firefox/
 Tagged releases also ship ready-made archives on the
 [Releases page](https://github.com/chemGT/shadow-ai-sentinel/releases).
 
-Rolling this out across a fleet via Chrome/Edge/Firefox enterprise policy? See the
-[managed deployment guide](docs/deployment.md).
+Rolling this out across a fleet via Chrome/Edge/Firefox enterprise policy, with rules pushed
+centrally (`chrome.storage.managed`)? See the [managed deployment guide](docs/deployment.md).
 
 ## What it does **not** do
 
@@ -129,7 +130,7 @@ Shadow AI Sentinel protects against **accidental** leaks — the pasted log, the
 config file. It is not designed to stop a determined insider:
 
 - encoded secrets (base64, hex, URL-encoding), reversed or deliberately split values are not decoded;
-- images, XLSX/PPTX, archives and scanned (image-only) PDFs are not inspected;
+- images, RTF/ODF, archives and scanned (image-only) PDFs are not inspected;
 - requests sent outside the page's message box (direct API calls, other apps) are out of reach.
 
 The full threat model and the adversarial test corpus are public:

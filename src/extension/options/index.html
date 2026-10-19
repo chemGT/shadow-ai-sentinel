@@ -73,6 +73,27 @@
         color: #111827;
       }
 
+      /* Policy gérée par l'organisation */
+      .managed-banner {
+        border: 1px solid #c7d2fe;
+        background: #eef2ff;
+        color: #312e81;
+        border-radius: 8px;
+        padding: 10px 14px;
+        font-size: 0.875rem;
+        margin: 0 0 20px;
+      }
+      .managed-badge {
+        display: inline-block;
+        margin-left: 8px;
+        padding: 1px 6px;
+        border-radius: 999px;
+        background: #e0e7ff;
+        color: #3730a3;
+        font-size: 0.75rem;
+        font-weight: 500;
+      }
+
       /* Rules table */
       table.rules-table {
         width: 100%;
@@ -150,6 +171,10 @@
       .switch:focus-visible {
         outline: 2px solid #111827;
         outline-offset: 2px;
+      }
+      .switch:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
       }
 
       /* Segmented control (Redact/Block), aria-pressed */
@@ -254,6 +279,10 @@
   <body>
     <h1>Shadow AI Sentinel</h1>
     <p class="hint">Configuration locale — règles DLP et allowlist. Rien ne quitte votre navigateur.</p>
+    <p id="managedBanner" class="managed-banner" role="note" hidden>
+      Certains réglages sont gérés par votre organisation (policy navigateur). Ils sont appliqués en
+      priorité et ne sont pas modifiables ici.
+    </p>
 
     <fieldset>
       <legend>Allowlist</legend>
@@ -265,6 +294,7 @@
         Valeurs autorisées
         <textarea id="allowlist" spellcheck="false" placeholder="exemple@entreprise.com&#10;192.168.1.1"></textarea>
       </label>
+      <p id="allowlistManagedHint" class="hint" style="margin: 0 0 12px" hidden></p>
       <div class="actions">
         <button type="button" id="saveAllowlist">Enregistrer l’allowlist</button>
       </div>

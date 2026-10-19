@@ -1,8 +1,15 @@
 import { validatePolicy } from '../../core/validation/policy.js';
 import { ALL_RULE_TYPES } from '../../core/constants.js';
+import {
+  applyManagedPolicy,
+  hasManagedSettings,
+  managedRuleTypes,
+  type ManagedConfig,
+} from '../../core/managed-policy.js';
 import type { Policy, Rule, RuleAction, RuleType } from '../../core/types.js';
 import {
   getAllowlist,
+  getManagedConfig,
   getStoredPolicy,
   setAllowlist,
   setStoredPolicy,
@@ -22,6 +29,10 @@ const RULE_LABELS: Record<RuleType, string> = {
 const policyJsonEl = document.getElementById('policyJson') as HTMLTextAreaElement;
 const allowlistEl = document.getElementById('allowlist') as HTMLTextAreaElement;
 const rulesTableBodyEl = document.getElementById('rulesTableBody') as HTMLTableSectionElement;
+const managedBannerEl = document.getElementById('managedBanner') as HTMLElement;
+const allowlistManagedHintEl = document.getElementById('allowlistManagedHint') as HTMLElement;
+
+let managedConfig: ManagedConfig = { allowlist: [], errors: [] };
 
 const toastEl = document.getElementById('toast') as HTMLElement;
 const toastIconEl = toastEl.querySelector('.toast-icon') as HTMLElement;
@@ -61,12 +72,13 @@ function showToast(kind: 'ok' | 'error', message: string): void {
 
 toastDismissEl.addEventListener('click', hideToast);
 
-function makeSwitch(rule: Rule): HTMLButtonElement {
+function makeSwitch(rule: Rule, managed: boolean): HTMLButtonElement {
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.className = 'switch';
   btn.setAttribute('role', 'switch');
   btn.setAttribute('aria-checked', String(rule.enabled));
+  btn.disabled = managed;
   btn.setAttribute('aria-label', `Activer la règle ${RULE_LABELS[rule.type]}`);
   btn.addEventListener('click', () => {
     void updateRule(rule.type, { enabled: !rule.enabled });
@@ -74,7 +86,7 @@ function makeSwitch(rule: Rule): HTMLButtonElement {
   return btn;
 }
 
-function makeSegmented(rule: Rule): HTMLDivElement {
+function makeSegmented(rule: Rule, managed: boolean): HTMLDivElement {
   const wrap = document.createElement('div');
   wrap.className = 'segmented';
 
@@ -88,7 +100,7 @@ function makeSegmented(rule: Rule): HTMLDivElement {
     btn.type = 'button';
     btn.textContent = action.label;
     btn.setAttribute('aria-pressed', String(rule.action === action.value));
-    btn.disabled = !rule.enabled;
+    btn.disabled = managed || !rule.enabled;
     btn.addEventListener('click', () => {
       void updateRule(rule.type, { action: action.value });
     });
@@ -98,8 +110,11 @@ function makeSegmented(rule: Rule): HTMLDivElement {
   return wrap;
 }
 
-function renderRulesTable(policy: Policy): void {
+/** Affiche la policy effective (locale + gérée) ; les règles gérées sont verrouillées. */
+function renderRulesTable(localPolicy: Policy): void {
   rulesTableBodyEl.innerHTML = '';
+  const policy = applyManagedPolicy(localPolicy, managedConfig);
+  const managedTypes = managedRuleTypes(managedConfig);
 
   for (const type of ALL_RULE_TYPES) {
     const rule = policy.rules.find((r) => r.type === type) ?? {
@@ -110,17 +125,25 @@ function renderRulesTable(policy: Policy): void {
 
     const tr = document.createElement('tr');
 
+    const managed = managedTypes.has(type);
     const labelTd = document.createElement('td');
     labelTd.className = 'rule-label';
     labelTd.textContent = RULE_LABELS[type];
+    if (managed) {
+      const badge = document.createElement('span');
+      badge.className = 'managed-badge';
+      badge.textContent = 'Géré';
+      badge.title = 'Règle imposée par la policy de votre organisation';
+      labelTd.appendChild(badge);
+    }
     tr.appendChild(labelTd);
 
     const switchTd = document.createElement('td');
-    switchTd.appendChild(makeSwitch(rule));
+    switchTd.appendChild(makeSwitch(rule, managed));
     tr.appendChild(switchTd);
 
     const actionTd = document.createElement('td');
-    actionTd.appendChild(makeSegmented(rule));
+    actionTd.appendChild(makeSegmented(rule, managed));
     tr.appendChild(actionTd);
 
     rulesTableBodyEl.appendChild(tr);
@@ -153,7 +176,17 @@ async function updateRule(type: RuleType, patch: Partial<Pick<Rule, 'enabled' | 
   }
 }
 
+function renderManagedState(): void {
+  managedBannerEl.hidden = !hasManagedSettings(managedConfig);
+  const count = managedConfig.allowlist.length;
+  allowlistManagedHintEl.hidden = count === 0;
+  allowlistManagedHintEl.textContent =
+    `+ ${count} valeur(s) ajoutée(s) par votre organisation, appliquée(s) en plus de cette liste.`;
+}
+
 async function loadForm(): Promise<void> {
+  managedConfig = await getManagedConfig();
+  renderManagedState();
   const policy = await getStoredPolicy();
   policyJsonEl.value = JSON.stringify(policy, null, 2);
   renderRulesTable(policy);

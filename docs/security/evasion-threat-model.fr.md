@@ -225,7 +225,7 @@ Références : `file-guard.ts`, `binary-extract.ts`, `text-file.ts`, `binary-fil
 
 | Vecteur | Mécanisme | Faisabilité | Impact | Détecté ? |
 |---|---|---|---|---|
-| **Format non scanné** | seuls texte/PDF/DOCX sont scannés (`file-guard.ts:277-284`). **XLSX, PPTX, RTF, ODT, images, ZIP/archives, binaires** → `isScannableFile` faux → **passent sans scan** | Facile | Part | ❌ Non |
+| **Format non scanné** | seuls texte/PDF/DOCX/XLSX/PPTX sont scannés (`file-guard.ts`). **RTF, ODT, images, ZIP/archives, binaires** → `isScannableFile` faux → **passent sans scan** | Facile | Part | ❌ Non |
 | **PDF image (sans couche texte)** | `extractPdfText` lit `getTextContent()` (`binary-extract.ts:42`), **pas d'OCR** → texte vide → `allow` | Facile (scan→PDF) | Part | ❌ Non |
 | **PDF chiffré / corrompu** | `extractBinaryText` throw → `catch` → `warn` + **laisser passer** (`file-guard.ts:168-171`) | Facile | Part | ⚠️ Averti |
 | **DOCX : commentaires** | `mammoth.extractRawText` (`binary-extract.ts:60`) lit `document.xml` (corps) ; les **commentaires** (`comments.xml`) ne sont pas extraits → secret en commentaire **échappe** | Délibéré | Part | ❌ Non* |
@@ -251,7 +251,7 @@ tests existants `file-guard.test.ts`).
 **Confirmés, à documenter (correctif risqué ou hors regex) :**
 5. `pro_email` sous-domaines.
 6. `.txt` > 5 Mo fail-open silencieux.
-7. Formats fichiers non scannés (XLSX/archives/images), PDF image, PDF chiffré, DOCX commentaires.
+7. Formats fichiers non scannés (RTF/ODF/archives/images ; XLSX/PPTX corrigés le 2026-10-19), PDF image, PDF chiffré, DOCX commentaires.
 
 **Limites assumées (ne pas « corriger », documenter comme périmètre) :**
 8. Encodages (base64/hex/URL), inversion, découpage volontaire, `fetch` direct, iframe/shadow DOM,

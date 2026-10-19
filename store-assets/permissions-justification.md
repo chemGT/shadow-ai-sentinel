@@ -5,7 +5,7 @@ CWS "Privacy practices" tab and the AMO submission notes.
 
 | Permission | Why it is required |
 |------------|--------------------|
-| `storage` | Persist the user's local policy (which rule types are enabled, Block vs Redact), allowlist, and anonymous local counters. All data stays in `chrome.storage.local` on the user's device. |
+| `storage` | Persist the user's local policy (which rule types are enabled, Block vs Redact), allowlist, and anonymous local counters. All data stays in `chrome.storage.local` on the user's device. In managed deployments, the extension also reads (never writes) the admin-pushed policy from `chrome.storage.managed`, delivered locally by the browser's enterprise policy — no network access. |
 | Host: `*://claude.ai/*`, `*://chatgpt.com/*`, `*://gemini.google.com/*`, `*://chat.mistral.ai/*`, `*://chat.deepseek.com/*`, `*://perplexity.ai/*`, `*://www.perplexity.ai/*`, `*://grok.com/*`, `*://copilot.microsoft.com/*` | Inject the content script that reads the prompt being typed/pasted **on these eight AI sites only**, so it can detect and block/redact sensitive data before submission. The extension does not run on any other site. Note: the Grok surface embedded in x.com is deliberately excluded — matching `x.com` would inject the script on all of X/Twitter, far beyond the extension's single purpose. |
 
 ## Single-purpose statement (CWS requires one)

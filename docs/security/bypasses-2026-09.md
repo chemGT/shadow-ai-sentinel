@@ -73,15 +73,21 @@ bypass (encoding/tool), the product does not claim to stop it.
 - **Proposed fix**: a defensive normalization pass before `runAllDetectors` (see **D**).
   Closes B1, B2 and B4 in one shot (zero-width, NBSP, full-width digits, NFKC compatibility homoglyphs).
 
-### B5 — [MEDIUM] File formats not scanned (XLSX, PPTX, RTF, ZIP, images)
-- **Repro**: test `[BYPASS CONNU] XLSX / PPTX / archives / images ne sont ni texte ni binaire
+### B5 — [MEDIUM] File formats not scanned (RTF, ODF, ZIP, images) — **XLSX/PPTX FIXED (2026-10-19)**
+- **Fix applied (partial)**: XLSX and PPTX are now extracted locally
+  (`src/extension/sites/shared/ooxml-extract.ts`: minimal ZIP reader + native
+  `DecompressionStream`, no dependency; cells via shared strings, inline strings, numbers, cell
+  comments, slides and speaker notes) and go through the binary pipeline (size limit, redact →
+  block). Zip-bomb guard: 50 MB decompressed cap, enforced while streaming. Tests
+  `CORRECTIF (B5)` in `evasion-corpus.test.ts` and `ooxml-extract.test.ts`.
+- **Repro (remaining)**: test `[BYPASS CONNU] RTF / archives / images ne sont ni texte ni binaire
   scannable` — `isTextLikeFile` and `isBinaryScannableFile` both return `false` → the file
   passes **with no scan at all**.
-- **Root cause**: `src/extension/sites/shared/file-guard.ts:277-284` (`isScannableFile`) +
-  `src/core/binary-file.ts:23` + `src/core/text-file.ts:44` — only text/PDF/DOCX are covered.
+- **Root cause**: `src/extension/sites/shared/file-guard.ts` (`isScannableFile`) +
+  `src/core/binary-file.ts` + `src/core/text-file.ts` — only text/PDF/DOCX/XLSX/PPTX are covered.
 - **Proposed fix**: at minimum **block by default** (or explicitly warn) for non-extractable
-  office formats (XLSX/PPTX/ODT) instead of silently letting them through; longer term, add an
-  XLSX extractor (`sheetjs`) to the binary pipeline. Product decision — cost vs. surface.
+  office formats (RTF/ODT/ODS) instead of silently letting them through; ODF could reuse the ZIP
+  reader of `ooxml-extract.ts`. Product decision — cost vs. surface.
 
 ---
 

@@ -9,7 +9,7 @@ services such as ChatGPT, Claude, Gemini, Le Chat, DeepSeek, Perplexity, Grok an
 
 ## What the extension does
 
-- Analyzes what you type and the files you attach (text, code, PDF, DOCX) **locally, in your
+- Analyzes what you type and the files you attach (text, code, PDF, DOCX, XLSX, PPTX) **locally, in your
   browser**, before they are sent.
 - May **block** the message or **replace** sensitive values with tokens (`[REDACTED_…]`).
 

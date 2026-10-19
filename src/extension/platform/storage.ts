@@ -10,6 +10,13 @@ export interface LocalStats {
   truncated: number;
 }
 import { validatePolicy } from '../../core/validation/policy.js';
+import {
+  applyManagedPolicy,
+  MANAGED_KEYS,
+  mergeAllowlists,
+  parseManagedConfig,
+  type ManagedConfig,
+} from '../../core/managed-policy.js';
 import { getExtensionApi } from './browser-api.js';
 
 /**
@@ -67,6 +74,38 @@ export async function setAllowlist(values: readonly string[]): Promise<void> {
     new Set(values.map((v) => v.trim()).filter((v) => v.length > 0)),
   );
   await storageSet({ [STORAGE_KEYS.allowlist]: cleaned });
+}
+
+/**
+ * Configuration gérée par l'organisation (lecture seule). Absente — aucun `managed_schema`
+ * (Firefox sans policy `3rdparty`), stockage vide ou API indisponible — : configuration vide,
+ * comportement inchangé. Les entrées invalides sont ignorées et signalées en console.
+ */
+export async function getManagedConfig(): Promise<ManagedConfig> {
+  let raw: unknown;
+  try {
+    // Firefox rejette la Promise quand aucun manifeste de stockage géré n'existe.
+    raw = await getExtensionApi().storage.managed.get([...MANAGED_KEYS]);
+  } catch {
+    return parseManagedConfig(undefined);
+  }
+  const config = parseManagedConfig(raw);
+  if (config.errors.length > 0) {
+    console.warn('[Shadow AI Sentinel] Policy gérée partiellement ignorée:', config.errors);
+  }
+  return config;
+}
+
+/** Policy appliquée : locale, surchargée champ par champ par la policy gérée. */
+export async function getEffectivePolicy(): Promise<Policy> {
+  const [local, managed] = await Promise.all([getStoredPolicy(), getManagedConfig()]);
+  return applyManagedPolicy(local, managed);
+}
+
+/** Allowlist appliquée : locale + gérée. */
+export async function getEffectiveAllowlist(): Promise<string[]> {
+  const [local, managed] = await Promise.all([getAllowlist(), getManagedConfig()]);
+  return mergeAllowlists(local, managed);
 }
 
 export async function getLocalStats(): Promise<LocalStats> {

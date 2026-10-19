@@ -1,7 +1,7 @@
 import { resolveLlmHost } from '../../core/llm-hosts.js';
 import type { ExtensionMessage, LlmHost, Policy } from '../../core/types.js';
 import { getExtensionApi } from '../platform/browser-api.js';
-import { getStoredPolicy, getAllowlist } from '../platform/storage.js';
+import { getEffectiveAllowlist, getEffectivePolicy } from '../platform/storage.js';
 import { sendMessage } from '../platform/runtime.js';
 import { attachClaudeAdapter } from '../sites/claude/adapter.js';
 import { attachChatGptAdapter } from '../sites/chatgpt/adapter.js';
@@ -28,7 +28,7 @@ async function loadPolicy(): Promise<Policy> {
   } catch {
     // Service worker non disponible — fallback storage
   }
-  return getStoredPolicy();
+  return getEffectivePolicy();
 }
 
 function listenPolicyUpdates(): void {
@@ -42,21 +42,23 @@ function listenPolicyUpdates(): void {
     }
   });
   // Fallback : écoute les mises à jour directement depuis le storage
-  // (couvre le cas où le SW est terminé et ne peut pas broadcaster)
+  // (couvre le cas où le SW est terminé et ne peut pas broadcaster). La valeur brute locale
+  // n'est jamais appliquée telle quelle : la policy gérée (area `managed`) reste prioritaire.
   api.storage.onChanged.addListener((changes, area) => {
-    if (area === 'local' && 'sentinel_policy' in changes) {
-      const newPolicy = changes['sentinel_policy'].newValue as Policy | undefined;
-      if (newPolicy) {
-        policy = newPolicy;
+    const managedChanged = area === 'managed';
+    if (managedChanged || (area === 'local' && 'sentinel_policy' in changes)) {
+      void getEffectivePolicy().then((next) => {
+        policy = next;
         console.info('[Shadow AI Sentinel] Policy mise à jour (storage)', {
-          version: newPolicy.version,
+          version: next.version,
         });
-      }
+      });
     }
-    if (area === 'local' && 'sentinel_allowlist' in changes) {
-      const next = changes['sentinel_allowlist'].newValue;
-      allowlist = Array.isArray(next) ? next.filter((v): v is string => typeof v === 'string') : [];
-      console.info('[Shadow AI Sentinel] Allowlist mise à jour', { count: allowlist.length });
+    if (managedChanged || (area === 'local' && 'sentinel_allowlist' in changes)) {
+      void getEffectiveAllowlist().then((next) => {
+        allowlist = next;
+        console.info('[Shadow AI Sentinel] Allowlist mise à jour', { count: allowlist.length });
+      });
     }
   });
 }
@@ -97,7 +99,7 @@ function bootstrap(): void {
 
   listenPolicyUpdates();
 
-  void Promise.all([loadPolicy(), getAllowlist()])
+  void Promise.all([loadPolicy(), getEffectiveAllowlist()])
     .then(([loaded, loadedAllowlist]) => {
       policy = loaded;
       allowlist = loadedAllowlist;

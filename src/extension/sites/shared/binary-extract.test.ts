@@ -62,6 +62,19 @@ describe('binary-extract', () => {
     await expect(extractBinaryText(docx)).resolves.toContain('Meeting notes');
   });
 
+  it('extractBinaryText route XLSX et PPTX vers l’extracteur OOXML', async () => {
+    const xlsx = fixtureFile(
+      'xlsx-benign.xlsx',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+    const pptx = fixtureFile(
+      'pptx-benign.pptx',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    );
+    await expect(extractBinaryText(xlsx)).resolves.toContain('Revenue');
+    await expect(extractBinaryText(pptx)).resolves.toContain('Team offsite');
+  });
+
   it('extractBinaryText rejette un format non pris en charge', async () => {
     const other = new File(['plain text'], 'notes.txt', { type: 'text/plain' });
     await expect(extractBinaryText(other)).rejects.toThrow();

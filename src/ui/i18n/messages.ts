@@ -116,7 +116,7 @@ export function blockFileModalCopy(
   };
 }
 
-/** Modale Block — PDF/DOCX dont la décision policy est "redact" (non réécrivable en place). */
+/** Modale Block — PDF/DOCX/XLSX/PPTX dont la décision policy est "redact" (non réécrivable en place). */
 export function blockUnsupportedFileFormatCopy(
   ruleTypes: RuleType[],
   fileName: string,
@@ -165,7 +165,7 @@ export function fileTooLargeNotice(fileName: string, locale: Locale): string {
     : `File “${safeName}” is too large to scan: sent without DLP verification.`;
 }
 
-/** Toast — PDF/DOCX illisible (corrompu, chiffré…), laissé passer sans blocage. */
+/** Toast — PDF/DOCX/XLSX/PPTX illisible (corrompu, chiffré…), laissé passer sans blocage. */
 export function fileScanFailedNotice(fileName: string, locale: Locale): string {
   const safeName = fileName.replace(/[<>]/g, '');
   return locale === 'fr'
@@ -249,7 +249,7 @@ export function employeeNoticeSections(locale: Locale): EmployeeNoticeSection[] 
       {
         heading: 'Ce que fait Sentinel',
         bullets: [
-          'Analyse votre saisie et vos pièces jointes (texte, code, PDF, DOCX) localement, avant envoi.',
+          'Analyse votre saisie et vos pièces jointes (texte, code, PDF, DOCX, XLSX, PPTX) localement, avant envoi.',
           'Peut bloquer l’envoi ou remplacer une donnée par un jeton (ex. [REDACTED_IBAN]).',
         ],
       },
@@ -286,7 +286,7 @@ export function employeeNoticeSections(locale: Locale): EmployeeNoticeSection[] 
     {
       heading: 'What Sentinel does',
       bullets: [
-        'Analyzes what you type and your attachments (text, code, PDF, DOCX) locally before sending.',
+        'Analyzes what you type and your attachments (text, code, PDF, DOCX, XLSX, PPTX) locally before sending.',
         'May block sending or replace data with a token (e.g. [REDACTED_IBAN]).',
       ],
     },

@@ -1,5 +1,7 @@
 # Shadow AI Sentinel
 
+<p align="center"><img src="assets/banner.jpg" alt="Shadow AI Sentinel, extension navigateur de confidentialité" width="100%"></p>
+
 [![CI](https://github.com/chemGT/shadow-ai-sentinel/actions/workflows/ci.yml/badge.svg)](https://github.com/chemGT/shadow-ai-sentinel/actions/workflows/ci.yml)
 [![Licence : Apache-2.0](https://img.shields.io/badge/licence-Apache--2.0-blue.svg)](LICENSE)
 
@@ -34,7 +36,8 @@ Chaque règle passe en **Bloquer** / **Caviarder** ou se désactive depuis les o
 **allowlist** neutralise les valeurs connues (clés de test, votre e-mail public…).
 
 **Pièces jointes** analysées : fichiers texte/code (`.env`, `.json`, `.csv`, sources…) et
-**PDF / DOCX** (extraction locale via pdf.js et mammoth).
+**PDF / DOCX / XLSX / PPTX** (extraction locale via pdf.js, mammoth et un lecteur Office Open XML
+intégré — cellules, feuilles, commentaires, diapositives et notes de l'orateur).
 
 **Durcissement anti-contournement :** le texte est normalisé avant analyse (caractères invisibles
 supprimés, espaces insécables repliés, homoglyphes cyrilliques/grecs et pleine chasse ramenés à
@@ -62,7 +65,7 @@ npm run build:firefox    # Firefox  → dist-firefox/
 ## Ce que l'outil ne fait **pas**
 
 Il protège contre la **fuite par inadvertance**, pas contre un initié déterminé : secrets encodés
-(base64, hex…), images, XLSX/PPTX, archives, PDF scannés et appels hors de la zone de saisie ne sont
+(base64, hex…), images, RTF/ODF, archives, PDF scannés et appels hors de la zone de saisie ne sont
 pas couverts. Modèle de menace complet :
 [`docs/security/evasion-threat-model.fr.md`](docs/security/evasion-threat-model.fr.md).
 

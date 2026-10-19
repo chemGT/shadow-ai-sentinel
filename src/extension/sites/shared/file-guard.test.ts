@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createDefaultPolicy } from '../../../core/defaults.js';
-import { MAX_BINARY_FILE_BYTES } from '../../../core/binary-file.js';
+import { MAX_BINARY_FILE_BYTES, PPTX_MIME, XLSX_MIME } from '../../../core/binary-file.js';
 import type { Policy } from '../../../core/types.js';
 import { guardFileList, hasScannableInList, type FileGuardOptions } from './file-guard.js';
 
@@ -59,6 +59,19 @@ function docxSensitive(): File {
 }
 function docxBenign(): File {
   return fixtureFile('docx-benign.docx', DOCX_TYPE);
+}
+
+function xlsxSensitive(): File {
+  return fixtureFile('xlsx-sensitive.xlsx', XLSX_MIME);
+}
+function xlsxBenign(): File {
+  return fixtureFile('xlsx-benign.xlsx', XLSX_MIME);
+}
+function pptxSensitive(): File {
+  return fixtureFile('pptx-sensitive.pptx', PPTX_MIME);
+}
+function pptxBenign(): File {
+  return fixtureFile('pptx-benign.pptx', PPTX_MIME);
 }
 
 function policyWithIbanAction(action: 'block' | 'redact'): Policy {
@@ -149,6 +162,39 @@ describe('guardFileList — PDF/DOCX', () => {
 
   it('laisse passer un PDF corrompu avec avertissement (pas de blocage)', async () => {
     const result = await guardFileList([pdfCorrupt()], options());
+    expect(result.blocked).toBe(false);
+    expect(result.allowed).toHaveLength(1);
+  });
+});
+
+describe('guardFileList — XLSX/PPTX', () => {
+  it('reconnaît XLSX et PPTX comme scannables', () => {
+    expect(hasScannableInList([xlsxBenign()])).toBe(true);
+    expect(hasScannableInList([pptxBenign()])).toBe(true);
+  });
+
+  it('bloque un XLSX contenant un IBAN quand la policy IBAN = redact (binaire non réécrivable)', async () => {
+    const policy = policyWithIbanAction('redact');
+    const result = await guardFileList([xlsxSensitive()], options({ getPolicy: () => policy }));
+    expect(result.blocked).toBe(true);
+    expect(result.allowed).toHaveLength(0);
+  });
+
+  it('bloque un PPTX dont les notes de l’orateur contiennent une clé OpenAI', async () => {
+    const result = await guardFileList([pptxSensitive()], options());
+    expect(result.blocked).toBe(true);
+    expect(result.allowed).toHaveLength(0);
+  });
+
+  it('laisse passer XLSX et PPTX bénins', async () => {
+    const result = await guardFileList([xlsxBenign(), pptxBenign()], options());
+    expect(result.blocked).toBe(false);
+    expect(result.allowed).toHaveLength(2);
+  });
+
+  it('laisse passer un XLSX corrompu avec avertissement (pas de blocage)', async () => {
+    const corrupt = new File([new Uint8Array(64)], 'broken.xlsx', { type: XLSX_MIME });
+    const result = await guardFileList([corrupt], options());
     expect(result.blocked).toBe(false);
     expect(result.allowed).toHaveLength(1);
   });

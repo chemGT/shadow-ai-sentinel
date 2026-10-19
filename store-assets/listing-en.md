@@ -19,7 +19,7 @@ Everything runs **locally on your device**. No account, no sign-up, and no netwo
 - 🔑 **API keys & tokens** (AWS, OpenAI, GitHub, Stripe, generic secrets…)
 - 🧩 **Generic high-entropy secrets** pasted by accident
 - 🪪 **Personal data (PII)** — IBAN, payment cards, phone numbers, work emails, internal IP addresses
-- 📎 **Attachments** — secrets inside text, code, PDF and DOCX files before upload
+- 📎 **Attachments** — secrets inside text, code, PDF, Word, Excel and PowerPoint files before upload
 - ⚙️ **Allowlists** — silence false positives for your team
 
 ### How it protects you

@@ -10,11 +10,11 @@ Firefox Add-ons (AMO), plus the public privacy page.
 | `listing-fr.md` | Same, French |
 | `permissions-justification.md` | Per-permission rationale + single-purpose + data-practice answers for reviewers |
 | `privacy-policy.md` | Public privacy policy — must be hosted at a public URL and linked in both stores |
-| `../assets/icon.svg` | Icon source (regenerate PNGs with `node scripts/build-icons.mjs`) |
+| `../assets/logo.jpg` | Logo source (regenerate PNGs with `npm i --no-save sharp && node scripts/build-icons.mjs`) |
 | `../icons/icon-{16,48,128}.png` | Shipped icons (also used as store icon) |
 
 ## ✅ Done
-- [x] Icon set 16/48/128 (S-shield, indigo→cyan gradient), wired into both manifests
+- [x] Icon set 16/48/128 (derived from `assets/logo.jpg`), wired into both manifests
 - [x] Store descriptions EN + FR
 - [x] Permission justifications + data-practice answers
 - [x] Privacy policy (truthful: free tier = zero network)

@@ -1,0 +1,39 @@
+{
+  "type": "object",
+  "properties": {
+    "emailDomains": {
+      "title": "Work email domains",
+      "description": "Domains matched by the pro_email rule (e.g. example.com). Overrides the local value.",
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "fail_mode": {
+      "title": "Behavior when a site adapter breaks",
+      "description": "open = send without scan, warn = send with a visible warning, closed = block all sends.",
+      "type": "string",
+      "enum": ["open", "warn", "closed"]
+    },
+    "rules": {
+      "title": "Detection rules",
+      "description": "One entry per rule type. A managed entry overrides the local rule of the same type; other types stay user-configurable.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["api_key", "generic_secret", "iban", "card", "internal_ip", "pro_email", "phone"]
+          },
+          "action": { "type": "string", "enum": ["block", "redact"] },
+          "enabled": { "type": "boolean" }
+        }
+      }
+    },
+    "allowlist": {
+      "title": "Allowlist",
+      "description": "Exact values that never trigger a rule (test keys, public addresses). Added to the user's own allowlist.",
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}
