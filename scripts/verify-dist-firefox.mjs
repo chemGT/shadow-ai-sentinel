@@ -71,6 +71,14 @@ if (!geckoId) {
 }
 console.log(`OK gecko.id=${geckoId}`);
 
+// Consentement de collecte de données Firefox : obligatoire pour toute nouvelle soumission AMO.
+// L'extension ne collecte rien → `required: ["none"]`.
+const dataCollection = manifest.browser_specific_settings?.gecko?.data_collection_permissions;
+if (JSON.stringify(dataCollection?.required) !== '["none"]') {
+  throw new Error('manifest Firefox : data_collection_permissions.required doit valoir ["none"]');
+}
+console.log('OK data_collection_permissions=none');
+
 const expectedHosts = [
   'claude.ai',
   'chatgpt.com',

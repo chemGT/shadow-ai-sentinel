@@ -84,11 +84,8 @@ jobs:
           node scripts/verify-dist-firefox.mjs
 
       - name: Package
-        run: |
-          mkdir -p release
-          (cd dist && zip -qr "../release/shadow-ai-sentinel-${TAG}-chromium.zip" .)
-          (cd dist-firefox && zip -qr "../release/shadow-ai-sentinel-${TAG}-firefox-unsigned.xpi" .)
-          (cd release && sha256sum * > SHA256SUMS.txt)
+        # Chromium zip, xpi Firefox non signé, archive source (AMO), SHA256SUMS.txt → release/
+        run: node scripts/package.mjs
 
       - name: Build provenance attestation
         # Attestations : dépôt public requis (ou GitHub Enterprise Cloud).

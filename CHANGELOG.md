@@ -9,12 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] — 2026-10-19
+
 ### Added
 - **XLSX and PPTX attachments are scanned** (closes the XLSX/PPTX part of bypass B5): cells, all sheets, cell comments, slides and speaker notes are extracted locally by a built-in Office Open XML reader (no new dependency, zip-bomb guard). As with PDF/DOCX, a redact rule blocks the file since it cannot be rewritten
 - **Centrally managed policy** (`chrome.storage.managed`, declared via `managed_schema.json`): admins can push `rules`, `emailDomains`, `fail_mode` and `allowlist` through Chrome/Edge enterprise policy or Firefox `policies.json` (`3rdparty`). Managed values win field by field (rule by rule), invalid values fall back to the local setting, the admin allowlist is added to the user's. The options page shows managed settings as locked. Guide: `docs/deployment.md`
+- `npm run package`: builds both targets and writes store-ready packages to `release/` — Chromium zip (Chrome Web Store), unsigned Firefox `.xpi` (AMO), source zip (required by AMO for minified code) and `SHA256SUMS.txt`; the release workflow uses the same script, so GitHub Releases now also ship the source zip
+- `store-assets/amo-reviewer-notes.md`: build instructions, bundled libraries, expected linter warnings and test steps for store reviewers
+- Firefox manifest declares `data_collection_permissions: none` (Firefox built-in data consent, required for new AMO submissions)
 - Release workflow can be started manually (Actions → Release → Run workflow, from `master`): it validates the version, builds, tests and creates the `vX.Y.Z` tag and GitHub Release itself — no local tag push needed
 
 ### Changed
+- Replaced `npm run package:firefox` (unsigned `.xpi` written inside `dist-firefox/`, re-zipped into itself on a second run) with `npm run package`
 - New logo: extension icons (16/48/128) are now generated from `assets/logo.jpg` (`scripts/build-icons.mjs`); README header banner
 
 ## [1.0.0] — 2026-10-18 — First open-source release

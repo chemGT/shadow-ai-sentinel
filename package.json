@@ -1,13 +1,13 @@
 {
   "name": "shadow-ai-sentinel",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Open-source prompt redactor: a local browser DLP that blocks or redacts secrets and personal data before they reach ChatGPT, Claude, Gemini and other AI chatbots.",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "build:firefox": "tsc --noEmit && vite build --config vite.firefox.config.ts",
-    "package:firefox": "node scripts/package-firefox-xpi.mjs",
+    "package": "npm run build && node scripts/verify-dist.mjs && npm run build:firefox && node scripts/verify-dist-firefox.mjs && node scripts/package.mjs",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",

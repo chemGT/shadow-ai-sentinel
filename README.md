@@ -119,7 +119,9 @@ npm run build:firefox    # Firefox  → dist-firefox/
 - **Firefox:** `about:debugging` → This Firefox → *Load Temporary Add-on* → `dist-firefox/manifest.json`
 
 Tagged releases also ship ready-made archives on the
-[Releases page](https://github.com/chemGT/shadow-ai-sentinel/releases).
+[Releases page](https://github.com/chemGT/shadow-ai-sentinel/releases): unzip the
+`-chromium.zip` and load the folder unpacked; the Firefox `.xpi` is unsigned until the AMO listing
+is live, so release Firefox only accepts it as a temporary add-on.
 
 Rolling this out across a fleet via Chrome/Edge/Firefox enterprise policy, with rules pushed
 centrally (`chrome.storage.managed`)? See the [managed deployment guide](docs/deployment.md).
@@ -153,7 +155,7 @@ issue (rule, site, context, version — never your text). See the
 | `npm run test:e2e` | Builds, then runs Playwright against the real extension on fixtures of the 8 sites |
 | `npx tsc --noEmit` | Typecheck |
 | `npm run build` / `npm run build:firefox` | Extension builds |
-| `npm run package:firefox` | Unsigned `.xpi` for AMO |
+| `npm run package` | Builds both targets, then writes store-ready packages to `release/` (Chromium zip, unsigned Firefox `.xpi`, source zip for AMO, `SHA256SUMS.txt`) |
 
 ```
 src/

@@ -78,8 +78,10 @@ Closing a known bypass = flip its test to a positive assertion and update
 2. Either push a `vX.Y.Z` tag on `master`, or run **Actions → Release → Run workflow** on `master`
    with `X.Y.Z` — the workflow then creates the tag itself.
 3. The workflow refuses mismatched versions, a missing CHANGELOG section or an existing tag, then
-   publishes the Chromium zip, the unsigned Firefox `.xpi`, `SHA256SUMS.txt` and a build-provenance
-   attestation.
+   publishes the Chromium zip, the unsigned Firefox `.xpi`, the source zip (for AMO),
+   `SHA256SUMS.txt` and a build-provenance attestation (`scripts/package.mjs`; same output locally
+   with `npm run package`).
+4. Submit the zip/xpi to the stores: checklist in `store-assets/README.md`.
 
 ## Commits and pull requests
 
