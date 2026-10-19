@@ -114,51 +114,116 @@ Two things to get right before you point a force-install policy at a self-hosted
 ## Configure the policy from the admin side
 
 The *content* of Shadow AI Sentinel's policy (which rules are on, block vs. redact, your email
-domains, fail-open/closed behavior) is separate from the install policies above. Today that policy
-lives in `chrome.storage.local` and is set per browser profile from the extension's **options
-page** (`chrome://extensions` → Shadow AI Sentinel → *Extension options*), where you can paste or
-import a JSON policy. [`docs/policy.example.json`](policy.example.json) is a working example of the
-full shape (`version`, `emailDomains`, `fail_mode`, `rules[]`) to start from and adapt.
+domains, fail-open/closed behavior, allowlist) is separate from the install policies above. Two
+layers exist:
 
-There is no centrally-pushed policy yet — see the next section for how that's expected to work.
+1. **Local policy** — `chrome.storage.local`, set per browser profile from the extension's
+   **options page** (`chrome://extensions` → Shadow AI Sentinel → *Extension options*), where a
+   JSON policy can be pasted or imported. [`docs/policy.example.json`](policy.example.json) is a
+   working example of the full shape (`version`, `emailDomains`, `fail_mode`, `rules[]`).
+2. **Managed policy** — pushed by the admin through the browser's native extension-policy
+   mechanism (`chrome.storage.managed`). Read-only for the user, and it wins over the local policy.
 
-## Managed storage (`chrome.storage.managed`) — proposed design
+### Managed policy (`chrome.storage.managed`)
 
-This section is a **design proposal only** (tracked in issue #14); nothing described here is
-implemented. It documents the intended shape before any code is written.
+The extension declares a managed schema
+([`public/managed_schema.json`](../public/managed_schema.json), shipped as `managed_schema.json`
+at the root of the Chromium build). Four keys are supported:
 
-**Goal**: let admins push the same policy JSON described above (`docs/policy.example.json`) via
-Chrome/Edge/Firefox's native managed-storage mechanism, instead of requiring a manual paste into
-the options page on every machine.
+| Key | Type | Effect |
+|-----|------|--------|
+| `rules` | array of `{ "type", "action", "enabled" }` | Each entry **replaces the local rule of the same type**. Types you don't list stay user-configurable. |
+| `emailDomains` | array of strings | Replaces the local list (used by the `pro_email` rule). |
+| `fail_mode` | `"open"` \| `"warn"` \| `"closed"` | Replaces the local value. |
+| `allowlist` | array of strings | **Added** to the user's own allowlist (union); users can't remove admin entries. |
 
-**Mechanism**: declare `"storage": { "managed_schema": "schema.json" }` in `manifest.json` /
-`manifest.firefox.json`, where `schema.json` is a JSON Schema matching the policy shape. The
-browser validates incoming admin policy against that schema and exposes the result, read-only,
-through `chrome.storage.managed.get(...)`. Firefox uses the same API, sourced from its native
-manifest / `3rdparty` policy, and also requires a restart to pick up changes.
+Rule `type` values: `api_key`, `generic_secret`, `iban`, `card`, `internal_ip`, `pro_email`,
+`phone`. `action`: `block` or `redact`.
 
-**Precedence**: managed value overrides local value, **field by field**. A field that is `null` or
-absent from managed storage means "no managed policy for this field" — it must fall back to the
-local value, never implicitly clear it. There is no partial-object merge beyond that: each field in
-`rules[]`, `emailDomains`, `fail_mode`, etc. is resolved independently.
+**Precedence**: managed overrides local **field by field** (and rule by rule). A key that is absent
+or `null` means "not managed": the local value applies, it is never implicitly cleared. An invalid
+key or rule entry is ignored (with a console warning in the extension) and the local value applies
+— the extension never blocks the user because of a malformed admin policy. Chromium also rejects
+values that don't match the schema before the extension sees them (visible in `chrome://policy`);
+Firefox doesn't validate against the schema, so the extension re-validates every value itself.
 
-**Failure modes**:
-- No `managed_schema` declared, or managed storage empty → unchanged from today: the local policy
-  (`sentinel_policy` in `chrome.storage.local`) is authoritative.
-- Managed value present but failing the JSON Schema → the browser itself rejects it and managed
-  storage stays empty for that key; the extension should surface this visibly in its own console
-  rather than fail silently or block the user.
+**What the user sees**: on the options page, a banner says some settings are managed by the
+organization; managed rules carry a *Géré* badge and their switches are disabled; the number of
+admin allowlist entries is shown under the allowlist.
+
+**Live updates**: when the admin policy changes (policy refresh, `chrome://policy` → *Reload
+policies*), the extension recomputes the effective policy and pushes it to open AI tabs, without a
+browser restart (Firefox still needs a restart to re-read `policies.json`).
 
 **Zero network**: reading `chrome.storage.managed` triggers no outbound call — the value was
-already delivered to the browser by the OS/admin policy. This stays fully compatible with the
-project's no-network constraint.
+already delivered to the browser by the OS/admin policy.
 
-**Open question**: whether `sentinel_allowlist` should also be manageable this way, or stay
-local-only. Not decided; flagging it here rather than picking silently.
+#### Example payload
 
-**Planned tests** (once this is implemented): managed value wins over local value on the same
-field; no managed value → behavior unchanged; invalid schema → conservative fallback (local policy
-kept, error visible in the console).
+```json
+{
+  "fail_mode": "closed",
+  "emailDomains": ["example.com"],
+  "rules": [
+    { "type": "api_key", "action": "block", "enabled": true },
+    { "type": "generic_secret", "action": "block", "enabled": true },
+    { "type": "pro_email", "action": "redact", "enabled": true }
+  ],
+  "allowlist": ["AKIAIOSFODNN7EXAMPLE"]
+}
+```
+
+#### Chrome / Edge
+
+Extension policies live under the `3rdparty` → `extensions` → `<extension-id>` node of the browser
+policy. Replace `<extension-id>` with the ID pinned in your `ExtensionInstallForcelist` entry.
+
+| Platform | Where |
+|----------|-------|
+| Linux (Chrome) | `/etc/opt/chrome/policies/managed/shadow-ai-sentinel.json` (Edge: `/etc/opt/edge/policies/managed/`) |
+| Windows | Registry `HKLM\Software\Policies\Google\Chrome\3rdparty\extensions\<extension-id>\policy` (Edge: `…\Microsoft\Edge\3rdparty\extensions\<extension-id>\policy`); one value per key, arrays as a JSON string (`REG_SZ`) |
+| macOS | Configuration profile for the preference domain `com.google.Chrome.extensions.<extension-id>` (Edge: `com.microsoft.Edge.extensions.<extension-id>`) |
+| Google Admin console | *Devices → Chrome → Apps & extensions* → the extension → *Policy for extensions* (paste the JSON payload) |
+
+Linux example (`/etc/opt/chrome/policies/managed/shadow-ai-sentinel.json`):
+
+```json
+{
+  "3rdparty": {
+    "extensions": {
+      "<extension-id>": {
+        "fail_mode": "closed",
+        "rules": [{ "type": "api_key", "action": "block", "enabled": true }]
+      }
+    }
+  }
+}
+```
+
+Check it in `chrome://policy` (or `edge://policy`): the values appear under the extension's name,
+with a validation error next to any value that doesn't match the schema.
+
+#### Firefox
+
+Use the `3rdparty` policy in `policies.json` (same locations as above), keyed by the add-on ID:
+
+```json
+{
+  "policies": {
+    "3rdparty": {
+      "Extensions": {
+        "shadow-ai-sentinel@pilot.sentinel": {
+          "fail_mode": "closed",
+          "rules": [{ "type": "api_key", "action": "block", "enabled": true }],
+          "allowlist": ["AKIAIOSFODNN7EXAMPLE"]
+        }
+      }
+    }
+  }
+}
+```
+
+Check it in `about:policies`. Firefox reads `policies.json` at startup only.
 
 ## Tell your employees
 

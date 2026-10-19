@@ -4,6 +4,7 @@ export {
   getExtensionVersion,
 } from './browser-api.js';
 export {
+  getEffectivePolicy,
   getStoredPolicy,
   setStoredPolicy,
 } from './storage.js';

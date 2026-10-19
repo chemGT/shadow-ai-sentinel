@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **XLSX and PPTX attachments are scanned** (closes the XLSX/PPTX part of bypass B5): cells, all sheets, cell comments, slides and speaker notes are extracted locally by a built-in Office Open XML reader (no new dependency, zip-bomb guard). As with PDF/DOCX, a redact rule blocks the file since it cannot be rewritten
+- **Centrally managed policy** (`chrome.storage.managed`, declared via `managed_schema.json`): admins can push `rules`, `emailDomains`, `fail_mode` and `allowlist` through Chrome/Edge enterprise policy or Firefox `policies.json` (`3rdparty`). Managed values win field by field (rule by rule), invalid values fall back to the local setting, the admin allowlist is added to the user's. The options page shows managed settings as locked. Guide: `docs/deployment.md`
 - Release workflow can be started manually (Actions → Release → Run workflow, from `master`): it validates the version, builds, tests and creates the `vX.Y.Z` tag and GitHub Release itself — no local tag push needed
 
 ### Changed

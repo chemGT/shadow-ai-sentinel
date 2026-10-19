@@ -11,7 +11,7 @@ function isRuleType(value: unknown): value is RuleType {
   return typeof value === 'string' && ALL_RULE_TYPES.includes(value as RuleType);
 }
 
-function isFailMode(value: unknown): value is FailMode {
+export function isFailMode(value: unknown): value is FailMode {
   return typeof value === 'string' && FAIL_MODES.includes(value as FailMode);
 }
 
@@ -19,13 +19,13 @@ function isRuleAction(value: unknown): value is RuleAction {
   return typeof value === 'string' && RULE_ACTIONS.includes(value as RuleAction);
 }
 
-function normalizeEmailDomains(domains: string[]): string[] {
+export function normalizeEmailDomains(domains: string[]): string[] {
   return domains
     .map((d) => d.trim().toLowerCase().replace(/^@/, ''))
     .filter((d) => d.length > 0);
 }
 
-function parseRule(raw: unknown, index: number): Rule | string {
+export function parseRule(raw: unknown, index: number): Rule | string {
   if (typeof raw !== 'object' || raw === null) {
     return `rules[${index}] doit être un objet`;
   }

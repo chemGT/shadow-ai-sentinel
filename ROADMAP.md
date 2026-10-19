@@ -19,6 +19,7 @@ are the best entry points.
 - [ ] **More secret formats**: provider keys requested through
       [missed-detection issues](https://github.com/chemGT/shadow-ai-sentinel/issues/new?template=false-negative.yml).
 - [x] **Managed deployment guide**: Chrome/Edge enterprise policies, Firefox policies.json ([docs/deployment.md](docs/deployment.md)).
+- [x] **Centrally managed policy** (`chrome.storage.managed`): admins push rules, email domains, `fail_mode` and allowlist entries; managed values win field by field.
 - [x] Translate the security docs to English. ([docs/security/](docs/security/) → EN canonical, `*.fr.md` = original)
 
 ## Out of scope (by design)
