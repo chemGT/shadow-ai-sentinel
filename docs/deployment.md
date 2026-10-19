@@ -86,8 +86,8 @@ Example `ExtensionSettings` entry, using this project's real Firefox add-on ID
 ## Self-hosted distribution (until store listings are live)
 
 Shadow AI Sentinel isn't on the Chrome Web Store or Firefox Add-ons yet (see the
-[roadmap](../ROADMAP.md)). Until then, the `release.yml` workflow is the source of signed-off
-builds: each tagged release publishes `shadow-ai-sentinel-<tag>-chromium.zip`,
+[roadmap](../ROADMAP.md)). Until then, the `release.yml` workflow is the source of attested
+builds (build provenance, not code signing): each tagged release publishes `shadow-ai-sentinel-<tag>-chromium.zip`,
 `shadow-ai-sentinel-<tag>-firefox-unsigned.xpi` and a `SHA256SUMS.txt` (plus a provenance
 attestation, since the repository is public) to the
 [GitHub Releases page](https://github.com/chemGT/shadow-ai-sentinel/releases). You can also build
