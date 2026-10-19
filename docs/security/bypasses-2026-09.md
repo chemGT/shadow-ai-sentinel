@@ -39,7 +39,7 @@ bypass (encoding/tool), the product does not claim to stop it.
   version and the contiguous version are detected.
 - **Root cause**: `src/core/detection/iban.ts:10` — separator `[ ]?` (literal ASCII space).
 - **Proposed fix**: widen the separator class to Unicode spaces + hyphen,
-  e.g. `(?:[   -]?[A-Z0-9]{4}){2,7}`. The mod-97 safety net (`iban.ts:12`) makes the false-positive
+  e.g. `(?:[   -]?[A-Z0-9]{4}){2,7}`. The mod-97 safety net (`iban.ts:12`) makes the false-positive
   risk negligible. (Better: a shared defensive normalization — see **D**.)
 
 ### B2 — [MEDIUM] Card number separated by NBSP / thin space escapes detection — **FIXED (2026-10-18)**
@@ -48,7 +48,7 @@ bypass (encoding/tool), the product does not claim to stop it.
 - **Repro**: tests `[BYPASS CONNU] carte séparée par NBSP` and `… par NNBSP fine`
   (`4111 1111 1111 1111` in U+00A0 / U+202F) → undetected.
 - **Root cause**: `src/core/detection/card.ts:12` — separator `[ -]` (ASCII space / hyphen).
-- **Proposed fix**: add NBSP + NNBSP to the class, e.g. `(?:\d[   -]?){12,18}\d`.
+- **Proposed fix**: add NBSP + NNBSP to the class, e.g. `(?:\d[   -]?){12,18}\d`.
   **Do not** add the dot (see C2). Luhn (`card.ts:15`) bounds the false positives.
 
 ### B3 — [MEDIUM] `pro_email`: subdomains of the configured domain escape detection — ✅ **FIXED 2026-10-19 (issue #11)**
@@ -137,7 +137,7 @@ one-liner, hence the "recommendation" label rather than "fix applied".
 
 ---
 
-## E. What was tested and turned out to be **SOLID**
+## E. What was tested and turned out to be **SOLIDE**
 
 Confirmed by the `describe('SOLIDE — détections robustes')` block (permanent regressions):
 

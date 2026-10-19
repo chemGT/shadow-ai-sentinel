@@ -164,7 +164,7 @@ Pattern: `…(?:[ ]?[A-Z0-9]{4}){2,7}…` — separator = **literal ASCII space 
 - `DE89370400440532013000` (contiguous) → ✅.
 - `DE89 3704 0044 0532 0130 00` (ASCII spaces) → ✅.
 - `DE89-3704-0044-0532-0130-00` (**hyphens**) → **❌ undetected**.
-- `DE89 3704…` (**NBSP**) → **❌ undetected**.
+- `DE89 3704…` (**NBSP**) → **❌ undetected**.
 
 **Root cause** `iban.ts:10`: literal `[ ]` class. The hyphen is a plausible IBAN format;
 the NBSP arrives via copy-paste from Word/PDF/web pages with French typography. The mod-97
@@ -176,7 +176,7 @@ Pattern: `/\b(?:\d[ -]?){12,18}\d\b/` — separator = **ASCII space or hyphen**.
 
 - `4111 1111 1111 1111`, `4111-1111-1111-1111`, `4111111111111111` → ✅.
 - `4111.1111.1111.1111` (**dots**) → **❌ undetected**.
-- `4111 1111…` (**NBSP**) → **❌ undetected**.
+- `4111 1111…` (**NBSP**) → **❌ undetected**.
 
 **Root cause** `card.ts:12`: literal `[ -]` class. ⚠️ **FP warning**: adding the **dot** as
 a separator would match version numbers, ratios, and dotted 13-19 digit sequences that pass
