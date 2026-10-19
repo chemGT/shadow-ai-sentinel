@@ -50,7 +50,7 @@ contourner (encodage/outil), le produit ne prétend pas l'arrêter.
   **Ne pas** ajouter le point (voir C2). Luhn (`card.ts:15`) borne les FP.
 
 ### B3 — [MOYENNE] `pro_email` : les sous-domaines du domaine configuré échappent — ✅ **CORRIGÉ 2026-10-19 (issue #11)**
-- **Repro** : test `[BYPASS CONNU] sous-domaine du domaine configuré`
+- **Repro** (avant correctif) : test `[BYPASS CONNU] sous-domaine du domaine configuré`
   (`jean@mail.acme.com`, `jean@eu.acme.com` avec policy `acme.com`) → non détecté.
 - **Cause racine** : `src/core/detection/pro-email.ts:14` — le `@` doit précéder immédiatement le
   domaine ; aucun préfixe de sous-domaine n'est autorisé.

@@ -222,7 +222,7 @@ describe('[BYPASS CONNU] unicode — 2026-09-15', () => {
 
 // ---------------------------------------------------------------------------
 // CORRECTIF 2026-10-19 — pro_email sous-domaines (bypass B3 corrigé, issue #11)
-// Auparavant NON détecté (cf. `.ai/security/bypasses-2026-09.md` B3). Ces tests verrouillent
+// Auparavant NON détecté (cf. `docs/security/bypasses-2026-09.md` B3). Ces tests verrouillent
 // le correctif `pro-email.ts` : ils DOIVENT passer.
 // ---------------------------------------------------------------------------
 describe('CORRECTIF — pro_email sous-domaines (B3)', () => {
