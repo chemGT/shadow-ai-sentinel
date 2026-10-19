@@ -1,23 +1,55 @@
 # Shadow AI Sentinel
+<div align="center">
+
+<h1>
+<img src="store-assets/banner.jpg" alt="Shadow AI Sentinel, privacy browser extension" width="100%">
+</h1>
+
+**The prompt redactor that keeps your secrets away from ChatGPT, Claude, Gemini and 5 other AI chatbots.**<br>
+Open source · 100 % local · zero telemetry
 
 [![CI](https://github.com/chemGT/shadow-ai-sentinel/actions/workflows/ci.yml/badge.svg)](https://github.com/chemGT/shadow-ai-sentinel/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/chemGT/shadow-ai-sentinel/actions/workflows/codeql.yml/badge.svg)](https://github.com/chemGT/shadow-ai-sentinel/actions/workflows/codeql.yml)
-[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+![Manifest V3](https://img.shields.io/badge/Manifest-V3-4285F4?logo=googlechrome&logoColor=white)
+![Firefox](https://img.shields.io/badge/Firefox-supported-FF7139?logo=firefoxbrowser&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
 
-**Open-source prompt redactor for ChatGPT, Claude, Gemini and 5 other AI chatbots.**
-Shadow AI Sentinel is a browser extension (local DLP) that catches secrets and personal data in your
-prompt **before** it is sent — then redacts the sensitive value in place (`[REDACTED_IBAN]`) or
-blocks the message.
+[Install](#install) · [Detections](#what-it-detects) · [How it works](#how-it-works) · [Docs](docs/README.md) · [Français](README.fr.md)
 
-- **100 % local.** Detection runs in your browser. The extension makes **no network request at all**:
-  no backend, no analytics, no telemetry.
-- **Auditable.** Every line that touches your prompt is in this repository.
-- **Built for "shadow AI".** Employees paste logs, configs and customer data into public LLMs every
-  day. This is a seatbelt for that moment, not a corporate surveillance tool.
+<br>
 
-[Français](README.fr.md)
+<img src="store-assets/screenshots/01-block-modal.png" alt="Block modal on an AI chat" width="720">
 
-![Block modal on an AI chat](store-assets/screenshots/01-block-modal.png)
+</div>
+
+<br>
+
+<table>
+<tr>
+<td width="33%" valign="top">
+
+### 100 % local
+Detection runs in your browser. **No network request**, no backend, no analytics.
+
+</td>
+<td width="33%" valign="top">
+
+### Auditable
+Every line that touches your prompt is in this repo. Public threat model and evasion corpus.
+
+</td>
+<td width="33%" valign="top">
+
+### Built for shadow AI
+Logs, configs and customer data pasted into public LLMs: a seatbelt, not surveillance.
+
+</td>
+</tr>
+</table>
+
+> [!NOTE]
+> Each match is replaced by a typed token (`[REDACTED_IBAN]`) right in the message box, or the message is blocked. Your choice, rule by rule.
 
 ---
 
