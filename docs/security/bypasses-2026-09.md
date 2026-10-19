@@ -1,154 +1,158 @@
-# Contournements DLP confirmés — septembre 2026
+# Confirmed DLP Bypasses — September 2026
 
-**Date :** 2026-09-15 · **Méthode :** chaque contournement listé est **confirmé par exécution** du
-corpus `src/core/detection/evasion-corpus.test.ts` (`npx vitest run src/core/detection/evasion-corpus.test.ts`,
-35 tests verts) — ce ne sont **pas** des hypothèses. Modèle de menace détaillé :
-`evasion-threat-model.md`. Suite complète : **325 tests verts**, `tsc` propre.
+French original: `bypasses-2026-09.fr.md`.
 
-Gravité : **haute** = fuite probable sans intention de contourner (format courant) · **moyenne** =
-fuite réaliste, action simple ou copier-coller · **basse** = nécessite une intention claire de
-contourner (encodage/outil), le produit ne prétend pas l'arrêter.
+**Date**: 2026-09-15 · **Method**: every bypass listed is **confirmed by executing**
+the corpus `src/core/detection/evasion-corpus.test.ts` (`npx vitest run src/core/detection/evasion-corpus.test.ts`,
+35 passing tests) — these are **not** hypotheses. Detailed threat model:
+`evasion-threat-model.md`. Full suite: **325 passing tests**, clean `tsc`.
 
----
-
-## A. Contournements corrigés dans ce lot
-
-### A1 — [HAUTE] Téléphone au format international `+33…` totalement non détecté — **CORRIGÉ**
-- **Repro (avant fix)** : `+33612345678`, `+33 6 12 34 56 78`, `+33.6.12.34.56.78` → aucune détection.
-- **Test de verrou** : `describe('CORRECTIF — téléphone +33 (international) désormais détecté')`.
-- **Cause racine** : `src/core/detection/phone.ts:4` (le motif FR démarrait par `\b`, impossible
-  avant un `+` précédé d'un espace/début de chaîne) **combiné à** `phone.ts:55` (le motif E.164
-  exclut explicitement `+33`, en supposant à tort que le motif FR le couvre). Résultat : aucun des
-  deux ne voyait un numéro français en notation internationale — un format de carnet d'adresses
-  standard, donc une **fuite par inadvertance**.
-- **Correctif appliqué** : ancrage de tête `\b` → `(?<![\w+])` (`phone.ts:11`). Couvre les trois
-  formes `+33`, conserve à l'identique le comportement national et les cas négatifs
-  (`ticketX0612345678` toujours ignoré). 0 régression sur les 290 tests préexistants.
+Severity: **high** = likely leak with no intent to bypass (common format) · **medium** =
+realistic leak, a simple action or copy-paste · **low** = requires a clear intent to
+bypass (encoding/tool), the product does not claim to stop it.
 
 ---
 
-## B. Contournements confirmés — à corriger (correctif proposé, non implémenté)
+## A. Bypasses fixed in this batch
 
-### B1 — [MOYENNE] IBAN séparé par tirets ou NBSP échappe — **CORRIGÉ (2026-10-18)**
-- **Correctif appliqué** : séparateur IBAN `[ -]?` + strip `[\s-]` dans le mod-97 (`iban.ts`) ;
-  NBSP replié par la normalisation **D**. Verrou : `CORRECTIF — unicode normalisé avant scan`.
-- **Repro** : tests `[BYPASS CONNU] IBAN séparé par tirets` et `… par NBSP`
-  (`DE89-3704-0044-0532-0130-00`, `DE89 3704 …` en U+00A0) → non détecté, alors que la version
-  espaces ASCII et la version contiguë le sont.
-- **Cause racine** : `src/core/detection/iban.ts:10` — séparateur `[ ]?` (espace ASCII littéral).
-- **Correctif proposé** : élargir la classe de séparation aux espaces Unicode + tiret,
-  ex. `(?:[   -]?[A-Z0-9]{4}){2,7}`. Le garde-fou mod-97 (`iban.ts:12`) rend le risque de
-  faux positif négligeable. (Mieux : normalisation défensive commune — voir **D**.)
+### A1 — [HIGH] International-format phone `+33…` entirely undetected — **FIXED**
+- **Repro (before the fix)**: `+33612345678`, `+33 6 12 34 56 78`, `+33.6.12.34.56.78` → no detection.
+- **Lock-in test**: `describe('CORRECTIF — téléphone +33 (international) désormais détecté')`.
+- **Root cause**: `src/core/detection/phone.ts:4` (the FR pattern started with `\b`, impossible
+  before a `+` preceded by a space/start of string) **combined with** `phone.ts:55` (the E.164
+  pattern explicitly excludes `+33`, wrongly assuming the FR pattern covers it). Result: neither
+  one saw a French number in international notation — a standard address-book format, hence an
+  **inadvertent leak**.
+- **Fix applied**: head anchor `\b` → `(?<![\w+])` (`phone.ts:11`). Covers all three `+33`
+  forms, leaves the national behavior and the negative cases unchanged
+  (`ticketX0612345678` still ignored). 0 regressions across the 290 pre-existing tests.
 
-### B2 — [MOYENNE] Carte bancaire séparée par NBSP / espace fine échappe — **CORRIGÉ (2026-10-18)**
-- **Correctif appliqué** : normalisation **D** (espaces Unicode → ASCII, BOM supprimé). Le point
-  reste exclu (C2).
-- **Repro** : tests `[BYPASS CONNU] carte séparée par NBSP` et `… par NNBSP fine`
-  (`4111 1111 1111 1111` en U+00A0 / U+202F) → non détecté.
-- **Cause racine** : `src/core/detection/card.ts:12` — séparateur `[ -]` (espace ASCII / tiret).
-- **Correctif proposé** : ajouter NBSP + NNBSP à la classe, ex. `(?:\d[   -]?){12,18}\d`.
-  **Ne pas** ajouter le point (voir C2). Luhn (`card.ts:15`) borne les FP.
+---
 
-### B3 — [MOYENNE] `pro_email` : les sous-domaines du domaine configuré échappent
-- **Repro** : test `[BYPASS CONNU] sous-domaine du domaine configuré`
-  (`jean@mail.acme.com`, `jean@eu.acme.com` avec policy `acme.com`) → non détecté.
-- **Cause racine** : `src/core/detection/pro-email.ts:14` — le `@` doit précéder immédiatement le
-  domaine ; aucun préfixe de sous-domaine n'est autorisé.
-- **Correctif proposé** : insérer `(?:[a-z0-9-]+\.)*` avant le domaine :
-  `@(?:[a-z0-9-]+\.)*(?:${domainPart})`. Vérifier qu'un domaine `acme.com` ne matche pas
-  `evilacme.com` (le `.` littéral l'empêche déjà).
+## B. Confirmed bypasses — to fix (proposed fix, not implemented)
 
-### B4 — [MOYENNE] Zero-width / BOM / homoglyphes / pleine chasse dans un secret — **CORRIGÉ (2026-10-18)**
-- **Correctif appliqué** : normalisation **D** + table d'homoglyphes cyrilliques/grecs stricts
-  (NFKC seul ne replie pas `А` cyrillique).
-- **Repro** : tests `[BYPASS CONNU] zero-width … dans une clé`, `BOM … dans une carte`,
+### B1 — [MEDIUM] IBAN separated by hyphens or NBSP escapes detection — **FIXED (2026-10-18)**
+- **Fix applied**: IBAN separator `[ -]?` + strip `[\s-]` in the mod-97 check (`iban.ts`);
+  NBSP folded by normalization **D**. Lock-in: `CORRECTIF — unicode normalisé avant scan`.
+- **Repro**: tests `[BYPASS CONNU] IBAN séparé par tirets` and `… par NBSP`
+  (`DE89-3704-0044-0532-0130-00`, `DE89 3704 …` in U+00A0) → undetected, while the ASCII-space
+  version and the contiguous version are detected.
+- **Root cause**: `src/core/detection/iban.ts:10` — separator `[ ]?` (literal ASCII space).
+- **Proposed fix**: widen the separator class to Unicode spaces + hyphen,
+  e.g. `(?:[   -]?[A-Z0-9]{4}){2,7}`. The mod-97 safety net (`iban.ts:12`) makes the false-positive
+  risk negligible. (Better: a shared defensive normalization — see **D**.)
+
+### B2 — [MEDIUM] Card number separated by NBSP / thin space escapes detection — **FIXED (2026-10-18)**
+- **Fix applied**: normalization **D** (Unicode spaces → ASCII, BOM stripped). The dot
+  remains excluded (C2).
+- **Repro**: tests `[BYPASS CONNU] carte séparée par NBSP` and `… par NNBSP fine`
+  (`4111 1111 1111 1111` in U+00A0 / U+202F) → undetected.
+- **Root cause**: `src/core/detection/card.ts:12` — separator `[ -]` (ASCII space / hyphen).
+- **Proposed fix**: add NBSP + NNBSP to the class, e.g. `(?:\d[   -]?){12,18}\d`.
+  **Do not** add the dot (see C2). Luhn (`card.ts:15`) bounds the false positives.
+
+### B3 — [MEDIUM] `pro_email`: subdomains of the configured domain escape detection — ✅ **FIXED 2026-10-19 (issue #11)**
+- **Repro** (before the fix): test `[BYPASS CONNU] sous-domaine du domaine configuré`
+  (`jean@mail.acme.com`, `jean@eu.acme.com` with policy `acme.com`) → undetected.
+- **Root cause**: `src/core/detection/pro-email.ts:14` — the `@` has to immediately precede the
+  domain; no subdomain prefix is allowed.
+- **Fix applied 2026-10-19** (issue #11): insert `(?:[a-z0-9-]+\.)*` before the domain:
+  `@(?:[a-z0-9-]+\.)*(?:${domainPart})`. Verified that a domain `acme.com` does not match
+  `evilacme.com` (the literal `.` already prevents it) — verified by the tests
+  `CORRECTIF — pro_email sous-domaines (B3)` in `src/core/detection/evasion-corpus.test.ts`
+  (the matching `[BYPASS CONNU]` test was flipped to positive).
+
+### B4 — [MEDIUM] Zero-width / BOM / homoglyphs / full-width digits in a secret — **FIXED (2026-10-18)**
+- **Fix applied**: normalization **D** + a strict Cyrillic/Greek homoglyph table
+  (NFKC alone does not fold Cyrillic `А`).
+- **Repro**: tests `[BYPASS CONNU] zero-width … dans une clé`, `BOM … dans une carte`,
   `homoglyphe cyrillique …`, `chiffre pleine chasse …`.
-- **Cause racine** : aucune **normalisation Unicode** avant scan (pipeline `run-detectors.ts` /
-  `regex-engine.ts`). Les motifs sont ASCII ; tout caractère invisible intercalé ou tout homoglyphe
-  de compatibilité casse le match.
-- **Correctif proposé** : passe de normalisation défensive avant `runAllDetectors` (voir **D**).
-  Ferme d'un coup B1, B2 et B4 (zero-width, NBSP, pleine chasse, homoglyphes de compatibilité NFKC).
+- **Root cause**: no **Unicode normalization** before scanning (`run-detectors.ts` /
+  `regex-engine.ts` pipeline). Patterns are ASCII; any interspersed invisible character or
+  compatibility homoglyph breaks the match.
+- **Proposed fix**: a defensive normalization pass before `runAllDetectors` (see **D**).
+  Closes B1, B2 and B4 in one shot (zero-width, NBSP, full-width digits, NFKC compatibility homoglyphs).
 
-### B5 — [MOYENNE] Formats de fichier non scannés (XLSX, PPTX, RTF, ZIP, images)
-- **Repro** : test `[BYPASS CONNU] XLSX / PPTX / archives / images ne sont ni texte ni binaire
-  scannable` — `isTextLikeFile` et `isBinaryScannableFile` renvoient tous deux `false` → le fichier
-  passe **sans aucun scan**.
-- **Cause racine** : `src/extension/sites/shared/file-guard.ts:277-284` (`isScannableFile`) +
-  `src/core/binary-file.ts:23` + `src/core/text-file.ts:44` — seuls texte/PDF/DOCX sont couverts.
-- **Correctif proposé** : a minima **bloquer par défaut** (ou avertir explicitement) les formats
-  bureautiques non extractibles (XLSX/PPTX/ODT) plutôt que les laisser passer en silence ; à terme,
-  ajouter un extracteur XLSX (`sheetjs`) au pipeline binaire. Décision produit — coût vs surface.
-
----
-
-## C. Contournements confirmés — à **documenter, ne pas corriger** (limite assumée ou FP)
-
-### C1 — [BASSE] Encodages (base64, hex, URL-encoding) et transformations réversibles
-- **Repro** : tests `[BYPASS CONNU] encodages` (base64/hex/URL) + `manipulations de chaîne`
-  (découpage sur deux lignes, séparateurs internes dans la clé, enrobage `_`, inversion).
-- **Cause racine** : le moteur scanne le **texte brut**, sans décodage (choix assumé :
-  `run-detectors.ts`). Un décodeur généraliste exploserait faux positifs et coût CPU.
-- **Décision** : **limite de périmètre**, pas un défaut à corriger. Le produit arrête la fuite par
-  inadvertance, pas l'exfiltration motivée. À refléter dans le discours commercial / la privacy page.
-
-### C2 — [BASSE] Carte séparée par des points
-- **Repro** : test `[BYPASS CONNU] carte séparée par des points`.
-- **Cause racine** : `card.ts:12`.
-- **Décision** : **ne pas corriger**. Ajouter `.` comme séparateur ferait matcher numéros de
-  version, ratios et séquences pointées de 13-19 chiffres passant Luhn par hasard (~10 %) — perte de
-  clients (faux positifs sur du code/texte technique) supérieure au trou. Cf. la contrainte du lot.
+### B5 — [MEDIUM] File formats not scanned (XLSX, PPTX, RTF, ZIP, images)
+- **Repro**: test `[BYPASS CONNU] XLSX / PPTX / archives / images ne sont ni texte ni binaire
+  scannable` — `isTextLikeFile` and `isBinaryScannableFile` both return `false` → the file
+  passes **with no scan at all**.
+- **Root cause**: `src/extension/sites/shared/file-guard.ts:277-284` (`isScannableFile`) +
+  `src/core/binary-file.ts:23` + `src/core/text-file.ts:44` — only text/PDF/DOCX are covered.
+- **Proposed fix**: at minimum **block by default** (or explicitly warn) for non-extractable
+  office formats (XLSX/PPTX/ODT) instead of silently letting them through; longer term, add an
+  XLSX extractor (`sheetjs`) to the binary pipeline. Product decision — cost vs. surface.
 
 ---
 
-## D. Recommandation transverse à plus fort levier — **IMPLÉMENTÉE (2026-10-18)**
+## C. Confirmed bypasses — to **document, not fix** (accepted limit or false-positive risk)
 
-> Implémentation : `src/core/detection/normalize.ts`, appelée par `detectSensitiveData`
-> (`regex-engine.ts`). Option retenue pour les offsets : **carte d'index creuse** (seuls les
-> points de code dont le repli change la longueur sont enregistrés, recherche dichotomique) →
-> `start/end` désignent le texte original, le caviardage couvre le segment réellement saisi
-> (invisibles intercalés inclus). NFKC limité aux formes de compatibilité imitant l'ASCII
-> (pleine chasse, ligatures, exposants, chiffres cerclés, alphanumériques mathématiques).
-> L'allowlist applique le même repli. Coût mesuré (2 Mo, conteneur CI) : ASCII/français
-> ~15 ms (inchangé), cyrillique dense ~150–200 ms, une seule passe à l'envoi.
-> Tests : `normalize.test.ts`, `evasion-corpus.test.ts`, `analyze.test.ts`.
+### C1 — [LOW] Encodings (base64, hex, URL-encoding) and reversible transforms
+- **Repro**: tests `[BYPASS CONNU] encodages` (base64/hex/URL) + `manipulations de chaîne`
+  (splitting across two lines, internal separators within the key, `_` wrapping, reversal).
+- **Root cause**: the engine scans **raw text**, with no decoding (an accepted choice:
+  `run-detectors.ts`). A general-purpose decoder would blow up false positives and CPU cost.
+- **Decision**: a **scope limit**, not a defect to fix. The product stops inadvertent leaks,
+  not motivated exfiltration. To be reflected in the sales pitch / privacy page.
 
-Texte d'origine de la recommandation :
-
-
-Une **normalisation défensive avant scan** — insérée en tête de `runAllDetectors`
-(`src/core/detection/run-detectors.ts`) ou dans `detectSensitiveData`
-(`src/core/regex-engine.ts`) — fermerait B1, B2 et B4 d'un seul correctif localisé, à faible risque
-de faux positif :
-
-1. **Supprimer** les caractères zero-width : `U+200B`, `U+200C`, `U+200D`, `U+FEFF`.
-2. **Replier** les espaces Unicode (`U+00A0`, `U+202F`, `U+2000-200A`, `U+3000`) vers l'espace ASCII.
-3. **Normaliser NFKC** (replie chiffres pleine chasse et ligatures/homoglyphes de compatibilité).
-
-⚠️ Subtilité **offsets** : la normalisation peut changer la longueur du texte ; les `start/end`
-renvoyés servent au caviardage sur le texte **original** (`analyze.ts:59`). Il faut soit scanner le
-texte normalisé **en conservant une carte d'index** vers l'original, soit — plus simple et sûr —
-n'utiliser la version normalisée que pour **décider** (block/allow) et élargir la redaction au
-segment original correspondant. À concevoir avant implémentation : ce n'est pas un one-liner, d'où
-le classement « recommandation » et non « correctif appliqué ».
+### C2 — [LOW] Card number separated by dots
+- **Repro**: test `[BYPASS CONNU] carte séparée par des points`.
+- **Root cause**: `card.ts:12`.
+- **Decision**: **do not fix**. Adding `.` as a separator would match version numbers, ratios,
+  and dotted 13-19 digit sequences that pass Luhn by chance (~10%) — the customer cost (false
+  positives on code/technical text) outweighs the gap. Cf. the project's constraints.
 
 ---
 
-## E. Ce qui a été testé et s'est révélé **SOLIDE**
+## D. Cross-cutting, highest-leverage recommendation — **IMPLEMENTED (2026-10-18)**
 
-Confirmé par le bloc `describe('SOLIDE — détections robustes')` (régressions permanentes) :
+> Implementation: `src/core/detection/normalize.ts`, called by `detectSensitiveData`
+> (`regex-engine.ts`). Chosen approach for offsets: **sparse index map** (only the code
+> points whose folding changes length are recorded, binary search) → `start/end` refer to the
+> original text, redaction covers the segment actually typed (including interspersed
+> invisibles). NFKC limited to compatibility forms that mimic ASCII (full-width, ligatures,
+> superscripts, circled digits, mathematical alphanumerics). The allowlist applies the same
+> folding. Measured cost (2 MB, CI container): ASCII/French ~15 ms (unchanged), dense
+> Cyrillic ~150–200 ms, a single pass on send.
+> Tests: `normalize.test.ts`, `evasion-corpus.test.ts`, `analyze.test.ts`.
 
-- **Clés API** brutes en contexte : AWS `AKIA…`, OpenAI `sk-…`, tokens JWT/`Bearer`.
-- **IBAN** contigu **et** espacé ASCII (avec garde-fou mod-97 : un IBAN au checksum faux est rejeté).
-- **Carte** contiguë, espacée **et** tiretée ASCII (avec Luhn : un n° de commande de 16 chiffres passe).
-- **IP RFC1918** au format canonique (une IP publique `8.8.8.8` est ignorée).
-- **E-mail pro** sur domaine exact, insensible à la casse.
-- **Téléphone FR** national contigu/espacé, **NBSP toléré** (la classe `\s` du motif téléphone
-  couvre l'insécable — c'est précisément ce qui manque à IBAN/carte), et désormais **`+33`
-  international** (correctif A1).
-- **Robustesse taille** : le chunking (`limits.ts`) couvre tout le texte ≤ 2 Mo sans perte ; au-delà,
-  troncature **signalée** à l'utilisateur (`wasTextTruncated`).
-- **Pas de faux positifs** sur texte anodin, suites de chiffres non-cartes, IP publiques.
+Original text of the recommendation:
 
-Le cœur « fuite accidentelle d'un secret collé » est correctement couvert. Les trous restants sont
-soit des **formats de séparation** inhabituels (B1/B2, corrigeables), soit des **évasions
-délibérées** (C1) hors périmètre d'un DLP local côté client.
+
+A **defensive normalization pass before scanning** — inserted at the head of `runAllDetectors`
+(`src/core/detection/run-detectors.ts`) or in `detectSensitiveData`
+(`src/core/regex-engine.ts`) — would close B1, B2 and B4 with a single localized fix, at low
+false-positive risk:
+
+1. **Remove** zero-width characters: `U+200B`, `U+200C`, `U+200D`, `U+FEFF`.
+2. **Fold** Unicode spaces (`U+00A0`, `U+202F`, `U+2000-200A`, `U+3000`) to the ASCII space.
+3. **Normalize with NFKC** (folds full-width digits and compatibility ligatures/homoglyphs).
+
+⚠️ **Offsets** subtlety: normalization can change the text length; the returned `start/end`
+are used for redaction on the **original** text (`analyze.ts:59`). Either scan the
+normalized text while keeping an index map back to the original, or — simpler and safer —
+use the normalized version only to **decide** (block/allow) and widen the redaction to the
+corresponding original segment. This needs design work before implementation: it is not a
+one-liner, hence the "recommendation" label rather than "fix applied".
+
+---
+
+## E. What was tested and turned out to be **SOLIDE**
+
+Confirmed by the `describe('SOLIDE — détections robustes')` block (permanent regressions):
+
+- Raw **API keys** in context: AWS `AKIA…`, OpenAI `sk-…`, JWT/`Bearer` tokens.
+- **IBAN** contiguous **and** ASCII-spaced (with the mod-97 safety net: an IBAN with a bad checksum is rejected).
+- **Card** contiguous, spaced, **and** ASCII-hyphenated (with Luhn: a 16-digit order number passes through).
+- **RFC1918 IP** in canonical format (a public IP `8.8.8.8` is ignored).
+- **Corporate email** on exact domain, case-insensitive.
+- **FR phone** national contiguous/spaced, **NBSP tolerated** (the `\s` class of the phone
+  pattern covers the non-breaking space — exactly what IBAN/card are missing), and now
+  **international `+33`** (fix A1).
+- **Size robustness**: chunking (`limits.ts`) covers all text ≤ 2 MB with no loss; beyond that,
+  truncation is **flagged** to the user (`wasTextTruncated`).
+- **No false positives** on innocuous text, non-card digit sequences, public IPs.
+
+The core "inadvertent leak of a pasted secret" case is correctly covered. The remaining gaps
+are either unusual **separator formats** (B1/B2, fixable) or **deliberate evasions** (C1)
+outside the scope of a client-side local DLP.

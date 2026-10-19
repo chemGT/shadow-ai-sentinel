@@ -1,263 +1,271 @@
-# Modèle de menace — évasions du moteur DLP local
+# Threat Model — Local DLP Engine Evasions
 
-**Date :** 2026-09-15 · **Périmètre :** moteur de détection `src/core/detection/**` +
-pipeline `src/core/regex-engine.ts` + interception content-script
+French original: `evasion-threat-model.fr.md`.
+
+**Date:** 2026-09-15 · **Scope:** detection engine `src/core/detection/**` +
+pipeline `src/core/regex-engine.ts` + content-script interception
 (`src/extension/sites/shared/{guard-adapter,file-guard}.ts`, `src/extension/content/analyze.ts`).
-**Méthode :** chaque affirmation ci-dessous est vérifiée sur le **code réel** (regex copiées à
-l'identique et exécutées) ; les cas confirmés par exécution sont repris dans le corpus de tests
-`src/core/detection/evasion-corpus.test.ts` et le rapport `bypasses-2026-09.md`.
+**Method:** every claim below is verified against the **actual code** (regexes copied
+verbatim and executed); cases confirmed by execution are tracked in the test corpus
+`src/core/detection/evasion-corpus.test.ts` and in the report `bypasses-2026-09.md`.
 
-## 0. Rappel du fonctionnement (surface d'attaque)
+## 0. How it works (attack surface)
 
-- L'interception se déclenche sur **trois événements seulement** : `keydown` (Enter **sans**
-  modificateur, hors composition IME), `click` sur le bouton d'envoi, et sur les fichiers
+- Interception triggers on **three events only**: `keydown` (Enter **without**
+  a modifier, outside IME composition), `click` on the send button, and on files
   (`change` / `drop` / `paste`) — cf. `guard-adapter.ts:133-165`, `file-guard.ts:286-363`.
-- Le texte analysé est celui **extrait du composer** (`extractTextFromInput` :
-  `textarea.value` ou `innerText/textContent` — `input-text.ts:1-6`).
-- Détection = **regex + validateurs** (Luhn pour carte, mod-97 pour IBAN, format FR pour phone),
-  **aucune** couche de décodage (base64/hex/URL), **aucun** OCR. Depuis le 2026-10-18 : une
-  **normalisation Unicode défensive** précède le scan (`normalize.ts`, cf. §3 et bypasses D).
-- Depuis le passage open source (2026-10-18), plus de palier Free/Pro : toutes les règles et le
-  scan de fichiers sont disponibles ; leur activation dépend uniquement de la policy.
+- The text analyzed is the text **extracted from the composer** (`extractTextFromInput`:
+  `textarea.value` or `innerText/textContent` — `input-text.ts:1-6`).
+- Detection = **regex + validators** (Luhn for card, mod-97 for IBAN, FR format for phone),
+  **no** decoding layer (base64/hex/URL), **no** OCR. Since 2026-10-18: a
+  **defensive Unicode normalization** precedes the scan (`normalize.ts`, cf. §3 and bypass D).
+- Since going open source (2026-10-18), there is no more Free/Pro tier: all rules and
+  file scanning are available; their activation depends solely on the policy.
 
-**Faisabilité** — barème utilisé : *Accidentel* (fuite sans intention, ex. format de copier-coller
-courant) · *Facile* (une manipulation triviale, sans outil) · *Délibéré* (nécessite un encodage /
-un outil / une intention claire de contourner).
-
----
-
-## 1. Encodages (aucune couche de décodage)
-
-Le moteur ne décode **rien** avant de scanner. Toute transformation réversible du secret le rend
-invisible. Vérifié : `base64("AKIA…")`, `hex("AKIA…")`, URL-encoding → **0 détection**.
-
-| Vecteur | Mécanisme | Faisabilité | Impact | Détecté ? |
-|---|---|---|---|---|
-| **base64** intégral | `QUtJQUlPU0ZP…` ne matche aucun motif | Délibéré | La donnée part | ❌ Non |
-| **base64 partiel** | seule une portion du secret est encodée | Délibéré | Part | ❌ Non |
-| **hex** | `414b4941…` | Délibéré | Part | ❌ Non |
-| **URL-encoding** | `AKIA%20IOSF…` (le `%20` casse le `\b…\b`) | Délibéré | Part | ❌ Non |
-| **double-encodage** | base64(base64(x)) | Délibéré | Part | ❌ Non |
-| **JSON échappé** | `"AK…"` — la chaîne source ne contient pas les octets | Délibéré | Part | ❌ Non |
-
-**Analyse.** Attendu par conception : un décodeur généraliste exploserait les faux positifs et le
-coût CPU. C'est un **choix assumé**, pas un bug — mais il doit être documenté comme limite connue :
-un utilisateur qui *veut* exfiltrer y parvient trivialement. La valeur du produit est de bloquer la
-**fuite par inadvertance** (copier-coller d'un `.env`), pas l'exfiltration motivée. À ne pas vendre
-comme une barrière anti-malveillant.
+**Feasibility** — scale used: *Accidental* (leak with no intent, e.g. a common copy-paste
+format) · *Easy* (a trivial manipulation, no tool) · *Deliberate* (requires encoding /
+a tool / a clear intent to bypass).
 
 ---
 
-## 2. Manipulations de chaîne
+## 1. Encodings (no decoding layer)
 
-| Vecteur | Mécanisme (référence code) | Faisabilité | Impact | Détecté ? |
+The engine decodes **nothing** before scanning. Any reversible transform of the secret
+makes it invisible. Verified: `base64("AKIA…")`, `hex("AKIA…")`, URL-encoding → **0 detections**.
+
+| Vector | Mechanism | Feasibility | Impact | Detected? |
 |---|---|---|---|---|
-| **Découpage sur plusieurs lignes** | `AKIA\nIOSF…` : le motif est contigu, `\n` casse le match (`api-key.ts:7`) | Facile | Part | ❌ Non |
-| **Découpage sur plusieurs messages** | moitié dans msg 1, moitié dans msg 2 : chaque envoi est scanné isolément (`guard-adapter.ts:97`) | Facile | Part | ❌ Non |
-| **Séparateurs internes (secret)** | insérer espaces/tirets dans une clé `AKIA-IOSF-…` : casse `[0-9A-Z]{16}` | Facile | Part | ❌ Non |
-| **Séparateurs (IBAN/carte)** | voir §5 : tiret sur IBAN, point sur carte → **non détecté** | Accidentel/Facile | Part | ❌ Non |
-| **Casse alternée** | `sK-AbC…` : motifs `api_key` **sensibles à la casse** (`api-key.ts`, pas de flag `i`) | Facile | Part | ❌ Non* |
-| **Inversion** | `ELPMAXE7NNDOFSOIAIKA` | Délibéré | Part | ❌ Non |
-| **Enrobage mot** | `_AKIAIOSFODNN7EXAMPLE_` : `_` est un caractère `\w`, la frontière `\b` **échoue** | Facile | Part | ❌ Non |
+| **Full base64** | `QUtJQUlPU0ZP…` matches no pattern | Deliberate | Data leaves | ❌ No |
+| **Partial base64** | only a portion of the secret is encoded | Deliberate | Leaves | ❌ No |
+| **hex** | `414b4941…` | Deliberate | Leaves | ❌ No |
+| **URL-encoding** | `AKIA%20IOSF…` (the `%20` breaks the `\b…\b`) | Deliberate | Leaves | ❌ No |
+| **Double encoding** | base64(base64(x)) | Deliberate | Leaves | ❌ No |
+| **Escaped JSON** | `"AK…"` — the source string does not contain the raw bytes | Deliberate | Leaves | ❌ No |
 
-*Casse : altérer la casse d'une clé la rend **invalide en tant que clé réelle** (une vraie clé AWS
-est en casse fixe) — le « contournement » exfiltre alors une donnée qui n'est plus le secret. Faible
-gravité pratique, mais l'`\b`-enrobage par `_` (`api-key.ts:7-20`) est un vrai trou : `x=_AKIA…_`
-passe alors que la clé est intacte.
+**Analysis.** Expected by design: a general-purpose decoder would blow up false positives
+and CPU cost. This is a **deliberate choice**, not a bug — but it must be documented as a
+known limit: a user who *wants* to exfiltrate data can do so trivially. The product's value
+is blocking **inadvertent leaks** (pasting a `.env`), not motivated exfiltration. Should not
+be marketed as a barrier against a malicious insider.
 
-**Cause racine transverse.** Toutes les frontières `\b` des motifs `api_key` échouent dès qu'un
-caractère `\w` (lettre, chiffre, `_`) jouxte le secret sans espace. Les détecteurs `iban`/`card`/
-`phone` sont plus robustes car ils tolèrent des séparateurs internes — mais de façon **incohérente**
-(voir §5).
+---
+
+## 2. String manipulations
+
+| Vector | Mechanism (code reference) | Feasibility | Impact | Detected? |
+|---|---|---|---|---|
+| **Splitting across multiple lines** | `AKIA\nIOSF…`: the pattern is contiguous, `\n` breaks the match (`api-key.ts:7`) | Easy | Leaves | ❌ No |
+| **Splitting across multiple messages** | half in msg 1, half in msg 2: each send is scanned in isolation (`guard-adapter.ts:97`) | Easy | Leaves | ❌ No |
+| **Internal separators (secret)** | inserting spaces/hyphens in a key `AKIA-IOSF-…`: breaks `[0-9A-Z]{16}` | Easy | Leaves | ❌ No |
+| **Separators (IBAN/card)** | see §5: hyphen on IBAN, dot on card → **undetected** | Accidental/Easy | Leaves | ❌ No |
+| **Alternating case** | `sK-AbC…`: `api_key` patterns are **case-sensitive** (`api-key.ts`, no `i` flag) | Easy | Leaves | ❌ No* |
+| **Reversal** | `ELPMAXE7NNDOFSOIAIKA` | Deliberate | Leaves | ❌ No |
+| **Word wrapping** | `_AKIAIOSFODNN7EXAMPLE_`: `_` is a `\w` character, the `\b` boundary **fails** | Easy | Leaves | ❌ No |
+
+*Case: altering a key's case makes it **invalid as a real key** (a real AWS key has fixed
+case) — the "bypass" then exfiltrates data that is no longer the secret. Low practical
+severity, but the `\b` wrapping by `_` (`api-key.ts:7-20`) is a real hole: `x=_AKIA…_`
+passes even though the key is intact.
+
+**Cross-cutting root cause.** Every `\b` boundary in the `api_key` patterns fails as soon as
+a `\w` character (letter, digit, `_`) is adjacent to the secret with no space. The `iban`/
+`card`/`phone` detectors are more robust because they tolerate internal separators — but
+**inconsistently** so (see §5).
 
 ---
 
 ## 3. Unicode
 
-Le moteur **ne normalise pas** (`grep normalize|NFK` → aucune normalisation dans le pipeline de
-détection). Point clé vérifié : la classe regex `\s` (utilisée par `phone.ts:5`) **matche** NBSP
-(U+00A0), NNBSP (U+202F), espace fine (U+2009), BOM/ZWNBSP (U+FEFF) — mais **pas** ZWSP (U+200B).
-Les détecteurs `iban.ts:10` et `card.ts:12` utilisent au contraire des classes **littérales**
-(`[ ]`, `[ -]`) qui ne tolèrent **aucun** de ces caractères.
+The engine **does not normalize** (`grep normalize|NFK` → no normalization in the
+detection pipeline). Key verified point: the regex class `\s` (used by `phone.ts:5`)
+**matches** NBSP (U+00A0), NNBSP (U+202F), thin space (U+2009), BOM/ZWNBSP (U+FEFF) — but
+**not** ZWSP (U+200B). Conversely, the `iban.ts:10` and `card.ts:12` detectors use
+**literal** classes (`[ ]`, `[ -]`) that tolerate **none** of these characters.
 
-| Vecteur | Mécanisme | Faisabilité | Impact | Détecté ? |
+| Vector | Mechanism | Feasibility | Impact | Detected? |
 |---|---|---|---|---|
-| **Zero-width (U+200B) dans le secret** | `AKIA​IOSF…` : coupe tout motif contigu ; `\s` ne le couvre pas | Délibéré | Part | ❌ Non |
-| **BOM / ZWNBSP (U+FEFF) intercalé** | idem, coupe les motifs `api_key`/`card`/`iban` | Délibéré | Part | ❌ Non |
-| **NBSP comme séparateur — carte/IBAN** | `4111 1111…` / `DE89 3704…` en NBSP → **non détecté** (classes littérales) | **Accidentel** | Part | ❌ Non |
-| **NBSP comme séparateur — téléphone** | `\s` couvre NBSP → **détecté** | — | — | ✅ Oui |
-| **Homoglyphes cyrillique/grec** | `АKIA` (А = U+0410) : n'est plus le motif ASCII | Délibéré | Part | ❌ Non |
-| **Chiffres pleine chasse** | `４111 1111…` : `\d` ne matche pas U+FF14 → le préfixe saute | Délibéré | Part | ❌ Non |
-| **NFKC vs NFD** | le secret décomposé (NFD) diffère octet-à-octet du motif ASCII | Délibéré | Part | ❌ Non |
-| **RLO/LRO (U+202E/202D)** | inverse l'affichage sans changer l'ordre logique — n'aide pas à contourner un scan *logique* ; sert surtout à **tromper l'humain** qui relit | Délibéré | Variable | N/A |
-| **Combinants / ligatures** | `ﬁ` (U+FB01) etc. : non pertinent pour des secrets ASCII | Délibéré | Part | ❌ Non |
+| **Zero-width (U+200B) inside the secret** | `AKIA​IOSF…`: breaks any contiguous pattern; `\s` does not cover it | Deliberate | Leaves | ❌ No |
+| **BOM / ZWNBSP (U+FEFF) inserted** | same, breaks `api_key`/`card`/`iban` patterns | Deliberate | Leaves | ❌ No |
+| **NBSP as separator — card/IBAN** | `4111 1111…` / `DE89 3704…` in NBSP → **undetected** (literal classes) | **Accidental** | Leaves | ❌ No |
+| **NBSP as separator — phone** | `\s` covers NBSP → **detected** | — | — | ✅ Yes |
+| **Cyrillic/Greek homoglyphs** | `АKIA` (А = U+0410): no longer the ASCII pattern | Deliberate | Leaves | ❌ No |
+| **Full-width digits** | `４111 1111…`: `\d` does not match U+FF14 → the prefix is skipped | Deliberate | Leaves | ❌ No |
+| **NFKC vs NFD** | the decomposed (NFD) secret differs byte-for-byte from the ASCII pattern | Deliberate | Leaves | ❌ No |
+| **RLO/LRO (U+202E/202D)** | reverses the display without changing the logical order — does not help bypass a *logical* scan; mainly serves to **deceive the human** proofreading it | Deliberate | Variable | N/A |
+| **Combining characters / ligatures** | `ﬁ` (U+FB01) etc.: not relevant for ASCII secrets | Deliberate | Leaves | ❌ No |
 
-**Cas « le site normalise lui-même ».** Certains composers appliquent une normalisation NFC ou
-suppriment les zero-width au collage. Deux conséquences opposées : (a) si le site **retire** les
-zero-width, le texte redevient détectable — mais l'extension lit le composer *avant* soumission,
-donc elle voit le texte tel que présent dans le DOM à ce instant ; (b) si le site normalise NFKC des
-homoglyphes (rare), idem. En pratique **le moteur voit ce que `extractTextFromInput` lit dans le
-DOM** au moment du guard — il n'y a pas de seconde passe. Un site qui reconstruit le payload au
-`submit` (voir §4) est le vrai risque.
+**Case of "the site normalizes on its own".** Some composers apply NFC normalization or
+strip zero-width characters on paste. Two opposite consequences: (a) if the site **removes**
+the zero-width characters, the text becomes detectable again — but the extension reads the
+composer *before* submission, so it sees the text as it is in the DOM at that instant;
+(b) if the site NFKC-normalizes homoglyphs (rare), likewise. In practice **the engine sees
+what `extractTextFromInput` reads in the DOM** at guard time — there is no second pass. A
+site that rebuilds the payload at `submit` time (see §4) is the real risk.
 
-**Recommandation de fond.** Une **normalisation défensive avant scan** (strip des zero-width +
-NFKC + repli des espaces Unicode vers l'espace ASCII) fermerait d'un coup les lignes NBSP/ZWSP/
-pleine-chasse/homoglyphes-compatibilité **sans** faux positif sur du texte légitime. C'est le
-correctif à plus fort levier (voir `bypasses-2026-09.md`).
+**Underlying recommendation.** A **defensive normalization pass before scanning** (strip
+zero-width + NFKC + fold Unicode spaces to the ASCII space) would close the NBSP/ZWSP/
+full-width/compatibility-homoglyph lines in one shot, **with no** false positive on
+legitimate text. This is the highest-leverage fix (see `bypasses-2026-09.md`).
 
 ---
 
-## 4. Contexte de formulaire (interception DOM)
+## 4. Form context (DOM interception)
 
-Le guard n'intercepte que 3 déclencheurs (cf. §0). Tout chemin d'envoi qui les évite fait fuiter.
+The guard only intercepts 3 triggers (cf. §0). Any send path that avoids them leaks.
 
-| Vecteur | Mécanisme (référence code) | Faisabilité | Impact | Détecté ? |
+| Vector | Mechanism (code reference) | Feasibility | Impact | Detected? |
 |---|---|---|---|---|
-| **Collage direct de texte** | pas d'écouteur `paste` sur le *texte* (seulement sur les fichiers, `file-guard.ts:337`) → le texte collé n'est scanné qu'au **moment de l'envoi** (Enter/clic). C'est OK **si** l'envoi passe par un des 3 déclencheurs. | — | — | ✅ à l'envoi |
-| **Ctrl/Cmd/Alt/Shift + Enter** | `guard-adapter.ts:134` : `return` si un modificateur est présent → **aucun scan** sur ce keydown | Facile | Part si le site envoie ainsi | ❌ Non (keydown) |
-| **Composition IME** | `event.isComposing` → `return` (`guard-adapter.ts:137`) | Facile | Part si envoi pendant compo | ❌ Non |
-| **`execCommand('insertText')`** | c'est le chemin d'**écriture** de la redaction (`input-text.ts:27`), pas un vecteur d'entrée ; sans impact sur la détection | — | — | N/A |
-| **Saisie caractère-par-caractère** | sans impact : le scan lit l'état final du composer à l'envoi | — | — | ✅ |
-| **`paste` bloqué par le site** | si le site empêche le collage, l'utilisateur tape — sans impact | — | — | ✅ |
-| **iframe** | le content-script est injecté selon `manifest.json:42-57` **sans `all_frames`** → **seul le top-frame** est protégé. Un composer dans une iframe même-origine ou un widget tiers **n'est pas scanné** | Délibéré/Variable | Part | ❌ Non |
-| **shadow DOM** | l'écoute est en capture au niveau `document` ; un envoi encapsulé qui ne rebulle pas jusqu'au `document`, ou un composer trouvé par des sélecteurs qui ne descendent pas dans le shadow (`selectors.ts`) échappe | Variable | Part | ⚠️ dépend du site |
-| **`contenteditable` non standard** | `extractTextFromInput` lit `innerText ?? textContent` (`input-text.ts:5`) ; un éditeur qui stocke la valeur ailleurs (ex. state React sérialisé au submit) peut diverger de l'`innerText` scanné | Variable | Part | ⚠️ dépend |
-| **Site remplace l'input au submit** | si le payload réel est reconstruit en JS au `submit`/`fetch` à partir d'un state non reflété dans le DOM, le scan (qui lit le DOM) voit autre chose que ce qui part | Délibéré | Part | ❌ Non |
-| **`fetch`/`XHR` direct depuis la page** | script utilisateur / devtools postant vers l'API du LLM sans passer par le composer → **jamais** intercepté (l'extension n'observe pas le réseau) | Délibéré | Part | ❌ Non |
-| **Sélecteurs cassés (drift du site)** | `findComposerInput`/`isSendButtonTarget` renvoient `null` si le site change son DOM ; le `adapter-health-monitor` le détecte et applique `fail_mode` (défaut **`warn`** = **fail-open**, `guard-adapter.ts:180`) | Accidentel (côté éditeur) | Part | ⚠️ fail-open par défaut |
+| **Direct text paste** | no `paste` listener on *text* (only on files, `file-guard.ts:337`) → pasted text is only scanned **at send time** (Enter/click). This is fine **as long as** the send goes through one of the 3 triggers. | — | — | ✅ at send |
+| **Ctrl/Cmd/Alt/Shift + Enter** | `guard-adapter.ts:134`: `return` if a modifier is present → **no scan** on that keydown | Easy | Leaks if the site sends this way | ❌ No (keydown) |
+| **IME composition** | `event.isComposing` → `return` (`guard-adapter.ts:137`) | Easy | Leaks if sent during composition | ❌ No |
+| **`execCommand('insertText')`** | this is the redaction **write** path (`input-text.ts:27`), not an input vector; no impact on detection | — | — | N/A |
+| **Character-by-character typing** | no impact: the scan reads the composer's final state at send time | — | — | ✅ |
+| **`paste` blocked by the site** | if the site prevents pasting, the user types — no impact | — | — | ✅ |
+| **iframe** | the content-script is injected per `manifest.json:42-57` **without `all_frames`** → **only the top frame** is protected. A composer inside a same-origin iframe or a third-party widget **is not scanned** | Deliberate/Variable | Leaves | ❌ No |
+| **shadow DOM** | listening is done in capture mode at the `document` level; a send encapsulated such that it does not bubble up to `document`, or a composer found via selectors that do not pierce the shadow (`selectors.ts`), escapes | Variable | Leaves | ⚠️ depends on site |
+| **Non-standard `contenteditable`** | `extractTextFromInput` reads `innerText ?? textContent` (`input-text.ts:5`); an editor that stores its value elsewhere (e.g. React state serialized at submit) can diverge from the scanned `innerText` | Variable | Leaves | ⚠️ depends |
+| **Site rebuilds the input at submit** | if the actual payload is rebuilt in JS at `submit`/`fetch` from state not reflected in the DOM, the scan (which reads the DOM) sees something different from what leaves | Deliberate | Leaves | ❌ No |
+| **Direct `fetch`/`XHR` from the page** | a user script / devtools posting to the LLM's API without going through the composer → **never** intercepted (the extension does not observe the network) | Deliberate | Leaves | ❌ No |
+| **Broken selectors (site drift)** | `findComposerInput`/`isSendButtonTarget` return `null` if the site changes its DOM; the `adapter-health-monitor` detects this and applies `fail_mode` (default **`warn`** = **fail-open**, `guard-adapter.ts:180`) | Accidental (publisher side) | Leaves | ⚠️ fail-open by default |
 
-**Analyse.** Ces vecteurs sont **structurels** (propres à une extension MV3 qui s'accroche au DOM
-d'un site tiers) et non testables hors E2E. Les plus préoccupants en pratique : **(a)** `fail_mode`
-par défaut = `warn` (fail-open) — une simple mise à jour du site désarme silencieusement le DLP ;
-**(b)** l'envoi par modificateur clavier (Ctrl+Enter est un raccourci d'envoi sur plusieurs sites) ;
-**(c)** absence d'`all_frames`.
+**Analysis.** These vectors are **structural** (inherent to an MV3 extension hooking into a
+third-party site's DOM) and not testable outside E2E. The most concerning in practice:
+**(a)** default `fail_mode` = `warn` (fail-open) — a simple site update silently disarms the
+DLP; **(b)** sending via a keyboard modifier (Ctrl+Enter is a send shortcut on several
+sites); **(c)** lack of `all_frames`.
 
 ---
 
-## 5. Détecteurs : faux négatifs des regex (vérifiés par exécution)
+## 5. Detectors: regex false negatives (verified by execution)
 
-Résultats obtenus en exécutant les motifs **exacts** du code sur des valeurs à checksum **valide**.
+Results obtained by running the code's **exact** patterns against values with a **valid**
+checksum.
 
-### 5.1 Téléphone — `phone.ts` — **trou majeur, non adversarial**
-Motif FR : `/\b(?:(?:\+33|0033)…|0[1-9]…)\b/` (`phone.ts:4-5`) ; E.164 :
-`/\+[1-9]\d{7,14}\b/` avec, dans le code, l'exclusion `!value.startsWith('+33')` (`phone.ts:55`).
+### 5.1 Phone — `phone.ts` — **major gap, non-adversarial**
+FR pattern: `/\b(?:(?:\+33|0033)…|0[1-9]…)\b/` (`phone.ts:4-5`); E.164:
+`/\+[1-9]\d{7,14}\b/` with, in the code, the exclusion `!value.startsWith('+33')` (`phone.ts:55`).
 
-- `+33612345678` (international contigu) → **❌ non détecté**.
-- `+33 6 12 34 56 78` (international espacé, format **standard**) → **❌ non détecté**.
-- `+33.6.12.34.56.78` (international pointé) → **❌ non détecté**.
-- `0612345678`, `06 12 34 56 78` (national) → ✅ détecté.
+- `+33612345678` (international, contiguous) → **❌ undetected**.
+- `+33 6 12 34 56 78` (international, spaced, **standard** format) → **❌ undetected**.
+- `+33.6.12.34.56.78` (international, dotted) → **❌ undetected**.
+- `0612345678`, `06 12 34 56 78` (national) → ✅ detected.
 
-**Cause racine** (`phone.ts:4` + `phone.ts:55`) : le motif FR commence par `\b`, or `\b` **ne peut
-pas** exister juste avant un `+` précédé d'un espace ou d'un début de chaîne (`+` et espace sont tous
-deux non-`\w`). Le motif FR ne matche donc **jamais** un numéro `+33…` en contexte réel. En parallèle,
-le motif E.164 **exclut explicitement** `+33`, en supposant à tort que le motif FR le couvre. Résultat :
-**aucun** des deux ne voit un numéro français au format international. Faisabilité **Accidentelle**
-(c'est le format d'un carnet de contacts). ✅ **Correctif appliqué** (voir `bypasses-2026-09.md`).
+**Root cause** (`phone.ts:4` + `phone.ts:55`): the FR pattern starts with `\b`, but `\b`
+**cannot** exist right before a `+` preceded by a space or start of string (`+` and space
+are both non-`\w`). The FR pattern therefore **never** matches a `+33…` number in a real
+context. In parallel, the E.164 pattern **explicitly excludes** `+33`, wrongly assuming the
+FR pattern covers it. Result: **neither** pattern sees a French number in international
+format. Feasibility: **Accidental** (it's the format of an address book). ✅ **Fix applied**
+(see `bypasses-2026-09.md`).
 
 ### 5.2 IBAN — `iban.ts:10`
-Motif : `…(?:[ ]?[A-Z0-9]{4}){2,7}…` — séparateur = **espace ASCII littéral uniquement**.
+Pattern: `…(?:[ ]?[A-Z0-9]{4}){2,7}…` — separator = **literal ASCII space only**.
 
-- `DE89370400440532013000` (contigu) → ✅.
-- `DE89 3704 0044 0532 0130 00` (espaces ASCII) → ✅.
-- `DE89-3704-0044-0532-0130-00` (**tirets**) → **❌ non détecté**.
-- `DE89 3704…` (**NBSP**) → **❌ non détecté**.
+- `DE89370400440532013000` (contiguous) → ✅.
+- `DE89 3704 0044 0532 0130 00` (ASCII spaces) → ✅.
+- `DE89-3704-0044-0532-0130-00` (**hyphens**) → **❌ undetected**.
+- `DE89 3704…` (**NBSP**) → **❌ undetected**.
 
-**Cause racine** `iban.ts:10` : classe `[ ]` littérale. Le tiret est un formatage IBAN plausible ;
-le NBSP arrive par copier-coller depuis Word/PDF/pages web à typographie française. Le checksum
-mod-97 (`iban.ts:12`) reste un garde-fou fort → ajouter ces séparateurs est **peu risqué en FP**.
+**Root cause** `iban.ts:10`: literal `[ ]` class. The hyphen is a plausible IBAN format;
+the NBSP arrives via copy-paste from Word/PDF/web pages with French typography. The mod-97
+checksum (`iban.ts:12`) remains a strong safety net → adding these separators carries
+**low FP risk**.
 
-### 5.3 Carte bancaire — `card.ts:12`
-Motif : `/\b(?:\d[ -]?){12,18}\d\b/` — séparateur = **espace ASCII ou tiret**.
+### 5.3 Card number — `card.ts:12`
+Pattern: `/\b(?:\d[ -]?){12,18}\d\b/` — separator = **ASCII space or hyphen**.
 
 - `4111 1111 1111 1111`, `4111-1111-1111-1111`, `4111111111111111` → ✅.
-- `4111.1111.1111.1111` (**points**) → **❌ non détecté**.
-- `4111 1111…` (**NBSP**) → **❌ non détecté**.
+- `4111.1111.1111.1111` (**dots**) → **❌ undetected**.
+- `4111 1111…` (**NBSP**) → **❌ undetected**.
 
-**Cause racine** `card.ts:12` : classe `[ -]` littérale. ⚠️ **Attention FP** : ajouter le **point**
-comme séparateur ferait matcher des numéros de version, ratios, séquences pointées de 13-19 chiffres
-qui passent Luhn par hasard (~10 %) — **à ne pas faire** dans du contexte code. Le **NBSP** en
-revanche (whitespace pur) est sûr.
+**Root cause** `card.ts:12`: literal `[ -]` class. ⚠️ **FP warning**: adding the **dot** as
+a separator would match version numbers, ratios, and dotted 13-19 digit sequences that pass
+Luhn by chance (~10%) — **should not be done** in a code-heavy context. **NBSP**, on the
+other hand (pure whitespace), is safe.
 
-### 5.4 E-mail pro — `pro-email.ts:8-17`
-Motif : `\b([a-z0-9._%+-]{1,64}@(?:<domaines>))\b`.
+### 5.4 Corporate email — `pro-email.ts:8-17`
+Pattern: `\b([a-z0-9._%+-]{1,64}@(?:<domains>))\b`.
 
-- `jean@acme.com`, `jean@ACME.COM` (casse) → ✅.
-- `jean@sub.acme.com` (**sous-domaine**, ex. `@mail.acme.com`, `@eu.acme.com`) → **❌ non détecté**.
+- `jean@acme.com`, `jean@ACME.COM` (case) → ✅.
+- `jean@sub.acme.com` (**subdomain**, e.g. `@mail.acme.com`, `@eu.acme.com`) → **❌ undetected**.
 
-**Cause racine** `pro-email.ts:14` : le `@` doit précéder **immédiatement** le domaine configuré ;
-aucun `(?:[a-z0-9-]+\.)*` n'autorise les sous-domaines. Un e-mail corporate sur sous-domaine échappe.
-Gravité moyenne, dépend de la config admin.
+**Root cause** `pro-email.ts:14`: the `@` must **immediately** precede the configured
+domain; no `(?:[a-z0-9-]+\.)*` allows for subdomains. A corporate email on a subdomain
+escapes detection. Medium severity, depends on admin configuration.
 
-### 5.5 api_key / generic_secret — bornes
-- `api_key` **sensible à la casse**, frontières `\b` (§2) → enrobage `_` et zero-width contournent.
-- `sk-` plafonné à 255 caractères (`api-key.ts:9`) : un secret > 255 après `sk-` → ❌ (faible : les
-  vraies clés sont plus courtes).
-- `generic_secret` : `Bearer`/`Basic` **sensibles à la casse** (`generic-secret.ts:6-7`) ; JWT exige
-  **3 segments** `eyJ…` (`generic-secret.ts:8`) — un token opaque non-JWT n'est pas couvert (attendu).
+### 5.5 api_key / generic_secret — bounds
+- `api_key` is **case-sensitive**, with `\b` boundaries (§2) → `_` wrapping and zero-width
+  characters bypass it.
+- `sk-` capped at 255 characters (`api-key.ts:9`): a secret > 255 chars after `sk-` → ❌
+  (minor: real keys are shorter).
+- `generic_secret`: `Bearer`/`Basic` are **case-sensitive** (`generic-secret.ts:6-7`); JWT
+  requires **3 segments** `eyJ…` (`generic-secret.ts:8`) — a non-JWT opaque token is not
+  covered (expected).
 
-### 5.6 IP interne — `internal-ip.ts:4`
-Motif ancré sur les plages RFic1918 avec `\b…\b` et points littéraux `\.`. Un `192 . 168 . 1 . 5`
-espacé n'est pas détecté (format non réaliste → faible). Robuste sur le format canonique.
+### 5.6 Internal IP — `internal-ip.ts:4`
+Pattern anchored on RFC1918 ranges with `\b…\b` and literal dots `\.`. A spaced
+`192 . 168 . 1 . 5` is not detected (unrealistic format → low severity). Robust on the
+canonical format.
 
 ---
 
-## 6. Limites du moteur (taille / chunking / troncature)
+## 6. Engine limits (size / chunking / truncation)
 
-Références : `limits.ts`, `regex-engine.ts:15-29`.
+References: `limits.ts`, `regex-engine.ts:15-29`.
 
-| Mécanisme | Comportement | Impact évasion |
+| Mechanism | Behavior | Evasion impact |
 |---|---|---|
-| **Fenêtres de 100k (`DETECTION_CHUNK_SIZE`)** | scan par fenêtres chevauchantes ; couvre **tout** le texte ≤ plafond, sans perte | Pas d'évasion par simple bourrage < 2M (corrigé, cf. test `limits`) |
-| **Chevauchement 10k (`DETECTION_CHUNK_OVERLAP`)** | un secret > 10k à cheval sur une frontière serait manqué ; or le plus long motif ≈ 8.7k (JWT) | Non exploitable pour les secrets courts |
-| **Plafond absolu 2M (`MAX_DETECTION_TOTAL_LENGTH`)** | au-delà, troncature **réelle** : tout secret placé après 2M de bourrage **échappe** — mais un **avertissement** `wasTextTruncated` est levé (`analyze.ts:30`, toast `guard-adapter.ts:100`) | ⚠️ Évasion par bourrage > 2M, **signalée** à l'utilisateur (détectable) |
-| **Fichier texte : 5 Mo (`text-file.ts:2`)** | au-delà, `readFileAsText` rejette → `processTextFile` renvoie `{status:'ok'}` (**fail-open silencieux**, `file-guard.ts:143-147`) | ❌ Un `.txt`/`.csv` > 5 Mo avec secret **passe sans avertissement** |
-| **Fichier binaire : 10 Mo (`binary-file.ts:2`)** | au-delà → `warn` + laisser passer (`file-guard.ts:163-165`) | ⚠️ PDF/DOCX > 10 Mo passe (averti) |
+| **100k windows (`DETECTION_CHUNK_SIZE`)** | scanning via overlapping windows; covers **all** text ≤ the cap, with no loss | No evasion via simple padding < 2M (fixed, cf. `limits` test) |
+| **10k overlap (`DETECTION_CHUNK_OVERLAP`)** | a secret > 10k straddling a boundary would be missed; but the longest pattern is ≈ 8.7k (JWT) | Not exploitable for short secrets |
+| **Absolute cap 2M (`MAX_DETECTION_TOTAL_LENGTH`)** | beyond this, **real** truncation: any secret placed after 2M of padding **escapes** — but a **warning** `wasTextTruncated` is raised (`analyze.ts:30`, toast `guard-adapter.ts:100`) | ⚠️ Evasion via padding > 2M, **flagged** to the user (detectable) |
+| **Text file: 5 MB (`text-file.ts:2`)** | beyond this, `readFileAsText` rejects → `processTextFile` returns `{status:'ok'}` (**silent fail-open**, `file-guard.ts:143-147`) | ❌ A `.txt`/`.csv` > 5 MB with a secret **passes with no warning** |
+| **Binary file: 10 MB (`binary-file.ts:2`)** | beyond this → `warn` + let through (`file-guard.ts:163-165`) | ⚠️ PDF/DOCX > 10 MB passes (warned) |
 
-**Note importante** : un `.txt` > 5 Mo est **fail-open silencieux** (`catch → status ok`), alors
-qu'un texte collé > 2 Mo est fail-open **avec avertissement**. Incohérence à corriger (au minimum
-émettre le même toast de troncature pour le fichier texte trop volumineux).
+**Important note**: a `.txt` > 5 MB is **silently fail-open** (`catch → status ok`), while
+pasted text > 2 MB is fail-open **with a warning**. An inconsistency to fix (at minimum,
+raise the same truncation toast for an oversized text file).
 
 ---
 
-## 7. Fichiers
+## 7. Files
 
-Références : `file-guard.ts`, `binary-extract.ts`, `text-file.ts`, `binary-file.ts`.
+References: `file-guard.ts`, `binary-extract.ts`, `text-file.ts`, `binary-file.ts`.
 
-| Vecteur | Mécanisme | Faisabilité | Impact | Détecté ? |
+| Vector | Mechanism | Feasibility | Impact | Detected? |
 |---|---|---|---|---|
-| **Format non scanné** | seuls texte/PDF/DOCX sont scannés (`file-guard.ts:277-284`). **XLSX, PPTX, RTF, ODT, images, ZIP/archives, binaires** → `isScannableFile` faux → **passent sans scan** | Facile | Part | ❌ Non |
-| **PDF image (sans couche texte)** | `extractPdfText` lit `getTextContent()` (`binary-extract.ts:42`), **pas d'OCR** → texte vide → `allow` | Facile (scan→PDF) | Part | ❌ Non |
-| **PDF chiffré / corrompu** | `extractBinaryText` throw → `catch` → `warn` + **laisser passer** (`file-guard.ts:168-171`) | Facile | Part | ⚠️ Averti |
-| **DOCX : commentaires** | `mammoth.extractRawText` (`binary-extract.ts:60`) lit `document.xml` (corps) ; les **commentaires** (`comments.xml`) ne sont pas extraits → secret en commentaire **échappe** | Délibéré | Part | ❌ Non* |
-| **DOCX : suivi de modifications** | texte **supprimé** (`w:delText`) n'est pas rendu par `extractRawText` ; le secret « supprimé » mais présent dans le fichier échappe | Délibéré | Part | ❌ Non* |
-| **Secret scindé corps + PJ** | chaque flux est scanné isolément (`file-guard.ts` vs `guard-adapter.ts`) ; une moitié dans le message, l'autre dans un `.txt` → aucun ne matche | Facile | Part | ❌ Non |
-| **Extension trompeuse** | un binaire renommé `.txt` → `readFileAsText` le lit comme texte (souvent illisible → pas de match) ; un `.pdf` réel non affecté | Variable | Part | ⚠️ |
+| **Unscanned format** | only text/PDF/DOCX are scanned (`file-guard.ts:277-284`). **XLSX, PPTX, RTF, ODT, images, ZIP/archives, binaries** → `isScannableFile` is false → **pass with no scan** | Easy | Leaves | ❌ No |
+| **Image-only PDF (no text layer)** | `extractPdfText` reads `getTextContent()` (`binary-extract.ts:42`), **no OCR** → empty text → `allow` | Easy (scan→PDF) | Leaves | ❌ No |
+| **Encrypted / corrupted PDF** | `extractBinaryText` throws → `catch` → `warn` + **let through** (`file-guard.ts:168-171`) | Easy | Leaves | ⚠️ Warned |
+| **DOCX: comments** | `mammoth.extractRawText` (`binary-extract.ts:60`) reads `document.xml` (body); **comments** (`comments.xml`) are not extracted → a secret in a comment **escapes** | Deliberate | Leaves | ❌ No* |
+| **DOCX: tracked changes** | **deleted** text (`w:delText`) is not rendered by `extractRawText`; a secret that was "deleted" but still present in the file escapes | Deliberate | Leaves | ❌ No* |
+| **Secret split across body + attachment** | each stream is scanned in isolation (`file-guard.ts` vs `guard-adapter.ts`); half in the message, half in a `.txt` → neither matches | Easy | Leaves | ❌ No |
+| **Misleading extension** | a binary renamed `.txt` → `readFileAsText` reads it as text (often unreadable → no match); a real `.pdf` is unaffected | Variable | Leaves | ⚠️ |
 
-*DOCX commentaires / suivi de modifications : gap **architectural** déduit du comportement de
-`mammoth.extractRawText` ; marqué « à confirmer par fixture » dans le corpus (non confirmé par
-exécution faute de fixture binaire — le reste des lignes fichiers est confirmé par le code / les
-tests existants `file-guard.test.ts`).
+*DOCX comments / tracked changes: an **architectural** gap inferred from the behavior of
+`mammoth.extractRawText`; flagged as "to confirm with a fixture" in the corpus (not
+confirmed by execution for lack of a binary fixture — the rest of the file-related lines
+are confirmed by code / existing tests `file-guard.test.ts`).
 
 ---
 
-## 8. Synthèse — priorisation
+## 8. Summary — prioritization
 
-**Confirmés par exécution, corrigeables proprement (faible risque FP) :**
-1. `+33…` téléphone (tous formats) — **corrigé** dans ce lot.
-2. IBAN séparé par tirets / NBSP — **corrigé** le 2026-10-18 (`normalize.ts` + séparateur `[ -]`).
-3. Carte séparée par NBSP (pas le point) — **corrigé** le 2026-10-18 (`normalize.ts`).
-4. Zero-width / homoglyphes / pleine chasse — **corrigé** le 2026-10-18 (`normalize.ts`).
+**Confirmed by execution, cleanly fixable (low FP risk):**
+1. `+33…` phone (all formats) — **fixed** in this batch.
+2. IBAN separated by hyphens / NBSP — **fixed** on 2026-10-18 (`normalize.ts` + `[ -]` separator).
+3. Card separated by NBSP (not the dot) — **fixed** on 2026-10-18 (`normalize.ts`).
+4. Zero-width / homoglyphs / full-width digits — **fixed** on 2026-10-18 (`normalize.ts`).
 
-**Confirmés, à documenter (correctif risqué ou hors regex) :**
-5. `pro_email` sous-domaines.
-6. `.txt` > 5 Mo fail-open silencieux.
-7. Formats fichiers non scannés (XLSX/archives/images), PDF image, PDF chiffré, DOCX commentaires.
+**Confirmed, to document (risky fix or out of regex scope):**
+5. `pro_email` subdomains.
+6. `.txt` > 5 MB silent fail-open.
+7. Unscanned file formats (XLSX/archives/images), image PDF, encrypted PDF, DOCX comments.
 
-**Limites assumées (ne pas « corriger », documenter comme périmètre) :**
-8. Encodages (base64/hex/URL), inversion, découpage volontaire, `fetch` direct, iframe/shadow DOM,
-   envoi par modificateur clavier, `fail_mode` par défaut fail-open.
+**Accepted limits (do not "fix", document as scope):**
+8. Encodings (base64/hex/URL), reversal, deliberate splitting, direct `fetch`, iframe/shadow
+   DOM, sending via keyboard modifier, default fail-open `fail_mode`.
 
-La ligne directrice : le produit protège contre la **fuite par inadvertance** et l'utilisateur
-négligent, **pas** contre un initié déterminé. Les corrections à mener en priorité sont celles qui
-ferment des **fuites accidentelles** (formats de copier-coller courants : `+33`, NBSP, tirets IBAN)
-— pas la course sans fin contre l'encodage volontaire.
+The guiding principle: the product protects against **inadvertent leaks** and the careless
+user, **not** against a determined insider. Fixes should be prioritized for those that close
+**accidental leaks** (common copy-paste formats: `+33`, NBSP, IBAN hyphens) — not an
+endless race against deliberate encoding.

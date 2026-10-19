@@ -64,7 +64,7 @@ npm run build:firefox    # Firefox  → dist-firefox/
 Il protège contre la **fuite par inadvertance**, pas contre un initié déterminé : secrets encodés
 (base64, hex…), images, XLSX/PPTX, archives, PDF scannés et appels hors de la zone de saisie ne sont
 pas couverts. Modèle de menace complet :
-[`docs/security/evasion-threat-model.md`](docs/security/evasion-threat-model.md).
+[`docs/security/evasion-threat-model.fr.md`](docs/security/evasion-threat-model.fr.md).
 
 ## Conformité
 
