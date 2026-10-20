@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.1.0] — 2026-10-19
+## [1.1.0] — 2026-10-20
 
 ### Added
 - **XLSX and PPTX attachments are scanned** (closes the XLSX/PPTX part of bypass B5): cells, all sheets, cell comments, slides and speaker notes are extracted locally by a built-in Office Open XML reader (no new dependency, zip-bomb guard). As with PDF/DOCX, a redact rule blocks the file since it cannot be rewritten
