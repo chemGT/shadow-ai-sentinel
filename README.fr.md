@@ -62,6 +62,11 @@ npm run build:firefox    # Firefox  → dist-firefox/
 - **Chrome / Edge / Brave :** `chrome://extensions` → Mode développeur → *Charger l'extension non empaquetée* → `dist/`
 - **Firefox :** `about:debugging` → Ce Firefox → *Charger un module temporaire* → `dist-firefox/manifest.json`
 
+Chaque version publiée fournit aussi des archives prêtes à l'emploi sur la
+[page Releases](https://github.com/chemGT/shadow-ai-sentinel/releases) : décompresser le
+`-chromium.zip` puis le charger non empaqueté ; le `.xpi` Firefox n'est pas signé tant que la fiche
+AMO n'est pas en ligne, Firefox stable ne l'accepte donc qu'en module temporaire.
+
 ## Ce que l'outil ne fait **pas**
 
 Il protège contre la **fuite par inadvertance**, pas contre un initié déterminé : secrets encodés

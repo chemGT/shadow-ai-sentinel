@@ -88,10 +88,11 @@ Example `ExtensionSettings` entry, using this project's real Firefox add-on ID
 Shadow AI Sentinel isn't on the Chrome Web Store or Firefox Add-ons yet (see the
 [roadmap](../ROADMAP.md)). Until then, the `release.yml` workflow is the source of attested
 builds (build provenance, not code signing): each tagged release publishes `shadow-ai-sentinel-<tag>-chromium.zip`,
-`shadow-ai-sentinel-<tag>-firefox-unsigned.xpi` and a `SHA256SUMS.txt` (plus a provenance
+`shadow-ai-sentinel-<tag>-firefox-unsigned.xpi`, `shadow-ai-sentinel-<tag>-source.zip` and a `SHA256SUMS.txt` (plus a provenance
 attestation, since the repository is public) to the
 [GitHub Releases page](https://github.com/chemGT/shadow-ai-sentinel/releases). You can also build
-locally with `npm run build` (Chromium → `dist/`) and `npm run build:firefox` (→ `dist-firefox/`).
+locally with `npm run package` (same archives in `release/`), or `npm run build` (Chromium → `dist/`)
+and `npm run build:firefox` (→ `dist-firefox/`).
 
 Loading `dist/` via `chrome://extensions` → *Load unpacked*, or `dist-firefox/` via
 `about:debugging` → *Load Temporary Add-on*, is a **per-machine developer action**, not a managed

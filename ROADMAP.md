@@ -6,7 +6,8 @@ are the best entry points.
 
 ## Next
 
-- [ ] **First public release `v1.0.0`** — align manifest versions, tag, GitHub Release artifacts.
+- [x] **First public release `v1.0.0`** — tag and GitHub Release artifacts (2026-10-18).
+- [x] **Store-ready packages** — `npm run package`: Chromium zip, Firefox `.xpi`, source zip for AMO, reviewer notes.
 - [ ] **Chrome Web Store and Firefox Add-ons listings** (store assets ready in `store-assets/`).
 - [ ] **`pro_email` subdomains** (B3) — `jean@mail.acme.com` should match domain `acme.com`.
 - [ ] **Screenshots / demo GIF** of the current UI (block, redact, popup, options).
