@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Labeled detection corpus (`src/core/detection/corpus.ts`, 65 should-detect and 41 should-not entries, known gaps flagged) run as a regression test, plus scan-time bounds on adversarial inputs
 - **Managed `lock_settings`** (boolean): when `true`, the user's own settings are ignored — rules the admin did not list fall back to the extension defaults (not to what the user chose), and only the managed allowlist applies. Without it a user could switch off any unlisted rule or allowlist any value
 - **Diagnostics panel** on the options page (the “doctor”): detection-engine self-test, storage, local policy validity, managed-policy status, `fail_mode`, disabled rules, per-site host access, background process, last adapter state — each problem with the action to take, and a *Copy report* button. Runs locally; the report contains no typed text, allowlist value or domain name
+- **Deployment kit** (`deploy/`): Windows PowerShell script (install / status / uninstall, idempotent, registry backup for rollback) and Intune detection script, Linux policy script (same three actions), macOS configuration-profile template, Firefox `policies.json` template, example managed configurations, and a runbook with Intune, Group Policy and troubleshooting tables. The Linux script and all JSON templates are validated by tests; the Windows scripts and the macOS profile could not be run here and are flagged as untested in the runbook
 
 ## [1.1.0] — 2026-10-20
 
