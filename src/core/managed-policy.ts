@@ -9,13 +9,26 @@
  * du même type, les autres types restent locaux. L'allowlist gérée s'**ajoute** à l'allowlist
  * locale (union).
  *
+ * `lock_settings: true` verrouille le poste : les réglages locaux de l'utilisateur sont ignorés.
+ * Les règles non listées par l'admin prennent leur valeur PAR DÉFAUT (et non celle choisie par
+ * l'utilisateur), `fail_mode`/`emailDomains` non gérés prennent leur défaut, et l'allowlist
+ * locale n'est plus appliquée. Sans ce verrou, un utilisateur peut désactiver toute règle que
+ * l'admin n'a pas listée et allowlister n'importe quelle valeur.
+ *
  * Chromium valide déjà contre `managed_schema.json` ; Firefox ne valide pas : on revalide ici.
  */
+import { ALL_RULE_TYPES, DEFAULT_FAIL_MODE, DEFAULT_RULES } from './constants.js';
 import type { FailMode, Policy, Rule, RuleType } from './types.js';
 import { isFailMode, normalizeEmailDomains, parseRule } from './validation/policy.js';
 
 /** Clés lues dans le stockage géré (cf. `public/managed_schema.json`). */
-export const MANAGED_KEYS = ['emailDomains', 'fail_mode', 'rules', 'allowlist'] as const;
+export const MANAGED_KEYS = [
+  'emailDomains',
+  'fail_mode',
+  'rules',
+  'allowlist',
+  'lock_settings',
+] as const;
 
 export interface ManagedConfig {
   emailDomains?: string[];
@@ -23,7 +36,13 @@ export interface ManagedConfig {
   /** Une entrée par type (dernière occurrence retenue en cas de doublon). */
   rules?: Rule[];
   allowlist: string[];
-  /** Champs/entrées ignorés car invalides — à signaler en console, jamais bloquant. */
+  /** `true` : réglages locaux ignorés (règles par défaut + règles gérées, allowlist gérée seule). */
+  lockSettings?: boolean;
+  /**
+   * Champs/entrées ignorés car invalides. Jamais bloquant, mais À MONTRER (page d'options,
+   * diagnostic) : une policy admin mal formée qui retombe en silence sur le réglage local est
+   * une protection que l'admin croit active et qui ne l'est pas.
+   */
   errors: string[];
 }
 
@@ -82,6 +101,14 @@ export function parseManagedConfig(raw: unknown): ManagedConfig {
     }
   }
 
+  if (input.lock_settings !== undefined && input.lock_settings !== null) {
+    if (typeof input.lock_settings === 'boolean') {
+      config.lockSettings = input.lock_settings;
+    } else {
+      config.errors.push('lock_settings ignoré (booléen attendu)');
+    }
+  }
+
   return config;
 }
 
@@ -91,11 +118,16 @@ export function hasManagedSettings(config: ManagedConfig): boolean {
     config.emailDomains !== undefined ||
     config.fail_mode !== undefined ||
     config.rules !== undefined ||
-    config.allowlist.length > 0
+    config.allowlist.length > 0 ||
+    config.lockSettings === true
   );
 }
 
+/** Types de règle non modifiables par l'utilisateur (tous si `lock_settings`). */
 export function managedRuleTypes(config: ManagedConfig): Set<RuleType> {
+  if (config.lockSettings === true) {
+    return new Set(ALL_RULE_TYPES);
+  }
   return new Set((config.rules ?? []).map((r) => r.type));
 }
 
@@ -105,6 +137,22 @@ export function applyManagedPolicy(local: Policy, config: ManagedConfig): Policy
     return local;
   }
   const managedRules = new Map((config.rules ?? []).map((r) => [r.type, r]));
+  if (config.lockSettings === true) {
+    // Poste verrouillé : on part des défauts, pas des réglages de l'utilisateur. `pro_email`
+    // n'a de sens qu'avec des domaines : sans `emailDomains` géré, il reste désactivé.
+    const emailDomains = config.emailDomains ?? [];
+    return {
+      ...local,
+      rules: DEFAULT_RULES.map((def) => {
+        const rule = { ...(managedRules.get(def.type) ?? def) };
+        return rule.type === 'pro_email' && emailDomains.length === 0
+          ? { ...rule, enabled: false }
+          : rule;
+      }),
+      emailDomains,
+      fail_mode: config.fail_mode ?? DEFAULT_FAIL_MODE,
+    };
+  }
   const rules = local.rules.map((r) => managedRules.get(r.type) ?? r);
   for (const rule of managedRules.values()) {
     if (!local.rules.some((r) => r.type === rule.type)) {
@@ -119,7 +167,10 @@ export function applyManagedPolicy(local: Policy, config: ManagedConfig): Policy
   };
 }
 
-/** Allowlist effective : union locale + gérée, sans doublon. */
+/** Allowlist effective : union locale + gérée, sans doublon (gérée seule si `lock_settings`). */
 export function mergeAllowlists(local: readonly string[], config: ManagedConfig): string[] {
+  if (config.lockSettings === true) {
+    return Array.from(new Set(config.allowlist));
+  }
   return Array.from(new Set([...local, ...config.allowlist]));
 }

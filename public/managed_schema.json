@@ -34,6 +34,11 @@
       "description": "Exact values that never trigger a rule (test keys, public addresses). Added to the user's own allowlist.",
       "type": "array",
       "items": { "type": "string" }
+    },
+    "lock_settings": {
+      "title": "Lock local settings",
+      "description": "true = the user's own settings are ignored: rules not listed here use the extension defaults, and only the managed allowlist applies. false or absent = unlisted rules and the local allowlist stay user-configurable.",
+      "type": "boolean"
     }
   }
 }

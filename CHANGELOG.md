@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **More secret formats detected**: GitHub `gho_`/`ghu_`/`ghs_`/`ghr_`, Stripe `whsec_`, Slack `xapp-` tokens and incoming-webhook URLs, Google `AIza…` API keys, npm, Hugging Face, SendGrid, Twilio and DigitalOcean tokens, PEM private keys (whole block), URLs with embedded credentials (`postgres://user:pass@host`), `password=…` / `client_secret: …` / `aws_secret_access_key = …` assignments (only the value is redacted), IBANs grouped with dots, grouped international phone numbers (`+1 415 555 2671`), `Bearer` tokens longer than 512 characters
 - Labeled detection corpus (`src/core/detection/corpus.ts`, 65 should-detect and 41 should-not entries, known gaps flagged) run as a regression test, plus scan-time bounds on adversarial inputs
+- **Managed `lock_settings`** (boolean): when `true`, the user's own settings are ignored — rules the admin did not list fall back to the extension defaults (not to what the user chose), and only the managed allowlist applies. Without it a user could switch off any unlisted rule or allowlist any value
 
 ## [1.1.0] — 2026-10-20
 
