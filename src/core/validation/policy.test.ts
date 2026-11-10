@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createDefaultPolicy } from '../defaults.js';
+import { evaluateGuard } from '../../extension/content/analyze.js';
 import { validatePolicy } from './policy.js';
 
 describe('validatePolicy', () => {
@@ -36,6 +37,33 @@ describe('validatePolicy', () => {
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.policy.emailDomains).toEqual(['acme.com', 'acme.fr']);
+    }
+  });
+});
+
+describe('validatePolicy — règles manquantes (F11)', () => {
+  it('complète les types absents par leur valeur par défaut au lieu de les désactiver', () => {
+    const result = validatePolicy({ ...createDefaultPolicy(), rules: [] });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.policy.rules).toEqual(createDefaultPolicy().rules);
+      expect(evaluateGuard('AKIAIOSFODNN7EXAMPLE', result.policy).kind).toBe('block');
+    }
+  });
+
+  it('respecte une désactivation explicite et garde la dernière occurrence d’un doublon', () => {
+    const result = validatePolicy({
+      ...createDefaultPolicy(),
+      rules: [
+        { type: 'iban', action: 'redact', enabled: true },
+        { type: 'iban', action: 'block', enabled: false },
+      ],
+    });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      const iban = result.policy.rules.filter((r) => r.type === 'iban');
+      expect(iban).toEqual([{ type: 'iban', action: 'block', enabled: false }]);
+      expect(result.policy.rules).toHaveLength(createDefaultPolicy().rules.length);
     }
   });
 });
