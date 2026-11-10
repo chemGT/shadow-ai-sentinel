@@ -98,10 +98,6 @@ export function validatePolicy(input: unknown): PolicyValidationResult {
   }
   const rules = completeRules(parsedRules);
 
-  if (raw.departmentId !== undefined && typeof raw.departmentId !== 'string') {
-    errors.push('departmentId doit être une string si présent');
-  }
-
   if (raw.fail_mode !== undefined && !isFailMode(raw.fail_mode)) {
     errors.push(`fail_mode invalide (attendu: ${FAIL_MODES.join(', ')})`);
   }
@@ -129,9 +125,6 @@ export function validatePolicy(input: unknown): PolicyValidationResult {
       emailDomains,
       rules,
       updatedAt: raw.updatedAt as string,
-      ...(raw.departmentId !== undefined
-        ? { departmentId: raw.departmentId as string }
-        : {}),
       ...(raw.fail_mode !== undefined ? { fail_mode: raw.fail_mode as FailMode } : {}),
     },
   };

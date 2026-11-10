@@ -12,6 +12,9 @@ are the best entry points.
 - [ ] **`pro_email` subdomains** (B3) — `jean@mail.acme.com` should match domain `acme.com`.
 - [ ] **Screenshots / demo GIF** of the current UI (block, redact, popup, options).
 
+- [x] **Reliability pass** (2026-11): `fail_mode` governs every unscannable case, no silent fail-open on errors, pasted files blocked, mid-session adapter breakage detected, labeled detection corpus, linear match merging.
+- [x] **Deployment kit** ([`deploy/`](deploy/README.md)) and options-page **Diagnostic**. Windows scripts and macOS profile still need a run on real hosts.
+
 ## Later
 
 - [x] **XLSX / PPTX attachments** (B5, partial) — extracted locally, no new dependency.
