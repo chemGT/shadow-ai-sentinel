@@ -26,6 +26,14 @@ export function detectSensitiveData(text: string, policy: Policy): DetectionMatc
   for (const { start, end } of chunkRanges(scoped.length)) {
     const chunkMatches = runAllDetectors(scoped.slice(start, end), policy);
     for (const match of chunkMatches) {
+      // Une correspondance collée à un bord INTERNE de fenêtre est peut-être un secret coupé en
+      // deux (ex. jeton trop long tronqué par la fenêtre, donc « valide » à tort). Le
+      // chevauchement garantit que la fenêtre voisine la voit en entier : on écarte celle-ci.
+      const cutAtEnd = end < scoped.length && match.end === end - start;
+      const cutAtStart = start > 0 && match.start === 0;
+      if (cutAtEnd || cutAtStart) {
+        continue;
+      }
       const original = normalized.toOriginal(match.start + start, match.end + start);
       raw.push({ ruleType: match.ruleType, start: original.start, end: original.end });
     }

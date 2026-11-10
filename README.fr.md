@@ -24,11 +24,11 @@ bloque le message.
 
 | Règle | Exemples | Validation | Défaut |
 |-------|----------|------------|--------|
-| `api_key` | AWS `AKIA…`, OpenAI `sk-…`, Anthropic `sk-ant-…`, Stripe `sk_live_…`, GitHub `ghp_…`, GitLab `glpat-…`, Slack `xox…`, chaînes Azure Storage | Préfixes fixes, longueurs bornées | Bloquer |
-| `generic_secret` | `Bearer …`, `Basic …`, JWT | Motifs bornés | Bloquer |
-| `iban` | `FR76 3000 6000 0112 3456 7890 189`, `DE89-3704-…` | mod-97 (ISO 13616) | Caviarder |
-| `card` | Visa / Mastercard / Amex | Luhn | Caviarder |
-| `phone` | Formats FR nationaux et `+33`, E.164 | Format | Caviarder |
+| `api_key` | AWS `AKIA…`, OpenAI/Anthropic/DeepSeek `sk-…`, Stripe `sk_live_…`/`whsec_…`, GitHub `ghp_…`/`gho_…`/`ghs_…`, GitLab `glpat-…`, Slack `xox…`/webhooks, Google `AIza…`, npm, Hugging Face, SendGrid, Twilio, clés privées PEM, chaînes Azure Storage | Préfixes fixes, longueurs bornées | Bloquer |
+| `generic_secret` | `Bearer …`, `Basic …`, JWT, URL avec identifiants (`postgres://user:pass@hôte`), affectations `password=…` / `client_secret: …` | Motifs bornés, Basic doit décoder en `user:pass`, valeur affectée mêlant lettres et chiffres | Bloquer |
+| `iban` | `FR76 3000 6000 0112 3456 7890 189`, `DE89-3704-…`, `FR76.3000.…` | mod-97 (ISO 13616) | Caviarder |
+| `card` | Visa / Mastercard / Amex / Discover / JCB / Diners | Luhn + préfixe émetteur et longueur | Caviarder |
+| `phone` | Formats FR nationaux et `+33`, E.164 contigu ou groupé (`+1 415 555 2671`) | Format | Caviarder |
 | `internal_ip` | Adresses RFC 1918 | Plages | Caviarder |
 | `pro_email` | Adresses sur les domaines que **vous** configurez | Domaine exact | Désactivé |
 

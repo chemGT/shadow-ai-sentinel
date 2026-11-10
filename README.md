@@ -57,11 +57,11 @@ Logs, configs and customer data pasted into public LLMs: a seatbelt, not surveil
 
 | Rule | Examples | Validation | Default |
 |------|----------|------------|---------|
-| `api_key` | AWS `AKIA…`/`ASIA…`, OpenAI `sk-…`, Anthropic `sk-ant-…`, Stripe `sk_live_…`, GitHub `ghp_…`/`github_pat_…`, GitLab `glpat-…`, Slack `xox…`, Azure storage connection strings | Fixed prefixes, bounded lengths | Block |
-| `generic_secret` | `Bearer …`, `Basic …`, JWTs | Bounded patterns | Block |
-| `iban` | `FR76 3000 6000 0112 3456 7890 189`, `DE89-3704-…` | ISO 13616 mod-97 | Redact |
-| `card` | Visa/Mastercard/Amex, contiguous or grouped | Luhn | Redact |
-| `phone` | French national and `+33` formats, E.164 | Format | Redact |
+| `api_key` | AWS `AKIA…`/`ASIA…`, OpenAI/Anthropic/DeepSeek `sk-…`, Stripe `sk_live_…`/`whsec_…`, GitHub `ghp_…`/`gho_…`/`ghs_…`/`github_pat_…`, GitLab `glpat-…`, Slack `xox…`/`xapp-…`/webhook URLs, Google `AIza…`, npm, Hugging Face, SendGrid, Twilio, DigitalOcean, PEM private keys, Azure storage connection strings | Fixed prefixes, bounded lengths | Block |
+| `generic_secret` | `Bearer …`, `Basic …`, JWTs, URLs with credentials (`postgres://user:pass@host`), `password=…` / `client_secret: …` assignments | Bounded patterns, Basic must decode to `user:pass`, assigned value must mix letters and digits | Block |
+| `iban` | `FR76 3000 6000 0112 3456 7890 189`, `DE89-3704-…`, `FR76.3000.…` | ISO 13616 mod-97 | Redact |
+| `card` | Visa/Mastercard/Amex/Discover/JCB/Diners, contiguous or grouped | Luhn + issuer prefix and length | Redact |
+| `phone` | French national and `+33` formats, E.164 contiguous or grouped (`+1 415 555 2671`) | Format | Redact |
 | `internal_ip` | RFC 1918 addresses (`10.x`, `172.16–31.x`, `192.168.x`) | Range check | Redact |
 | `pro_email` | Addresses on domains **you** configure | Exact domain | Off (needs a domain) |
 

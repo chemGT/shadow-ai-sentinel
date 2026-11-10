@@ -1,7 +1,7 @@
 import type { RawMatch } from './types.js';
 
 const IPV4_PATTERN =
-  /\b(?:(?:10\.\d{1,3}\.\d{1,3}\.\d{1,3})|(?:172\.(?:1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3})|(?:192\.168\.\d{1,3}\.\d{1,3}))\b/g;
+  /(?<![\d.])\b(?:(?:10\.\d{1,3}\.\d{1,3}\.\d{1,3})|(?:172\.(?:1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3})|(?:192\.168\.\d{1,3}\.\d{1,3}))\b(?!\.\d)/g;
 
 function isValidOctet(value: number): boolean {
   return value >= 0 && value <= 255;

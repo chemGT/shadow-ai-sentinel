@@ -178,7 +178,7 @@ export async function redactToastVisible(page: Page): Promise<boolean> {
     .catch(() => false);
 }
 
-export const SECRET_API_KEY = 'voici ma clé sk-ant-api03-e2e-fixture-0123456789 pour le script';
+export const SECRET_API_KEY = 'voici ma clé sk-ant-api03-e2eFixture0123456789abcdEFGH pour le script';
 export const SECRET_AWS_KEY = 'AKIAABCDEFGHIJKLMNOP';
 export const IBAN_FR = 'mon RIB est FR7630006000011234567890189 merci';
 export const CLEAN_TEXT = 'bonjour, peux-tu résumer ce paragraphe anodin ?';

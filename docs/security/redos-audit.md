@@ -127,3 +127,29 @@ The `MAX_DETECTION_INPUT_LENGTH = 100_000` safety net (in `limits.ts`) remains t
 ## Remaining actions
 
 - [ ] Consider `vuln-regex-detector` or `safe-regex` in CI for future regression protection (optional Sprint 1)
+
+---
+
+## Addendum — 2026-11 (detector extension)
+
+Re-audited after the detector set was extended (new vendor keys, PEM private keys, credential
+URLs, `name=value` secrets, grouped E.164). The "100,000-character truncation" described above is
+obsolete: the engine scans overlapping 100k windows up to 2,000,000 characters
+(`detection/limits.ts`).
+
+| File | Change | Why it stays linear / bounded |
+|------|--------|-------------------------------|
+| `api-key.ts` | Fixed-prefix patterns for GitHub `gh[pousr]_`, Stripe `whsec_`, Slack `xapp-` and webhook URLs, Google `AIza`, npm, Hugging Face, SendGrid, Twilio, DigitalOcean | Literal prefix + one bounded character class |
+| `api-key.ts` | PEM private key: `BEGIN…[\s\S]{1,4096}?…END` and `BEGIN…[A-Za-z0-9+/=\s]{0,4096}` | Lazy/greedy scan capped at 4096 per header; worst case measured below |
+| `api-key.ts` | Azure: optional `AccountKey=…{20,128}`, `SharedAccessSignature=…{20,512}` | Bounded, single class |
+| `generic-secret.ts` | Bearer `{20,4096}`, Basic `{16,512}` end with a negative lookahead instead of `\b` | Single class, bounded; over-length tokens are now matched instead of silently skipped |
+| `generic-secret.ts` | Credential URL `scheme://user:pass@host` | Three disjoint bounded classes separated by literals |
+| `generic-secret.ts` | `name[:=]value` secrets | Keyword alternation + `{0,24}` + `{8,128}`; no nesting |
+| `card.ts`, `phone.ts`, `internal-ip.ts` | Lookbehind/lookahead guards (adjacent digit, date separators) | Fixed-width or `?`-bounded lookarounds |
+| `iban.ts` | `.` accepted as group separator | Same shape as before |
+| `pro-email.ts` | Sub-domain labels bounded `{1,63}` × `{0,8}` (was unbounded `+` / `*`) | Removes the only unbounded quantifiers left in the engine |
+| `merge-matches.ts` | Linear merge (was quadratic: 22.9 s for 120k matches) | Not a regex, but it was the only real freeze found |
+
+Measured on ~2,000,000-character adversarial inputs (36 cases, Node 22, all rules enabled):
+worst case 0.7 s (e-mail labels), every other case under 0.6 s. A reduced version of these inputs
+runs in CI (`src/core/detection/corpus.test.ts`, "temps de scan borné").

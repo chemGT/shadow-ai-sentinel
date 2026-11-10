@@ -125,3 +125,29 @@ Le filet de sécurité `MAX_DETECTION_INPUT_LENGTH = 100_000` (dans `limits.ts`)
 ## Actions restantes
 
 - [ ] Envisager `vuln-regex-detector` ou `safe-regex` en CI pour régression future (optionnel Sprint 1)
+
+---
+
+## Addendum — 2026-11 (extension des détecteurs)
+
+Ré-audit après l'extension des détecteurs (nouvelles clés fournisseurs, clés privées PEM, URL
+avec identifiants, secrets `nom=valeur`, E.164 groupé). La « troncature à 100 000 caractères »
+décrite plus haut est obsolète : le moteur parcourt des fenêtres chevauchantes de 100 k jusqu'à
+2 000 000 de caractères (`detection/limits.ts`).
+
+| Fichier | Changement | Pourquoi cela reste linéaire / borné |
+|---------|------------|--------------------------------------|
+| `api-key.ts` | Motifs à préfixe fixe : GitHub `gh[pousr]_`, Stripe `whsec_`, Slack `xapp-` et webhooks, Google `AIza`, npm, Hugging Face, SendGrid, Twilio, DigitalOcean | Préfixe littéral + une classe bornée |
+| `api-key.ts` | Clé privée PEM : `BEGIN…[\s\S]{1,4096}?…END` et `BEGIN…[A-Za-z0-9+/=\s]{0,4096}` | Parcours plafonné à 4096 par en-tête ; pire cas mesuré ci-dessous |
+| `api-key.ts` | Azure : `AccountKey=…{20,128}` optionnel, `SharedAccessSignature=…{20,512}` | Borné, une seule classe |
+| `generic-secret.ts` | Bearer `{20,4096}`, Basic `{16,512}` terminés par un lookahead négatif au lieu de `\b` | Une classe, bornée ; un jeton trop long est désormais détecté au lieu d'être ignoré |
+| `generic-secret.ts` | URL avec identifiants `schéma://user:pass@hôte` | Trois classes disjointes bornées séparées par des littéraux |
+| `generic-secret.ts` | Secrets `nom[:=]valeur` | Alternance de mots-clés + `{0,24}` + `{8,128}` ; aucun imbriquement |
+| `card.ts`, `phone.ts`, `internal-ip.ts` | Gardes lookbehind/lookahead (chiffre adjacent, séparateurs de date) | Lookarounds de largeur fixe ou bornés par `?` |
+| `iban.ts` | `.` accepté comme séparateur de groupes | Même forme qu'avant |
+| `pro-email.ts` | Labels de sous-domaine bornés `{1,63}` × `{0,8}` (auparavant `+` / `*` non bornés) | Supprime les derniers quantificateurs non bornés du moteur |
+| `merge-matches.ts` | Fusion linéaire (auparavant quadratique : 22,9 s pour 120 k correspondances) | Pas un regex, mais c'était le seul vrai gel constaté |
+
+Mesuré sur des entrées adverses d'environ 2 000 000 de caractères (36 cas, Node 22, toutes
+règles actives) : pire cas 0,7 s (labels d'e-mail), tous les autres sous 0,6 s. Une version
+réduite de ces entrées tourne en CI (`src/core/detection/corpus.test.ts`, « temps de scan borné »).
