@@ -7,7 +7,12 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { createDefaultPolicy } from '../../../core/defaults.js';
 import { MAX_BINARY_FILE_BYTES, PPTX_MIME, XLSX_MIME } from '../../../core/binary-file.js';
 import type { Policy } from '../../../core/types.js';
-import { guardFileList, hasScannableInList, type FileGuardOptions } from './file-guard.js';
+import {
+  attachFileGuard,
+  guardFileList,
+  hasScannableInList,
+  type FileGuardOptions,
+} from './file-guard.js';
 
 // Stub minimal de l'API WebExtension : `reportDlpAction` en dépend.
 // `chrome.storage.local.get/set` sont Promise-only ici (cf. storage.ts) : pas de callback,
@@ -197,5 +202,42 @@ describe('guardFileList — XLSX/PPTX', () => {
     const result = await guardFileList([corrupt], options());
     expect(result.blocked).toBe(false);
     expect(result.allowed).toHaveLength(1);
+  });
+});
+
+describe('attachFileGuard — collage de fichiers (F1)', () => {
+  function pasteEvent(files: File[]): ClipboardEvent {
+    const event = new Event('paste', { bubbles: true, cancelable: true }) as ClipboardEvent;
+    Object.defineProperty(event, 'clipboardData', { value: { files } });
+    return event;
+  }
+
+  it('annule le collage de façon synchrone, avant la fin du dispatch', async () => {
+    const detach = attachFileGuard({ getPolicy: () => createDefaultPolicy(), host: 'claude.ai' });
+    const file = new File(['aws AKIAIOSFODNN7EXAMPLE'], 'creds.txt', { type: 'text/plain' });
+    const event = pasteEvent([file]);
+    let reachedSite = false;
+    const siteListener = () => {
+      reachedSite = true;
+    };
+    document.body.addEventListener('paste', siteListener);
+
+    document.body.dispatchEvent(event);
+
+    // Vérifié immédiatement après le dispatch : un preventDefault tardif (post-await) échouerait ici.
+    expect(event.defaultPrevented).toBe(true);
+    expect(reachedSite).toBe(false);
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    document.body.removeEventListener('paste', siteListener);
+    detach();
+  });
+
+  it('laisse passer un collage sans fichier analysable (image)', () => {
+    const detach = attachFileGuard({ getPolicy: () => createDefaultPolicy(), host: 'claude.ai' });
+    const event = pasteEvent([new File([new Uint8Array([1, 2, 3])], 'shot.png', { type: 'image/png' })]);
+    document.body.dispatchEvent(event);
+    expect(event.defaultPrevented).toBe(false);
+    detach();
   });
 });

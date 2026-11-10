@@ -327,17 +327,31 @@ export function attachFileGuard(options: FileGuardOptions): () => void {
     }
   }
 
+  /**
+   * Collage de fichiers : l'annulation doit être SYNCHRONE. Un `preventDefault()` appelé après
+   * un `await` arrive une fois le dispatch terminé — le site a déjà reçu les fichiers (ancien
+   * comportement : le fichier sensible partait malgré la modale). On annule donc d'abord, on
+   * analyse, puis on réinjecte les fichiers autorisés par l'input fichier (comme `onDrop`).
+   */
   async function onPaste(event: ClipboardEvent): Promise<void> {
     const files = filesFromDataTransfer(event.clipboardData);
     if (files.length === 0 || !hasScannableInList(files)) {
       return;
     }
 
-    const { blocked } = await guardFileList(files, options);
-    if (blocked) {
-      event.preventDefault();
-      event.stopPropagation();
-      event.stopImmediatePropagation();
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+
+    const { allowed, blocked } = await guardFileList(files, options);
+
+    if (blocked || allowed.length === 0) {
+      return;
+    }
+
+    const fileInput = document.querySelector<HTMLInputElement>('input[type="file"]');
+    if (fileInput) {
+      replaceInputFiles(fileInput, allowed);
     }
   }
 
