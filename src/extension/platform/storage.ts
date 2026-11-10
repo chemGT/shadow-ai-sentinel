@@ -137,3 +137,31 @@ export async function getAdapterHealth(): Promise<PersistedAdapterHealth> {
 export async function setAdapterHealth(state: PersistedAdapterHealth): Promise<void> {
   await storageSet({ [STORAGE_KEYS.adapterHealth]: state });
 }
+
+/**
+ * Diagnostic : erreurs de validation de la policy locale telle que stockée (`[]` si valide ou
+ * absente). `getStoredPolicy` masque ce cas en retombant sur les défauts.
+ */
+export async function getStoredPolicyErrors(): Promise<string[]> {
+  const result = await storageGet<unknown>(STORAGE_KEYS.policy);
+  const raw = result[STORAGE_KEYS.policy];
+  if (raw === undefined) {
+    return [];
+  }
+  const validated = validatePolicy(raw);
+  return validated.ok ? [] : validated.errors;
+}
+
+/** Diagnostic : aller-retour écriture/lecture/suppression sur une clé dédiée. */
+export async function probeStorage(): Promise<boolean> {
+  const key = 'sentinel_diag_probe';
+  try {
+    const api = getExtensionApi();
+    await api.storage.local.set({ [key]: 1 });
+    const read = (await api.storage.local.get(key)) as Record<string, unknown>;
+    await api.storage.local.remove(key);
+    return read[key] === 1;
+  } catch {
+    return false;
+  }
+}

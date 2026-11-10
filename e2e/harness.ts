@@ -55,6 +55,12 @@ async function extensionServiceWorker(context: BrowserContext) {
   return sw;
 }
 
+/** Identifiant de l'extension chargée (pour ouvrir ses pages : options, popup). */
+export async function extensionId(context: BrowserContext): Promise<string> {
+  const sw = await extensionServiceWorker(context);
+  return new URL(sw.url()).hostname;
+}
+
 /**
  * Acquitte la notice employé premier lancement (overlay plein écran RGPD),
  * sinon elle recouvre tous les composers et fausse les clics.
@@ -121,7 +127,7 @@ export async function gotoFixture(page: Page, host: string): Promise<void> {
   await page.goto(`https://${host}/`);
   const ready = await adapterReady;
   if (!ready) {
-    // Content script à document_idle : petite marge si le log n'est pas remonté.
+    // Petite marge si le log du content script n'est pas remonté.
     await page.waitForTimeout(2_000);
   }
 }
