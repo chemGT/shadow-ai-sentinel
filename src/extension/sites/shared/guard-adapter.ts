@@ -196,8 +196,27 @@ function runGuard(
   return false;
 }
 
+/** Zone de saisie de texte multi-ligne (là où Entrée envoie un message sur un site de chat). */
+function isEditableTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) {
+    return false;
+  }
+  return (
+    target instanceof HTMLTextAreaElement ||
+    target.isContentEditable ||
+    target.getAttribute('contenteditable') === 'true' ||
+    target.getAttribute('role') === 'textbox'
+  );
+}
+
 export function attachGuardAdapter(options: GuardAdapterOptions): () => void {
   const { dom, host, getPolicy, label, getAllowlist } = options;
+
+  const health = startAdapterHealthMonitor({
+    dom,
+    label,
+    getFailMode: () => getPolicy().fail_mode ?? 'warn',
+  });
 
   function onKeyDown(event: KeyboardEvent): void {
     if (event.key !== 'Enter' || event.shiftKey || event.ctrlKey || event.metaKey || event.altKey) {
@@ -209,8 +228,17 @@ export function attachGuardAdapter(options: GuardAdapterOptions): () => void {
 
     const input = dom.findComposerInput();
     if (!input) {
+      // Entrée dans une zone de saisie que l'adaptateur ne reconnaît pas : les sélecteurs ont
+      // cassé en cours de session. On le signale (bannière) et, en `fail_mode: closed`, on
+      // bloque cet envoi — avant, il partait sans analyse et sans avertissement.
+      if (isEditableTarget(event.target) && health.reportComposerMissing()) {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+      }
       return;
     }
+    health.reportComposerFound();
 
     const target = event.target;
     if (!(target instanceof Node) || !dom.isNodeInsideComposer(target, input)) {
@@ -242,11 +270,6 @@ export function attachGuardAdapter(options: GuardAdapterOptions): () => void {
     getAllowlist: options.getAllowlist,
   });
 
-  const detachHealthMonitor = startAdapterHealthMonitor({
-    dom,
-    label,
-    getFailMode: () => getPolicy().fail_mode ?? 'warn',
-  });
 
   console.info(`[Shadow AI Sentinel] Adaptateur ${label} actif (texte + fichiers texte)`);
 
@@ -254,6 +277,6 @@ export function attachGuardAdapter(options: GuardAdapterOptions): () => void {
     document.removeEventListener('keydown', onKeyDown, true);
     document.removeEventListener('click', onClick, true);
     detachFile();
-    detachHealthMonitor();
+    health.stop();
   };
 }

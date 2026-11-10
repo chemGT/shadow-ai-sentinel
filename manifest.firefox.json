@@ -58,7 +58,7 @@
         "*://copilot.microsoft.com/*"
       ],
       "js": ["src/extension/content/index.tsx"],
-      "run_at": "document_idle"
+      "run_at": "document_start"
     }
   ]
 }

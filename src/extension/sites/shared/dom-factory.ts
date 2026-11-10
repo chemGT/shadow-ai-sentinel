@@ -97,11 +97,35 @@ export function createSiteDom(config: SiteSelectorConfig): SiteDom {
     }
 
     const sendButton = findSendButton();
-    if (!sendButton) {
-      return false;
+    if (sendButton && (sendButton === target || sendButton.contains(target))) {
+      return true;
     }
 
-    return sendButton === target || sendButton.contains(target);
+    return isGenericSendButton(target);
+  }
+
+  /**
+   * Repli quand les sélecteurs du site ne résolvent plus le bouton d'envoi (refonte d'UI) : un
+   * bouton situé dans la zone du composer et qui se présente comme un bouton d'envoi
+   * (`type="submit"`, ou libellé/`data-testid` contenant send/envoyer/submit) est traité comme
+   * tel. Sans ce repli, un sélecteur périmé laissait le clic partir sans analyse alors que le
+   * self-test (qui ne regarde que la zone de saisie) restait au vert.
+   */
+  function isGenericSendButton(target: Node): boolean {
+    const element = target instanceof Element ? target : target.parentElement;
+    const button = element?.closest<HTMLElement>('button, [role="button"], input[type="submit"]');
+    if (!button) {
+      return false;
+    }
+    const input = findComposerInput();
+    if (!input || !isNodeInsideComposer(button, input)) {
+      return false;
+    }
+    if (button.getAttribute('type') === 'submit') {
+      return true;
+    }
+    const hint = `${button.getAttribute('aria-label') ?? ''} ${button.getAttribute('data-testid') ?? ''} ${button.getAttribute('title') ?? ''}`;
+    return /send|envoy|submit/i.test(hint);
   }
 
   return {

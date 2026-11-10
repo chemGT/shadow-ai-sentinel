@@ -51,7 +51,8 @@ async function loadPolicy(): Promise<Policy> {
 /**
  * Démarre la protection sur la page courante.
  *
- * Ordre voulu : l'adaptateur est attaché **immédiatement**, avec la policy par défaut, puis la
+ * Ordre voulu : l'adaptateur est attaché **immédiatement** (le manifeste injecte le script à
+ * `document_start`), avec la policy par défaut, puis la
  * policy et l'allowlist réelles sont chargées et prennent le relais. Avant, l'adaptateur n'était
  * attaché qu'une fois la policy chargée : un échec de chargement (storage ou service worker
  * indisponibles, exception) laissait la page sans aucune protection, avec un simple log console.
@@ -138,9 +139,18 @@ export function startContentScript(hostname: string): boolean {
       logFailure('Chargement de la policy impossible — règles par défaut appliquées', error),
     );
   refreshAllowlist();
-  void showFirstRunNoticeIfNeeded().catch((error: unknown) =>
-    logFailure('Notice de premier lancement indisponible', error),
-  );
+  // Le script tourne dès `document_start` (garde active avant le premier rendu) : la notice,
+  // elle, attend que le document soit construit pour ne pas être balayée par l'hydratation.
+  const showNotice = (): void => {
+    void showFirstRunNoticeIfNeeded().catch((error: unknown) =>
+      logFailure('Notice de premier lancement indisponible', error),
+    );
+  };
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', showNotice, { once: true });
+  } else {
+    showNotice();
+  }
 
   return true;
 }

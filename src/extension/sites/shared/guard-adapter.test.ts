@@ -16,8 +16,14 @@ vi.mock('../../content/reporting.js', () => ({
   reportDlpAction: vi.fn(async () => {}),
   reportTruncation: vi.fn(async () => {}),
 }));
+const reportComposerMissing = vi.fn(() => false);
+const reportComposerFound = vi.fn();
 vi.mock('./adapter-health-monitor.js', () => ({
-  startAdapterHealthMonitor: () => () => {},
+  startAdapterHealthMonitor: () => ({
+    stop: () => {},
+    reportComposerMissing: () => reportComposerMissing(),
+    reportComposerFound: () => reportComposerFound(),
+  }),
 }));
 
 import { showBlockAlert, showPolicyBlockAlert } from '../../content/ui-host.js';
@@ -136,5 +142,37 @@ describe('guard-adapter — exception pendant l’analyse (F3)', () => {
     pressEnter();
     const logged = JSON.stringify((console.error as unknown as { mock: { calls: unknown[][] } }).mock.calls);
     expect(logged).not.toContain('confidentiel');
+  });
+});
+
+describe('guard-adapter — sélecteurs cassés en cours de session (F8)', () => {
+  const noComposer = () => fakeDom({ findComposerInput: () => null });
+
+  it('Entrée dans une zone de saisie non reconnue : signalée au moniteur', () => {
+    attach('warn', noComposer());
+    reportComposerMissing.mockReturnValue(false);
+    expect(pressEnter()).toBe(false);
+    expect(reportComposerMissing).toHaveBeenCalledTimes(1);
+  });
+
+  it('fail_mode closed (le moniteur demande le blocage) : l’envoi est annulé', () => {
+    attach('closed', noComposer());
+    reportComposerMissing.mockReturnValue(true);
+    expect(pressEnter()).toBe(true);
+  });
+
+  it('Entrée hors zone de saisie (bouton, page) : rien n’est signalé', () => {
+    attach('closed', noComposer());
+    const event = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
+    document.body.dispatchEvent(event);
+    expect(reportComposerMissing).not.toHaveBeenCalled();
+    expect(event.defaultPrevented).toBe(false);
+  });
+
+  it('composer résolu : le moniteur est informé (levée d’un état cassé)', () => {
+    attach('warn');
+    composerText = 'bonjour';
+    pressEnter();
+    expect(reportComposerFound).toHaveBeenCalled();
   });
 });
