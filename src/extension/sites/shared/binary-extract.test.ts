@@ -4,7 +4,12 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { extractBinaryText, extractDocxText, extractPdfText } from './binary-extract.js';
+import {
+  extractBinaryText,
+  extractDocxText,
+  extractPdfText,
+  withFallback,
+} from './binary-extract.js';
 
 function fixturePath(name: string): string {
   return join(process.cwd(), 'test', 'fixtures', name);
@@ -78,5 +83,42 @@ describe('binary-extract', () => {
   it('extractBinaryText rejette un format non pris en charge', async () => {
     const other = new File(['plain text'], 'notes.txt', { type: 'text/plain' });
     await expect(extractBinaryText(other)).rejects.toThrow();
+  });
+});
+
+describe('withFallback (repli d’extraction PDF vers l’arrière-plan)', () => {
+  it('ne sollicite pas le repli quand l’extraction directe réussit', async () => {
+    let fallbackCalls = 0;
+    const text = await withFallback(
+      async () => 'direct',
+      async () => {
+        fallbackCalls += 1;
+        return 'repli';
+      },
+    );
+    expect(text).toBe('direct');
+    expect(fallbackCalls).toBe(0);
+  });
+
+  it('utilise le repli quand l’extraction directe échoue (cas Firefox)', async () => {
+    const text = await withFallback(
+      async () => {
+        throw new Error('Permission denied to access property "autoAllocateChunkSize"');
+      },
+      async () => 'repli',
+    );
+    expect(text).toBe('repli');
+  });
+
+  it('sans repli disponible, ou si le repli échoue aussi : erreur (fichier non analysable)', async () => {
+    const fail = async (): Promise<string> => {
+      throw new Error('direct');
+    };
+    await expect(withFallback(fail, null)).rejects.toThrow('direct');
+    await expect(
+      withFallback(fail, async () => {
+        throw new Error('repli');
+      }),
+    ).rejects.toThrow('repli');
   });
 });

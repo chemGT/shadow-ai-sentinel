@@ -6,6 +6,7 @@
  * Garde-fous anti « zip bomb » : nombre d'entrées lues et volume décompressé plafonnés ; un
  * dépassement lève une erreur (le file guard traite alors le fichier comme non scannable).
  */
+import { readFileBytes } from '../../../core/binary-file.js';
 
 /** Volume décompressé max cumulé, toutes entrées confondues. */
 export const MAX_OOXML_UNCOMPRESSED_BYTES = 50 * 1024 * 1024;
@@ -212,7 +213,7 @@ async function openZip(file: File): Promise<{
   entries: ZipEntry[];
   read: (entry: ZipEntry) => Promise<string>;
 }> {
-  const bytes = new Uint8Array(await file.arrayBuffer());
+  const bytes = await readFileBytes(file);
   const entries = readCentralDirectory(bytes);
   const budget = { remaining: MAX_OOXML_UNCOMPRESSED_BYTES };
   return { entries, read: (entry) => readEntry(bytes, entry, budget) };

@@ -1,4 +1,12 @@
-import { isDocxFile, isPdfFile, isPptxFile, isXlsxFile } from '../../../core/binary-file.js';
+import {
+  bytesToBase64,
+  isDocxFile,
+  isPdfFile,
+  isPptxFile,
+  isXlsxFile,
+  readFileBytes,
+} from '../../../core/binary-file.js';
+import { sendMessage } from '../../platform/runtime.js';
 
 /**
  * Import dynamique : pdfjs-dist/mammoth/ooxml-extract ne sont chargés (et n'alourdissent le bundle
@@ -28,9 +36,9 @@ async function loadPdfjs() {
   return pdfjs;
 }
 
-export async function extractPdfText(file: File): Promise<string> {
+/** Extraction pdf.js à partir d'octets appartenant au contexte courant. */
+export async function extractPdfTextFromBytes(data: Uint8Array): Promise<string> {
   const pdfjs = await loadPdfjs();
-  const data = new Uint8Array(await file.arrayBuffer());
   // Le cleanup (`destroy`) vit sur la loading task, pas sur le PDFDocumentProxy résolu.
   const loadingTask = pdfjs.getDocument({ data });
 
@@ -49,14 +57,65 @@ export async function extractPdfText(file: File): Promise<string> {
   }
 }
 
+/**
+ * Tente `direct`, puis `fallback` si `direct` échoue. Si les deux échouent, c'est l'erreur du
+ * repli qui remonte (le fichier est alors traité comme non analysable par le file guard).
+ */
+export async function withFallback<T>(
+  direct: () => Promise<T>,
+  fallback: (() => Promise<T>) | null,
+): Promise<T> {
+  try {
+    return await direct();
+  } catch (error) {
+    if (fallback === null) {
+      throw error;
+    }
+    return fallback();
+  }
+}
+
+/**
+ * Repli : extraction par la page d'arrière-plan de l'extension.
+ *
+ * Firefox : dans un content script, `ReadableStream` est le constructeur de la PAGE (vu à
+ * travers Xray) ; pdf.js lui passe des objets du content script que la page n'a pas le droit de
+ * lire (« Permission denied to access property "autoAllocateChunkSize" ») — `getTextContent`
+ * échoue donc toujours. L'arrière-plan, lui, est un contexte d'extension ordinaire où pdf.js
+ * fonctionne. Les octets transitent par la messagerie interne de l'extension (aucun réseau,
+ * rien n'est stocké), encodés en base64 car Chromium sérialise les messages en JSON.
+ */
+async function extractPdfTextInBackground(data: Uint8Array): Promise<string> {
+  const response = (await sendMessage({
+    type: 'EXTRACT_PDF_TEXT',
+    payload: bytesToBase64(data),
+  })) as { text?: unknown; error?: unknown } | undefined;
+  if (typeof response?.text !== 'string') {
+    throw new Error('extraction PDF en arrière-plan impossible');
+  }
+  return response.text;
+}
+
+export async function extractPdfText(file: File): Promise<string> {
+  const data = await readFileBytes(file);
+  const hasExtensionRuntime =
+    typeof chrome !== 'undefined' && typeof chrome.runtime?.sendMessage === 'function';
+  return withFallback(
+    // Copie : pdf.js peut transférer (détacher) le tampon reçu, or le repli en a encore besoin.
+    () => extractPdfTextFromBytes(data.slice()),
+    hasExtensionRuntime ? () => extractPdfTextInBackground(data) : null,
+  );
+}
+
 export async function extractDocxText(file: File): Promise<string> {
   const { default: mammoth } = await import('mammoth');
-  const arrayBuffer = await file.arrayBuffer();
+  const bytes = await readFileBytes(file);
+  const arrayBuffer = bytes.buffer as ArrayBuffer;
   // mammoth attend `{buffer}` via sa résolution Node par défaut (utilisée par Vitest) et
   // `{arrayBuffer}` via le remap `browser` de son package.json (appliqué par Vite en prod).
   // On fournit systématiquement la forme correspondant à l'environnement d'exécution réel.
   const input: Parameters<typeof mammoth.extractRawText>[0] =
-    typeof Buffer !== 'undefined' ? { buffer: Buffer.from(arrayBuffer) } : { arrayBuffer };
+    typeof Buffer !== 'undefined' ? { buffer: Buffer.from(bytes) } : { arrayBuffer };
   const result = await mammoth.extractRawText(input);
   return result.value;
 }

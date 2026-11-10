@@ -12,6 +12,9 @@ import {
   MAX_BINARY_FILE_BYTES,
   PPTX_MIME,
   XLSX_MIME,
+  base64ToBytes,
+  bytesToBase64,
+  readFileBytes,
 } from './binary-file.js';
 
 function mockFile(name: string, size: number, type = ''): File {
@@ -73,5 +76,21 @@ describe('binary-file', () => {
   it('applique la limite de taille binaire', () => {
     expect(isBinaryFileTooLarge(mockFile('a.pdf', MAX_BINARY_FILE_BYTES))).toBe(false);
     expect(isBinaryFileTooLarge(mockFile('a.pdf', MAX_BINARY_FILE_BYTES + 1))).toBe(true);
+  });
+});
+
+describe('readFileBytes / base64 (extraction sous Firefox)', () => {
+  it('rend une copie exacte des octets, dans un Uint8Array du contexte appelant', async () => {
+    const source = Uint8Array.from([0, 1, 2, 250, 255]);
+    const bytes = await readFileBytes(new File([source], 'a.bin'));
+    expect(bytes).toBeInstanceOf(Uint8Array);
+    expect([...bytes]).toEqual([0, 1, 2, 250, 255]);
+    expect(bytes.buffer).not.toBe(source.buffer);
+  });
+
+  it('base64 : aller-retour exact, y compris au-delà d’un bloc de 32 Ko', () => {
+    const big = new Uint8Array(100_000).map((_, i) => (i * 31) % 256);
+    expect([...base64ToBytes(bytesToBase64(big))]).toEqual([...big]);
+    expect(bytesToBase64(new Uint8Array(0))).toBe('');
   });
 });

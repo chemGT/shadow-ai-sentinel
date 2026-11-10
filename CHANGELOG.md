@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Firefox: PDF, DOCX, XLSX and PPTX attachments were never actually scanned.** Extraction always failed with a permission error (the file's bytes belong to the page, which the extension's content script may not build on), so the attachment was let through with the “could not be read” notice — or blocked outright under `fail_mode: closed`. File bytes are now copied into the extension's own context before extraction, and PDF text extraction falls back to the extension's background page on Firefox. Chromium was not affected. Present since attachment scanning was introduced
+
+### Added
+- `npm run test:e2e:firefox`: smoke test of the Firefox build in a real Firefox (WebDriver BiDi, no extra dependency) — package install, options page and diagnostics, popup, send guard on the 8 site fixtures, redaction, and text/PDF/DOCX/XLSX/PPTX attachments
+
 ## [1.2.0] — 2026-11-10
 
 ### Fixed
