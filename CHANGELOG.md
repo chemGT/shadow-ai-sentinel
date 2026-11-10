@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Coverage now measures `src/extension/**` and `src/ui/**` as well as `src/core/**` (64 % overall, 96 % on the detection core); thresholds raised to the measured floor, with a stricter one for the core
 - The page guard is injected at `document_start` (was `document_idle`), closing the window where a message could be sent before the extension was listening
 - `npm run package` no longer needs a `zip` binary (works on stock Windows) and produces **byte-reproducible** archives: two builds of the same commit give the same SHA-256, so `SHA256SUMS.txt` can be verified independently
+- Docs brought in line with the code: `docs/platform-compatibility.md` (8 sites, current interception and failure behaviour), `docs/deployment.md` (`lock_settings`, what `fail_mode` governs, corrected `ExtensionSettings` link), `SECURITY.md` (XLSX/PPTX are scanned), README install sections (diagnostics, deployment kit)
 
 ### Added
 - **More secret formats detected**: GitHub `gho_`/`ghu_`/`ghs_`/`ghr_`, Stripe `whsec_`, Slack `xapp-` tokens and incoming-webhook URLs, Google `AIza…` API keys, npm, Hugging Face, SendGrid, Twilio and DigitalOcean tokens, PEM private keys (whole block), URLs with embedded credentials (`postgres://user:pass@host`), `password=…` / `client_secret: …` / `aws_secret_access_key = …` assignments (only the value is redacted), IBANs grouped with dots, grouped international phone numbers (`+1 415 555 2671`), `Bearer` tokens longer than 512 characters

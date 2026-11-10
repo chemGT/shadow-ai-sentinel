@@ -85,8 +85,10 @@ full-width characters folded to ASCII. Redaction still applies to exactly what y
 
 Claude · ChatGPT · Gemini · Mistral Le Chat · DeepSeek · Perplexity · Grok · Microsoft Copilot
 
-If a site changes its DOM and the adapter can no longer find the message box, the extension says so
-(popup warning + configurable `fail_mode`: `open`, `warn` or `closed`) instead of failing silently.
+When something cannot be scanned — a site changed its page structure, a message exceeds the scan
+limit, an attachment is too large or unreadable — the extension says so instead of failing
+silently, and `fail_mode` decides the outcome: `closed` blocks, `warn` (default) sends with a
+visible warning, `open` sends.
 
 ## How it works
 
@@ -123,8 +125,12 @@ Tagged releases also ship ready-made archives on the
 `-chromium.zip` and load the folder unpacked; the Firefox `.xpi` is unsigned until the AMO listing
 is live, so release Firefox only accepts it as a temporary add-on.
 
-Rolling this out across a fleet via Chrome/Edge/Firefox enterprise policy, with rules pushed
-centrally (`chrome.storage.managed`)? See the [managed deployment guide](docs/deployment.md).
+**Check your install:** open the extension's options page → **Diagnostic**. Every line should
+read `OK`; anything else comes with the action to take.
+
+**Fleet rollout** (Intune, Group Policy, macOS profile, Linux, Firefox `policies.json`), with
+rules pushed centrally: use the [deployment kit](deploy/README.md) — one command per OS to
+install, check and uninstall — and the [policy reference](docs/deployment.md).
 
 ## What it does **not** do
 

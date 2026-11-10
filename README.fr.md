@@ -67,6 +67,14 @@ Chaque version publiée fournit aussi des archives prêtes à l'emploi sur la
 `-chromium.zip` puis le charger non empaqueté ; le `.xpi` Firefox n'est pas signé tant que la fiche
 AMO n'est pas en ligne, Firefox stable ne l'accepte donc qu'en module temporaire.
 
+**Vérifier l'installation :** page d'options de l'extension → **Diagnostic**. Chaque ligne doit
+afficher `OK` ; sinon, l'action à mener est indiquée.
+
+**Déploiement sur un parc** (Intune, GPO, profil macOS, Linux, `policies.json` Firefox), avec
+règles poussées de façon centralisée : [kit de déploiement](deploy/README.md) (en anglais) — une
+commande par OS pour installer, vérifier et désinstaller — et la
+[référence des policies](docs/deployment.md).
+
 ## Ce que l'outil ne fait **pas**
 
 Il protège contre la **fuite par inadvertance**, pas contre un initié déterminé : secrets encodés

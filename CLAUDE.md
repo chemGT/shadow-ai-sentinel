@@ -33,6 +33,15 @@ Hard constraints:
 - Policy (`sentinel_policy`) and allowlist (`sentinel_allowlist`) live in `chrome.storage.local`;
   the background only caches the policy and broadcasts updates to LLM tabs.
 - Site adapters: `src/extension/sites/<site>/` (selectors) + `sites/shared/` (send guard, file guard).
+- Startup: `src/extension/content/bootstrap.ts` attaches the guard immediately (default policy,
+  `document_start`), then swaps in the loaded policy. `fail_mode` (`core/fail-mode.ts`) governs
+  every "could not scan" case: broken adapter, truncated text, unscannable file, scan error.
+- Labeled detection corpus: `src/core/detection/corpus.ts` (should-detect / should-not, `gap: true`
+  = asserted known gap). A new pattern needs corpus entries and must cover the WHOLE secret
+  (redaction replaces only the matched span).
+- `deploy/`: fleet rollout scripts and templates; `src/test/deploy-artifacts.test.ts` validates them.
+- Options page **Diagnostic** = `core/diagnostics.ts` (pure; report must never contain content,
+  allowlist values or domain names).
 - Known bypasses are tests: `src/core/detection/evasion-corpus.test.ts` (`[BYPASS CONNU]` = asserted
   gap; fixing one means flipping the test and updating `docs/security/bypasses-2026-09.md`).
 

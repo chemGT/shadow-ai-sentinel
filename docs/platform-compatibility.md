@@ -1,75 +1,59 @@
 # Compatibilité plateformes LLM
 
-| Plateforme | Domaine | Extension | Statut | Dernière vérif. |
-|------------|---------|-----------|--------|-----------------|
-| Claude | `claude.ai` | 0.1.0 | 🟢 Adaptateur Phase 2 | 2026-05-19 |
-| ChatGPT | `chatgpt.com` | 0.1.0 | 🟡 Phase 7 — sélecteurs à valider post-login | 2026-05-20 |
-| Gemini | `gemini.google.com` | 0.1.0 | 🟡 Phase 7 — sélecteurs à valider post-login | 2026-05-20 |
+État au 2026-11. Les sélecteurs sont validés par l'e2e Playwright sur des **fixtures** des 8 sites
+(`e2e/fixtures.ts`), pas sur les sites réels (connexion requise) : une refonte d'UI côté site
+n'est détectée qu'à l'usage, par le self-test d'adaptateur (bannière « protection inactive »,
+diagnostic de la page d'options).
+
+| Plateforme | Domaine | Sélecteurs | Fixture e2e |
+|------------|---------|------------|-------------|
+| Claude | `claude.ai` | `src/extension/sites/claude/selectors.ts` | oui |
+| ChatGPT | `chatgpt.com` | `sites/chatgpt/selectors.ts` | oui |
+| Gemini | `gemini.google.com` | `sites/gemini/selectors.ts` | oui |
+| Le Chat | `chat.mistral.ai` | `sites/mistral/selectors.ts` | oui |
+| DeepSeek | `chat.deepseek.com` | `sites/deepseek/selectors.ts` | oui |
+| Perplexity | `perplexity.ai`, `www.perplexity.ai` | `sites/perplexity/selectors.ts` | oui |
+| Grok | `grok.com` | `sites/grok/selectors.ts` | oui |
+| Copilot | `copilot.microsoft.com` | `sites/copilot/selectors.ts` | oui |
+
+Non couverts : les autres domaines des mêmes éditeurs (consoles d'API, Copilot intégré à
+Microsoft 365, AI Studio…). Ajouter un hôte = `manifest*.json` (`host_permissions`,
+`content_scripts.matches`), `src/core/llm-hosts.ts`, un dossier `sites/<site>/` et une fixture.
 
 ## Architecture
 
-- Code partagé : `src/extension/sites/shared/` (`dom-factory`, `guard-adapter`, `input-text`)
+- Code partagé : `src/extension/sites/shared/` (`dom-factory`, `guard-adapter`, `file-guard`,
+  `adapter-health-monitor`, `input-text`)
 - Par site : `selectors.ts` → `dom.ts` → `adapter.ts`
-- Routage content script : `resolveLlmHost()` dans `src/core/llm-hosts.ts`
+- Démarrage : `src/extension/content/bootstrap.ts` (injecté à `document_start`, adaptateur
+  attaché immédiatement avec la policy par défaut, puis policy réelle)
 
-## Claude — `src/extension/sites/claude/selectors.ts`
-
-### Zone de saisie
-
-1. `div.ProseMirror[contenteditable="true"]`
-2. `[data-testid="chat-input"]`
-3. `div[contenteditable="true"][role="textbox"]`
-
-### Bouton d’envoi
-
-1. `button[aria-label="Send message"]`
-2. `button[data-testid="send-button"]`
-
-## ChatGPT — `src/extension/sites/chatgpt/selectors.ts`
-
-### Zone de saisie
-
-1. `#prompt-textarea`
-2. `div.ProseMirror[contenteditable="true"]`
-3. `[data-testid="prompt-textarea"]`
-4. `main div[contenteditable="true"]`
-
-### Bouton d’envoi
-
-1. `button[data-testid="send-button"]`
-2. `#composer-submit-button[data-testid="send-button"]`
-3. `button[aria-label*="Send"]`
-
-## Gemini — `src/extension/sites/gemini/selectors.ts`
-
-### Zone de saisie
-
-1. `rich-textarea div[contenteditable="true"]`
-2. `div.ql-editor[contenteditable="true"]`
-3. `div[contenteditable="true"][role="textbox"]`
-
-### Bouton d’envoi
-
-1. `button[aria-label="Send message"]`
-2. `button.send-button`
-3. `button[aria-label*="Send"]`
-
-## Raccourcis interceptés (tous sites)
+## Ce qui est intercepté (tous sites)
 
 - **Entrée** (sans Shift/Ctrl/Meta/Alt) dans le composer
-- **Clic** sur le bouton d’envoi
-- **Fichiers texte** : `change` sur `input[type=file]`, `drop`, `paste` (fichiers du presse-papiers)
+- **Clic** sur le bouton d'envoi — sélecteurs du site, puis repli générique : bouton situé dans
+  la zone du composer, `type="submit"` ou libellé contenant send/envoyer/submit
+- **Fichiers** : `change` sur `input[type=file]`, `drop`, `paste` (annulation synchrone, analyse,
+  puis réinjection des fichiers autorisés)
+  - texte/code : lus localement (5 Mo max), caviardables
+  - PDF, DOCX, XLSX, PPTX : texte extrait localement (10 Mo max) ; une règle « redact » bloque le
+    fichier, faute de pouvoir le réécrire
+  - autres formats (images, archives, RTF/ODF) : non analysés
 
-### Fichiers texte (`src/extension/sites/shared/file-guard.ts`)
+## Quand un site change
 
-- Lecture locale `FileReader` (max 5 Mo, analyse 100k car.)
-- Block / Redact identiques au composer
-- PDF / binaires : ignorés (pas d’analyse)
+| Situation | Détection | Effet selon `fail_mode` |
+|-----------|-----------|-------------------------|
+| Zone de saisie introuvable 10 s après le chargement | Self-test (`adapter-health-monitor.ts`) | `warn` : bannière ; `closed` : bannière + envois bloqués ; `open` : rien |
+| Zone de saisie introuvable en cours de session | Entrée dans un champ éditable non reconnu | idem, immédiatement |
+| Bouton d'envoi non reconnu | Repli générique (ci-dessus) | Analyse normale si le repli le reconnaît |
+| Zone de saisie de nouveau reconnue | Entrée suivante | État « cassé » levé |
 
 ## Procédure de mise à jour (rupture UI)
 
 1. Reproduire sur le site concerné (conversation ouverte).
-2. Inspecter le composer (input + bouton send).
-3. Ajouter le sélecteur en tête de liste dans `sites/<llm>/selectors.ts`.
-4. `npm test` puis Block (clé API) + Redact (IBAN) manuels.
-5. Mettre à jour ce fichier (date + statut).
+2. Inspecter le composer (zone de saisie + bouton d'envoi).
+3. Ajouter le sélecteur en tête de liste dans `sites/<site>/selectors.ts` et le reporter dans la
+   fixture (`e2e/fixtures.ts`).
+4. `npm test`, `npm run test:e2e`, puis Block (clé API) + Redact (IBAN) manuels sur le site.
+5. Mettre à jour la date en tête de ce fichier.

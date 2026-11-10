@@ -2,6 +2,7 @@
 
 | Document | Content |
 |----------|---------|
+| [../deploy/](../deploy/README.md) | Deployment kit: install/check/uninstall scripts (Windows, Linux), Intune and Group Policy steps, macOS profile, Firefox `policies.json`, example managed configurations, troubleshooting table |
 | [deployment.md](deployment.md) | Managed deployment: Chrome/Edge/Firefox enterprise policies, self-hosted builds, centrally managed policy (`storage.managed`) |
 | [security/evasion-threat-model.md](security/evasion-threat-model.md) | Threat model: attack surface, evasion classes, what is and is not covered |
 | [security/bypasses-2026-09.md](security/bypasses-2026-09.md) | Confirmed bypasses, fixes and documented limits — each backed by a test |
