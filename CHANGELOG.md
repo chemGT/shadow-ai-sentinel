@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] — 2026-11-10
+
 ### Fixed
 - **Pasted files were not actually blocked**: the paste was cancelled after the asynchronous scan, i.e. after the site had already received the file. The paste is now cancelled synchronously, the files are scanned, and only allowed (or redacted) files are handed back to the site
 - **Azure storage connection strings**: the match now covers `AccountKey=…` (it stopped at `AccountName=…;`, so a *redact* rule left the key itself in the message). A standalone `AccountKey=…` and `SharedAccessSignature=…` are detected too
@@ -26,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The page guard is injected at `document_start` (was `document_idle`), closing the window where a message could be sent before the extension was listening
 - `npm run package` no longer needs a `zip` binary (works on stock Windows) and produces **byte-reproducible** archives: two builds of the same commit give the same SHA-256, so `SHA256SUMS.txt` can be verified independently
 - Docs brought in line with the code: `docs/platform-compatibility.md` (8 sites, current interception and failure behaviour), `docs/deployment.md` (`lock_settings`, what `fail_mode` governs, corrected `ExtensionSettings` link), `SECURITY.md` (XLSX/PPTX are scanned), README install sections (diagnostics, deployment kit)
+- Dependencies: `pdfjs-dist` 6.5.438 (prod), TypeScript 7.0.2, Vite 8.3.7, Vitest 5.1.0, `@crxjs/vite-plugin` 3.0.0 (ESM only), Tailwind 4.3.4, `happy-dom` 21.0.4; `npm audit` reports 0 vulnerabilities
 
 ### Added
 - **More secret formats detected**: GitHub `gho_`/`ghu_`/`ghs_`/`ghr_`, Stripe `whsec_`, Slack `xapp-` tokens and incoming-webhook URLs, Google `AIza…` API keys, npm, Hugging Face, SendGrid, Twilio and DigitalOcean tokens, PEM private keys (whole block), URLs with embedded credentials (`postgres://user:pass@host`), `password=…` / `client_secret: …` / `aws_secret_access_key = …` assignments (only the value is redacted), IBANs grouped with dots, grouped international phone numbers (`+1 415 555 2671`), `Bearer` tokens longer than 512 characters
