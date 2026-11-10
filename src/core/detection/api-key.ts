@@ -58,10 +58,11 @@ const API_KEY_PATTERNS: ApiKeyPattern[] = [
   { source: /\bxox[baprs]-[A-Za-z0-9-]{10,255}\b/g, ruleType: 'api_key' },
   { source: /\bxapp-[A-Za-z0-9-]{20,255}\b/g, ruleType: 'api_key' },
   {
-    // Points écrits en classe `[.]` : même motif, mais CodeQL ne reconnaît plus ici un
-    // « hostname non ancré » (`js/regex/missing-regexp-anchor`), qui est un faux positif —
-    // on détecte un secret n'importe où dans le texte, on ne valide pas une URL.
-    source: /\bhttps:\/\/hooks[.]slack[.]com\/services\/[A-Za-z0-9/]{20,100}/g,
+    // `(?<=^|[^\w])` = le `\b` d'avant, en lookbehind : le motif reconnaît exactement les mêmes
+    // webhooks, mais CodeQL n'y voit plus un « hostname non ancré »
+    // (`js/regex/missing-regexp-anchor`), qui est un faux positif ici — on détecte un secret
+    // n'importe où dans le texte, on ne valide pas une URL.
+    source: /(?<=^|[^\w])https:\/\/hooks\.slack\.com\/services\/[A-Za-z0-9/]{20,100}/g,
     ruleType: 'api_key',
   },
   // Google API key
