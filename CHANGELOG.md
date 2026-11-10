@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - **Pasted files were not actually blocked**: the paste was cancelled after the asynchronous scan, i.e. after the site had already received the file. The paste is now cancelled synchronously, the files are scanned, and only allowed (or redacted) files are handed back to the site
+- **Azure storage connection strings**: the match now covers `AccountKey=…` (it stopped at `AccountName=…;`, so a *redact* rule left the key itself in the message). A standalone `AccountKey=…` and `SharedAccessSignature=…` are detected too
 
 ## [1.1.0] — 2026-10-20
 

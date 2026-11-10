@@ -18,10 +18,16 @@ const API_KEY_PATTERNS: ApiKeyPattern[] = [
   { source: /\bgithub_pat_[A-Za-z0-9_]{22,255}\b/g, ruleType: 'api_key' },
   { source: /\bglpat-[A-Za-z0-9_-]{20,255}\b/g, ruleType: 'api_key' },
   { source: /\bxox[baprs]-[A-Za-z0-9-]{10,255}\b/g, ruleType: 'api_key' },
+  // Azure Storage : la correspondance DOIT couvrir `AccountKey=…` — en mode redact, seul le
+  // segment trouvé est remplacé ; s'arrêter à `AccountName=…;` laissait la clé partir en clair.
+  // `AccountKey` reste optionnel (chaîne tronquée) ; la clé seule est couverte par le motif suivant.
   {
-    source: /\bDefaultEndpointsProtocol=https;AccountName=[^;\s]{3,24};/g,
+    source:
+      /\bDefaultEndpointsProtocol=https?;AccountName=[^;\s]{3,24};(?:AccountKey=[A-Za-z0-9+/]{20,128}={0,2})?/g,
     ruleType: 'api_key',
   },
+  { source: /\bAccountKey=[A-Za-z0-9+/]{40,128}={0,2}/g, ruleType: 'api_key' },
+  { source: /\bSharedAccessSignature=[A-Za-z0-9%&=+/_.:-]{20,512}/g, ruleType: 'api_key' },
 ];
 
 function collectPatternMatches(text: string, pattern: ApiKeyPattern): RawMatch[] {

@@ -8,6 +8,7 @@ import {
 import { isValidCardChecksum } from './detection/card.js';
 import { isValidIbanChecksum } from './detection/iban.js';
 import { detectSensitiveData } from './regex-engine.js';
+import { applyRedactionsToText, evaluateGuard } from '../extension/content/analyze.js';
 import type { Policy } from './types.js';
 
 function policyWith(overrides: Partial<Policy> & { emailDomains?: string[] }): Policy {
@@ -297,5 +298,35 @@ describe('detectSensitiveData — card', () => {
     const text = 'appelez le 06 12 34 56 78';
     const matches = detectSensitiveData(text, enableAllRules(createDefaultPolicy()));
     expect(matches.some((m) => m.ruleType === 'card')).toBe(false);
+  });
+});
+
+describe('Azure Storage — la clé est dans la correspondance (F2)', () => {
+  const key = `${'Ab1+/'.repeat(17)}A==`; // 86 caractères base64 + padding, comme une vraie clé
+  const conn = `DefaultEndpointsProtocol=https;AccountName=acct;AccountKey=${key};EndpointSuffix=core.windows.net`;
+
+  it('en mode redact, la clé ne reste pas dans le texte envoyé', () => {
+    const policy = createDefaultPolicy();
+    policy.rules = policy.rules.map((r) => (r.type === 'api_key' ? { ...r, action: 'redact' } : r));
+    const decision = evaluateGuard(conn, policy);
+    expect(decision.kind).toBe('redact');
+    if (decision.kind === 'redact') {
+      const sent = applyRedactionsToText(conn, decision.matches);
+      expect(sent).not.toContain(key);
+      expect(sent).toContain('[REDACTED_API_KEY]');
+    }
+  });
+
+  it('détecte une AccountKey isolée', () => {
+    const matches = detectSensitiveData(`AccountKey=${key}`, createDefaultPolicy());
+    expect(matches.map((m) => m.ruleType)).toEqual(['api_key']);
+  });
+
+  it('détecte toujours une chaîne de connexion sans AccountKey', () => {
+    const matches = detectSensitiveData(
+      'DefaultEndpointsProtocol=https;AccountName=acct;',
+      createDefaultPolicy(),
+    );
+    expect(matches).toHaveLength(1);
   });
 });
