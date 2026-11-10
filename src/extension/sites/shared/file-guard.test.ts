@@ -6,6 +6,8 @@ import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createDefaultPolicy } from '../../../core/defaults.js';
 import { MAX_BINARY_FILE_BYTES, PPTX_MIME, XLSX_MIME } from '../../../core/binary-file.js';
+import { MAX_DETECTION_TOTAL_LENGTH } from '../../../core/detection/limits.js';
+import { MAX_TEXT_FILE_BYTES } from '../../../core/text-file.js';
 import type { Policy } from '../../../core/types.js';
 import {
   attachFileGuard,
@@ -239,5 +241,45 @@ describe('attachFileGuard — collage de fichiers (F1)', () => {
     document.body.dispatchEvent(event);
     expect(event.defaultPrevented).toBe(false);
     detach();
+  });
+});
+
+describe('guardFileList — contenu non analysable et fail_mode (F4/F5)', () => {
+  const withFailMode = (fail_mode: 'open' | 'warn' | 'closed') =>
+    options({ getPolicy: () => ({ ...createDefaultPolicy(), fail_mode }) });
+
+  const oversizedPdf = () =>
+    new File([new Uint8Array(MAX_BINARY_FILE_BYTES + 1)], 'huge.pdf', { type: PDF_TYPE });
+  const oversizedText = () =>
+    new File([new Uint8Array(MAX_TEXT_FILE_BYTES + 1)], 'huge.log', { type: 'text/plain' });
+  const truncatedText = () =>
+    new File(['a '.repeat(MAX_DETECTION_TOTAL_LENGTH / 2 + 10)], 'long.txt', { type: 'text/plain' });
+
+  it.each([
+    ['binaire trop volumineux', oversizedPdf],
+    ['PDF corrompu', pdfCorrupt],
+    ['texte trop volumineux', oversizedText],
+    ['texte au-delà du plafond de scan', truncatedText],
+  ])('closed bloque : %s', async (_label, make) => {
+    const result = await guardFileList([make()], withFailMode('closed'));
+    expect(result.blocked).toBe(true);
+    expect(result.allowed).toHaveLength(0);
+  });
+
+  it.each([
+    ['binaire trop volumineux', oversizedPdf],
+    ['PDF corrompu', pdfCorrupt],
+    ['texte trop volumineux', oversizedText],
+    ['texte au-delà du plafond de scan', truncatedText],
+  ])('warn laisse passer (avec avertissement) : %s', async (_label, make) => {
+    const result = await guardFileList([make()], withFailMode('warn'));
+    expect(result.blocked).toBe(false);
+    expect(result.allowed).toHaveLength(1);
+  });
+
+  it('un texte trop volumineux n’est plus un passage silencieux : un toast est affiché', async () => {
+    await guardFileList([oversizedText()], withFailMode('warn'));
+    const toast = document.getElementById('shadow-ai-sentinel-file-toast');
+    expect(toast?.textContent ?? '').toContain('huge.log');
   });
 });

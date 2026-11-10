@@ -6,6 +6,7 @@ import {
   buildRedactedFile,
   consumeReplacedInputMark,
   isTextLikeFile,
+  MAX_TEXT_FILE_BYTES,
   readFileAsText,
   replaceInputFiles,
 } from '../../../core/text-file.js';
@@ -16,7 +17,8 @@ import {
   type GuardDecision,
 } from '../../content/analyze.js';
 import { reportDlpAction, reportTruncation } from '../../content/reporting.js';
-import { showBlockAlert } from '../../content/ui-host.js';
+import { showBlockAlert, showPolicyBlockAlert } from '../../content/ui-host.js';
+import { shouldBlockUnscannable, type UnscannableReason } from '../../../core/fail-mode.js';
 import { extractBinaryText } from './binary-extract.js';
 import {
   blockFileModalCopy,
@@ -26,6 +28,7 @@ import {
   fileTooLargeNotice,
   resolveLocale,
   truncationNotice,
+  unscannableBlockCopy,
 } from '../../../ui/i18n/messages.js';
 
 export type FileGuardOptions = {
@@ -141,7 +144,13 @@ async function processTextFile(
   try {
     text = await readFileAsText(file);
   } catch {
-    return { status: 'ok', file };
+    // Jamais de passage silencieux : trop volumineux ou illisible = non analysé, à signaler
+    // (et à bloquer en `fail_mode: closed`, cf. `guardFileList`).
+    return {
+      status: 'warn',
+      file,
+      reason: file.size > MAX_TEXT_FILE_BYTES ? 'too-large' : 'parse-failed',
+    };
   }
 
   return evaluateExtractedText(file, text, policy, allowlist);
@@ -150,8 +159,8 @@ async function processTextFile(
 /**
  * PDF/DOCX/XLSX/PPTX : même pipeline de décision que le texte brut, mais une décision "redact" est
  * impossible à appliquer fidèlement sur un binaire (pas de réécriture en place) — elle est donc
- * traitée comme un blocage. Taille excessive ou échec de parsing (corrompu/chiffré) : le fichier
- * passe, avec un avertissement, plutôt qu'un blocage (on ne bloque jamais sur une incertitude).
+ * traitée comme un blocage. Taille excessive ou échec de parsing (corrompu/chiffré) : statut
+ * `warn` — `guardFileList` avertit, ou bloque si `fail_mode: closed`.
  */
 async function processBinaryFile(
   file: File,
@@ -198,9 +207,28 @@ export async function guardFileList(
   const allowlist = options.getAllowlist?.();
   const allowed: File[] = [];
   let blocked = false;
+  const blockUnscannable = shouldBlockUnscannable(policy.fail_mode);
 
   for (const file of files) {
     const result = await processFile(file, policy, allowlist);
+
+    // Fichier non (ou partiellement) analysé : bloqué en `fail_mode: closed`.
+    const unscannable: UnscannableReason | null =
+      result.status === 'warn'
+        ? result.reason === 'too-large'
+          ? 'file-too-large'
+          : 'file-unreadable'
+        : (result.status === 'ok' || result.status === 'redact') && result.truncated
+          ? 'truncated'
+          : null;
+    if (unscannable !== null && blockUnscannable) {
+      showPolicyBlockAlert(unscannableBlockCopy(unscannable, resolveLocale(), file.name));
+      if (unscannable === 'truncated') {
+        void reportTruncation(options.host);
+      }
+      blocked = true;
+      break;
+    }
 
     if (result.status === 'block') {
       showBlockFileAlert(result.ruleType, file.name);

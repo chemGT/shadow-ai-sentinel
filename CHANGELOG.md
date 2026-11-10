@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Azure storage connection strings**: the match now covers `AccountKey=…` (it stopped at `AccountName=…;`, so a *redact* rule left the key itself in the message). A standalone `AccountKey=…` and `SharedAccessSignature=…` are detected too
 - **Tab freeze on match-dense text**: merging matches was quadratic (about 23 s for 120,000 matches, e.g. a large pasted log or export); it is now a single linear pass
 - **Partial policies no longer switch detectors off silently**: a stored or imported policy that omits a rule type (e.g. `"rules": []`) is completed with that rule's default instead of treating it as disabled. To disable a rule, state it explicitly (`"enabled": false`)
+- A text attachment over 5 MB (or unreadable) was let through with no notice at all; it now always shows a warning, and is blocked under `fail_mode: closed`
+
+### Changed
+- **`fail_mode` now governs everything that could not be scanned**, not only a broken site adapter: text beyond the 2 M-character scan limit, attachments too large to scan, unreadable (corrupt/encrypted) attachments. `closed` blocks them with an explanatory dialog; `warn`/`open` let them through with a visible notice, as before
 
 ## [1.1.0] — 2026-10-20
 

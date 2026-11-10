@@ -9,7 +9,7 @@
     },
     "fail_mode": {
       "title": "Behavior when a site adapter breaks",
-      "description": "open = send without scan, warn = send with a visible warning, closed = block all sends.",
+      "description": "What happens when content cannot be scanned (site adapter broken, text over the scan limit, file too large or unreadable, scan error). open = send, warn = send with a visible warning, closed = block.",
       "type": "string",
       "enum": ["open", "warn", "closed"]
     },

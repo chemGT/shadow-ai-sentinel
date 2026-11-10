@@ -4,8 +4,14 @@ import {
   evaluateGuard,
 } from '../../content/analyze.js';
 import { reportDlpAction, reportTruncation } from '../../content/reporting.js';
-import { showBlockAlert } from '../../content/ui-host.js';
-import { redactNotice, resolveLocale, truncationNotice } from '../../../ui/i18n/messages.js';
+import { showBlockAlert, showPolicyBlockAlert } from '../../content/ui-host.js';
+import {
+  redactNotice,
+  resolveLocale,
+  truncationNotice,
+  unscannableBlockCopy,
+} from '../../../ui/i18n/messages.js';
+import { shouldBlockUnscannable } from '../../../core/fail-mode.js';
 import { startAdapterHealthMonitor } from './adapter-health-monitor.js';
 import type { SiteDom } from './dom-factory.js';
 import { attachFileGuard } from './file-guard.js';
@@ -93,11 +99,29 @@ function runGuard(
   getAllowlist?: () => readonly string[],
 ): boolean {
   const text = dom.extractTextFromInput(input);
-  const decision = evaluateGuard(text, getPolicy(), getAllowlist?.());
+  const policy = getPolicy();
+  const decision = evaluateGuard(text, policy, getAllowlist?.());
+
+  // Texte au-delà du plafond de scan : la fin n'a pas été analysée. `fail_mode: closed` bloque
+  // l'envoi (sauf si une donnée sensible a déjà été trouvée : la modale habituelle prime).
+  const blockTruncated =
+    decision.truncated === true &&
+    decision.kind !== 'block' &&
+    shouldBlockUnscannable(policy.fail_mode);
 
   if (decision.truncated) {
-    showTruncationToast();
     void reportTruncation(host);
+    if (!blockTruncated) {
+      showTruncationToast();
+    }
+  }
+
+  if (blockTruncated) {
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+    showPolicyBlockAlert(unscannableBlockCopy('truncated', resolveLocale()));
+    return false;
   }
 
   if (decision.kind === 'allow') {
