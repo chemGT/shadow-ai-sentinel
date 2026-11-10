@@ -159,6 +159,7 @@ issue (rule, site, context, version — never your text). See the
 | `npm test` | Unit tests (Vitest) |
 | `npm run test:ci` | Unit tests + coverage |
 | `npm run test:e2e` | Builds, then runs Playwright against the real extension on fixtures of the 8 sites |
+| `FIREFOX_BIN=/path/to/firefox npm run test:e2e:firefox` | Builds the Firefox target and runs a smoke test in a real Firefox (WebDriver BiDi): install, options and popup, diagnostics, send guard on the 8 site fixtures, attachments |
 | `npx tsc --noEmit` | Typecheck |
 | `npm run build` / `npm run build:firefox` | Extension builds |
 | `npm run package` | Builds both targets, then writes store-ready packages to `release/` (Chromium zip, unsigned Firefox `.xpi`, source zip for AMO, `SHA256SUMS.txt`) |
