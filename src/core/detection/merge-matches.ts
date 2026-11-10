@@ -23,17 +23,20 @@ export function mergeRawMatches(matches: RawMatch[]): DetectionMatch[] {
     return b.end - b.start - (a.end - a.start);
   });
 
+  // Balayage linéaire : `sorted` est trié par début et `kept` reste trié, sans chevauchement —
+  // seul le DERNIER élément conservé peut donc chevaucher le candidat. L'ancienne recherche
+  // `kept.find(...)` par candidat était quadratique : ~23 s de gel du thread principal pour
+  // 120 000 correspondances (collage d'un gros journal ou d'un export).
   const kept: RawMatch[] = [];
 
   for (const candidate of sorted) {
-    const conflict = kept.find((k) => overlaps(k, candidate));
-    if (!conflict) {
+    const last = kept[kept.length - 1];
+    if (last === undefined || !overlaps(last, candidate)) {
       kept.push(candidate);
       continue;
     }
-    if (RULE_PRIORITY[candidate.ruleType] < RULE_PRIORITY[conflict.ruleType]) {
-      const idx = kept.indexOf(conflict);
-      kept[idx] = candidate;
+    if (RULE_PRIORITY[candidate.ruleType] < RULE_PRIORITY[last.ruleType]) {
+      kept[kept.length - 1] = candidate;
     }
   }
 
