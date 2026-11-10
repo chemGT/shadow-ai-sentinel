@@ -34,6 +34,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Diagnostics panel** on the options page (the “doctor”): detection-engine self-test, storage, local policy validity, managed-policy status, `fail_mode`, disabled rules, per-site host access, background process, last adapter state — each problem with the action to take, and a *Copy report* button. Runs locally; the report contains no typed text, allowlist value or domain name
 - **Deployment kit** (`deploy/`): Windows PowerShell script (install / status / uninstall, idempotent, registry backup for rollback) and Intune detection script, Linux policy script (same three actions), macOS configuration-profile template, Firefox `policies.json` template, example managed configurations, and a runbook with Intune, Group Policy and troubleshooting tables. The Linux script and all JSON templates are validated by tests; the Windows scripts and the macOS profile could not be run here and are flagged as untested in the runbook
 
+### Security
+- Dev dependency `happy-dom` updated past GHSA-834v-8h66-3h79 (test environment only; the shipped extension was not affected). `npm audit`: 0 vulnerabilities
+
 ## [1.1.0] — 2026-10-20
 
 ### Added
