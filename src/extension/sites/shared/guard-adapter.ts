@@ -8,6 +8,7 @@ import { showBlockAlert, showPolicyBlockAlert } from '../../content/ui-host.js';
 import {
   redactNotice,
   resolveLocale,
+  scanErrorNotice,
   truncationNotice,
   unscannableBlockCopy,
 } from '../../../ui/i18n/messages.js';
@@ -90,6 +91,52 @@ function showTruncationToast(): void {
   }, 6000);
 }
 
+function showScanErrorToast(): void {
+  showTruncationToast();
+  if (toastHost) {
+    toastHost.textContent = scanErrorNotice(resolveLocale());
+  }
+}
+
+/**
+ * Garde-fou autour de `runGuard` : une exception pendant l'analyse (extraction du texte,
+ * moteur, policy) ne doit pas se traduire par un envoi silencieux. `fail_mode: closed` bloque
+ * l'envoi ; sinon l'envoi passe avec un avertissement visible. On ne journalise que le nom de
+ * l'erreur, jamais son message (il pourrait reprendre du contenu saisi).
+ */
+function runGuardSafely(
+  dom: SiteDom,
+  host: LlmHost,
+  input: HTMLElement,
+  event: Event,
+  getPolicy: () => Policy,
+  getAllowlist?: () => readonly string[],
+): boolean {
+  try {
+    return runGuard(dom, host, input, event, getPolicy, getAllowlist);
+  } catch (error: unknown) {
+    console.error(
+      '[Shadow AI Sentinel] Échec de l’analyse avant envoi',
+      error instanceof Error ? error.name : 'erreur',
+    );
+    let failMode: Policy['fail_mode'];
+    try {
+      failMode = getPolicy().fail_mode;
+    } catch {
+      failMode = undefined;
+    }
+    if (shouldBlockUnscannable(failMode)) {
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      showPolicyBlockAlert(unscannableBlockCopy('scan-error', resolveLocale()));
+      return false;
+    }
+    showScanErrorToast();
+    return true;
+  }
+}
+
 function runGuard(
   dom: SiteDom,
   host: LlmHost,
@@ -170,7 +217,7 @@ export function attachGuardAdapter(options: GuardAdapterOptions): () => void {
       return;
     }
 
-    runGuard(dom, host, input, event, getPolicy, getAllowlist);
+    runGuardSafely(dom, host, input, event, getPolicy, getAllowlist);
   }
 
   function onClick(event: MouseEvent): void {
@@ -183,7 +230,7 @@ export function attachGuardAdapter(options: GuardAdapterOptions): () => void {
       return;
     }
 
-    runGuard(dom, host, input, event, getPolicy, getAllowlist);
+    runGuardSafely(dom, host, input, event, getPolicy, getAllowlist);
   }
 
   document.addEventListener('keydown', onKeyDown, true);

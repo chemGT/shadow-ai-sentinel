@@ -27,6 +27,7 @@ import {
   fileScanFailedNotice,
   fileTooLargeNotice,
   resolveLocale,
+  scanErrorNotice,
   truncationNotice,
   unscannableBlockCopy,
 } from '../../../ui/i18n/messages.js';
@@ -304,6 +305,39 @@ export function hasScannableInList(files: File[]): boolean {
   return files.some(isScannableFile);
 }
 
+/**
+ * `guardFileList` protégé contre une exception inattendue : les handlers ont déjà annulé
+ * l'événement, une promesse rejetée ferait disparaître les fichiers sans explication.
+ * `fail_mode: closed` bloque avec une modale ; sinon les fichiers passent avec un avertissement.
+ */
+async function guardFileListSafely(
+  files: File[],
+  options: FileGuardOptions,
+): Promise<{ allowed: File[]; blocked: boolean }> {
+  try {
+    return await guardFileList(files, options);
+  } catch (error: unknown) {
+    console.error(
+      '[Shadow AI Sentinel] Échec de l’analyse des pièces jointes',
+      error instanceof Error ? error.name : 'erreur',
+    );
+    let failMode: Policy['fail_mode'];
+    try {
+      failMode = options.getPolicy().fail_mode;
+    } catch {
+      failMode = undefined;
+    }
+    if (shouldBlockUnscannable(failMode)) {
+      showPolicyBlockAlert(
+        unscannableBlockCopy('scan-error', resolveLocale(), files[0]?.name ?? ''),
+      );
+      return { allowed: [], blocked: true };
+    }
+    showToast(scanErrorNotice(resolveLocale()));
+    return { allowed: files, blocked: false };
+  }
+}
+
 export function attachFileGuard(options: FileGuardOptions): () => void {
   async function onChange(event: Event): Promise<void> {
     const files = filesFromInput(event.target);
@@ -324,7 +358,7 @@ export function attachFileGuard(options: FileGuardOptions): () => void {
     const snapshot = [...files];
     input.value = '';
 
-    const { allowed, blocked } = await guardFileList(snapshot, options);
+    const { allowed, blocked } = await guardFileListSafely(snapshot, options);
 
     if (blocked) {
       return;
@@ -343,7 +377,7 @@ export function attachFileGuard(options: FileGuardOptions): () => void {
     event.stopPropagation();
     event.stopImmediatePropagation();
 
-    const { allowed, blocked } = await guardFileList(files, options);
+    const { allowed, blocked } = await guardFileListSafely(files, options);
 
     if (blocked) {
       return;
@@ -371,7 +405,7 @@ export function attachFileGuard(options: FileGuardOptions): () => void {
     event.stopPropagation();
     event.stopImmediatePropagation();
 
-    const { allowed, blocked } = await guardFileList(files, options);
+    const { allowed, blocked } = await guardFileListSafely(files, options);
 
     if (blocked || allowed.length === 0) {
       return;

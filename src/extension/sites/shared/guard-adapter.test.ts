@@ -106,3 +106,35 @@ describe('guard-adapter — texte au-delà du plafond de scan (F4)', () => {
     expect(document.getElementById('shadow-ai-sentinel-toast')?.style.display).toBe('block');
   });
 });
+
+describe('guard-adapter — exception pendant l’analyse (F3)', () => {
+  const throwingDom = () =>
+    fakeDom({
+      extractTextFromInput: () => {
+        throw new Error('contenu confidentiel dans le message');
+      },
+    });
+
+  beforeEach(() => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  it('fail_mode closed : l’envoi est bloqué', () => {
+    attach('closed', throwingDom());
+    expect(pressEnter()).toBe(true);
+    expect(showPolicyBlockAlert).toHaveBeenCalledTimes(1);
+  });
+
+  it('fail_mode warn : l’envoi passe, avec un avertissement visible', () => {
+    attach('warn', throwingDom());
+    expect(pressEnter()).toBe(false);
+    expect(document.getElementById('shadow-ai-sentinel-toast')?.style.display).toBe('block');
+  });
+
+  it('ne journalise jamais le message de l’erreur (contenu potentiel)', () => {
+    attach('warn', throwingDom());
+    pressEnter();
+    const logged = JSON.stringify((console.error as unknown as { mock: { calls: unknown[][] } }).mock.calls);
+    expect(logged).not.toContain('confidentiel');
+  });
+});

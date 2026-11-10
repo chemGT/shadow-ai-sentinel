@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Tab freeze on match-dense text**: merging matches was quadratic (about 23 s for 120,000 matches, e.g. a large pasted log or export); it is now a single linear pass
 - **Partial policies no longer switch detectors off silently**: a stored or imported policy that omits a rule type (e.g. `"rules": []`) is completed with that rule's default instead of treating it as disabled. To disable a rule, state it explicitly (`"enabled": false`)
 - A text attachment over 5 MB (or unreadable) was let through with no notice at all; it now always shows a warning, and is blocked under `fail_mode: closed`
+- **No more silent fail-open on internal errors**: the page guard is attached immediately with the default rules and the real policy takes over once loaded, so a storage or service-worker failure no longer leaves the page unprotected; an exception during a scan follows `fail_mode` (`closed` blocks, otherwise the content is sent with a visible warning); a failure to attach shows the “protection inactive” banner. Error logs carry the error name only, never its message
 
 ### Changed
 - **`fail_mode` now governs everything that could not be scanned**, not only a broken site adapter: text beyond the 2 M-character scan limit, attachments too large to scan, unreadable (corrupt/encrypted) attachments. `closed` blocks them with an explanatory dialog; `warn`/`open` let them through with a visible notice, as before
