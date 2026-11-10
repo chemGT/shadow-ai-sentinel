@@ -6,6 +6,7 @@ import {
   buildRedactedFile,
   consumeReplacedInputMark,
   isTextLikeFile,
+  MAX_TEXT_FILE_BYTES,
   readFileAsText,
   replaceInputFiles,
 } from '../../../core/text-file.js';
@@ -16,7 +17,8 @@ import {
   type GuardDecision,
 } from '../../content/analyze.js';
 import { reportDlpAction, reportTruncation } from '../../content/reporting.js';
-import { showBlockAlert } from '../../content/ui-host.js';
+import { showBlockAlert, showPolicyBlockAlert } from '../../content/ui-host.js';
+import { shouldBlockUnscannable, type UnscannableReason } from '../../../core/fail-mode.js';
 import { extractBinaryText } from './binary-extract.js';
 import {
   blockFileModalCopy,
@@ -25,7 +27,9 @@ import {
   fileScanFailedNotice,
   fileTooLargeNotice,
   resolveLocale,
+  scanErrorNotice,
   truncationNotice,
+  unscannableBlockCopy,
 } from '../../../ui/i18n/messages.js';
 
 export type FileGuardOptions = {
@@ -141,7 +145,13 @@ async function processTextFile(
   try {
     text = await readFileAsText(file);
   } catch {
-    return { status: 'ok', file };
+    // Jamais de passage silencieux : trop volumineux ou illisible = non analysé, à signaler
+    // (et à bloquer en `fail_mode: closed`, cf. `guardFileList`).
+    return {
+      status: 'warn',
+      file,
+      reason: file.size > MAX_TEXT_FILE_BYTES ? 'too-large' : 'parse-failed',
+    };
   }
 
   return evaluateExtractedText(file, text, policy, allowlist);
@@ -150,8 +160,8 @@ async function processTextFile(
 /**
  * PDF/DOCX/XLSX/PPTX : même pipeline de décision que le texte brut, mais une décision "redact" est
  * impossible à appliquer fidèlement sur un binaire (pas de réécriture en place) — elle est donc
- * traitée comme un blocage. Taille excessive ou échec de parsing (corrompu/chiffré) : le fichier
- * passe, avec un avertissement, plutôt qu'un blocage (on ne bloque jamais sur une incertitude).
+ * traitée comme un blocage. Taille excessive ou échec de parsing (corrompu/chiffré) : statut
+ * `warn` — `guardFileList` avertit, ou bloque si `fail_mode: closed`.
  */
 async function processBinaryFile(
   file: File,
@@ -198,9 +208,28 @@ export async function guardFileList(
   const allowlist = options.getAllowlist?.();
   const allowed: File[] = [];
   let blocked = false;
+  const blockUnscannable = shouldBlockUnscannable(policy.fail_mode);
 
   for (const file of files) {
     const result = await processFile(file, policy, allowlist);
+
+    // Fichier non (ou partiellement) analysé : bloqué en `fail_mode: closed`.
+    const unscannable: UnscannableReason | null =
+      result.status === 'warn'
+        ? result.reason === 'too-large'
+          ? 'file-too-large'
+          : 'file-unreadable'
+        : (result.status === 'ok' || result.status === 'redact') && result.truncated
+          ? 'truncated'
+          : null;
+    if (unscannable !== null && blockUnscannable) {
+      showPolicyBlockAlert(unscannableBlockCopy(unscannable, resolveLocale(), file.name));
+      if (unscannable === 'truncated') {
+        void reportTruncation(options.host);
+      }
+      blocked = true;
+      break;
+    }
 
     if (result.status === 'block') {
       showBlockFileAlert(result.ruleType, file.name);
@@ -276,6 +305,39 @@ export function hasScannableInList(files: File[]): boolean {
   return files.some(isScannableFile);
 }
 
+/**
+ * `guardFileList` protégé contre une exception inattendue : les handlers ont déjà annulé
+ * l'événement, une promesse rejetée ferait disparaître les fichiers sans explication.
+ * `fail_mode: closed` bloque avec une modale ; sinon les fichiers passent avec un avertissement.
+ */
+async function guardFileListSafely(
+  files: File[],
+  options: FileGuardOptions,
+): Promise<{ allowed: File[]; blocked: boolean }> {
+  try {
+    return await guardFileList(files, options);
+  } catch (error: unknown) {
+    console.error(
+      '[Shadow AI Sentinel] Échec de l’analyse des pièces jointes',
+      error instanceof Error ? error.name : 'erreur',
+    );
+    let failMode: Policy['fail_mode'];
+    try {
+      failMode = options.getPolicy().fail_mode;
+    } catch {
+      failMode = undefined;
+    }
+    if (shouldBlockUnscannable(failMode)) {
+      showPolicyBlockAlert(
+        unscannableBlockCopy('scan-error', resolveLocale(), files[0]?.name ?? ''),
+      );
+      return { allowed: [], blocked: true };
+    }
+    showToast(scanErrorNotice(resolveLocale()));
+    return { allowed: files, blocked: false };
+  }
+}
+
 export function attachFileGuard(options: FileGuardOptions): () => void {
   async function onChange(event: Event): Promise<void> {
     const files = filesFromInput(event.target);
@@ -296,7 +358,7 @@ export function attachFileGuard(options: FileGuardOptions): () => void {
     const snapshot = [...files];
     input.value = '';
 
-    const { allowed, blocked } = await guardFileList(snapshot, options);
+    const { allowed, blocked } = await guardFileListSafely(snapshot, options);
 
     if (blocked) {
       return;
@@ -315,7 +377,7 @@ export function attachFileGuard(options: FileGuardOptions): () => void {
     event.stopPropagation();
     event.stopImmediatePropagation();
 
-    const { allowed, blocked } = await guardFileList(files, options);
+    const { allowed, blocked } = await guardFileListSafely(files, options);
 
     if (blocked) {
       return;
@@ -327,17 +389,31 @@ export function attachFileGuard(options: FileGuardOptions): () => void {
     }
   }
 
+  /**
+   * Collage de fichiers : l'annulation doit être SYNCHRONE. Un `preventDefault()` appelé après
+   * un `await` arrive une fois le dispatch terminé — le site a déjà reçu les fichiers (ancien
+   * comportement : le fichier sensible partait malgré la modale). On annule donc d'abord, on
+   * analyse, puis on réinjecte les fichiers autorisés par l'input fichier (comme `onDrop`).
+   */
   async function onPaste(event: ClipboardEvent): Promise<void> {
     const files = filesFromDataTransfer(event.clipboardData);
     if (files.length === 0 || !hasScannableInList(files)) {
       return;
     }
 
-    const { blocked } = await guardFileList(files, options);
-    if (blocked) {
-      event.preventDefault();
-      event.stopPropagation();
-      event.stopImmediatePropagation();
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+
+    const { allowed, blocked } = await guardFileListSafely(files, options);
+
+    if (blocked || allowed.length === 0) {
+      return;
+    }
+
+    const fileInput = document.querySelector<HTMLInputElement>('input[type="file"]');
+    if (fileInput) {
+      replaceInputFiles(fileInput, allowed);
     }
   }
 

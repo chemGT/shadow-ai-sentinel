@@ -5,14 +5,17 @@
  *   - shadow-ai-sentinel-vX.Y.Z-source.zip            → sources exigées par AMO (code minifié par Vite)
  *   - SHA256SUMS.txt
  *
- * Prérequis : `dist/` et `dist-firefox/` construits (`npm run package` les construit d'abord),
- * `zip` et `git` dans le PATH. L'archive source vient de `git archive HEAD` : les modifications
+ * Prérequis : `dist/` et `dist-firefox/` construits (`npm run package` les construit d'abord) et
+ * `git` dans le PATH. Aucun binaire `zip` requis (fonctionne tel quel sous Windows) : les archives
+ * sont écrites par `scripts/lib/zip.mjs`, de façon déterministe — deux builds du même commit
+ * donnent les mêmes SHA-256. L'archive source vient de `git archive HEAD` : les modifications
  * non commitées n'y figurent pas, d'où l'avertissement sur un arbre de travail modifié.
  */
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { access, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { zipDirectory } from './lib/zip.mjs';
 
 const root = process.cwd();
 const outDir = join(root, 'release');
@@ -51,7 +54,7 @@ if (run('git', ['status', '--porcelain']).trim() !== '') {
   console.warn('ATTENTION : arbre de travail modifié — l’archive source ne contient que HEAD.');
 }
 
-// 2. Archives. `-X` : pas d'attributs étendus ; `-D` : pas d'entrées de répertoire.
+// 2. Archives déterministes : entrées triées, horodatage fixe, pas d'entrées de répertoire.
 await rm(outDir, { recursive: true, force: true });
 await mkdir(outDir);
 
@@ -61,7 +64,7 @@ const artifacts = [
 ];
 for (const { dir, name } of artifacts) {
   await access(join(root, dir, 'manifest.json'));
-  run('zip', ['-qrXD', join(outDir, name), '.'], join(root, dir));
+  await writeFile(join(outDir, name), await zipDirectory(join(root, dir)));
 }
 
 const sourceName = `shadow-ai-sentinel-${tag}-source.zip`;

@@ -114,6 +114,56 @@ describe('applyManagedPolicy', () => {
   });
 });
 
+describe('lock_settings — poste verrouillé (F21)', () => {
+  const userTampered = (): ReturnType<typeof createDefaultPolicy> => ({
+    ...createDefaultPolicy(),
+    fail_mode: 'open',
+    rules: createDefaultPolicy().rules.map((r) => ({ ...r, enabled: false })),
+  });
+
+  it('sans verrou : une règle non listée par l’admin reste désactivable par l’utilisateur', () => {
+    const config = parseManagedConfig({ rules: [{ type: 'iban', action: 'block', enabled: true }] });
+    const effective = applyManagedPolicy(userTampered(), config);
+    expect(effective.rules.find((r) => r.type === 'api_key')?.enabled).toBe(false);
+  });
+
+  it('avec verrou : les règles non listées reprennent leur défaut, pas le réglage local', () => {
+    const config = parseManagedConfig({
+      lock_settings: true,
+      rules: [{ type: 'iban', action: 'block', enabled: true }],
+    });
+    const effective = applyManagedPolicy(userTampered(), config);
+    expect(effective.rules.find((r) => r.type === 'api_key')).toEqual({
+      type: 'api_key',
+      action: 'block',
+      enabled: true,
+    });
+    expect(effective.rules.find((r) => r.type === 'iban')?.action).toBe('block');
+    expect(effective.fail_mode).toBe('warn');
+    expect([...managedRuleTypes(config)].sort()).toEqual([...ALL_RULE_TYPES].sort());
+  });
+
+  it('avec verrou : l’allowlist locale est ignorée', () => {
+    const config = parseManagedConfig({ lock_settings: true, allowlist: ['admin-ok'] });
+    expect(mergeAllowlists(['AKIAIOSFODNN7EXAMPLE'], config)).toEqual(['admin-ok']);
+  });
+
+  it('avec verrou seul : pro_email reste désactivé faute de domaines', () => {
+    const config = parseManagedConfig({
+      lock_settings: true,
+      rules: [{ type: 'pro_email', action: 'redact', enabled: true }],
+    });
+    const effective = applyManagedPolicy(createDefaultPolicy(), config);
+    expect(effective.rules.find((r) => r.type === 'pro_email')?.enabled).toBe(false);
+  });
+
+  it('valeur invalide : ignorée et signalée, pas de verrou', () => {
+    const config = parseManagedConfig({ lock_settings: 'yes' });
+    expect(config.lockSettings).toBeUndefined();
+    expect(config.errors).toHaveLength(1);
+  });
+});
+
 describe('mergeAllowlists', () => {
   it('union locale + gérée sans doublon', () => {
     const config = parseManagedConfig({ allowlist: ['a', 'b'] });

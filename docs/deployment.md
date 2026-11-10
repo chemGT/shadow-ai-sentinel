@@ -1,5 +1,9 @@
 # Managed deployment guide
 
+> **Ready-made scripts and templates** (Windows PowerShell, Intune and GPO steps, Linux script,
+> macOS profile, Firefox `policies.json`, example configurations, troubleshooting table) are in
+> [`deploy/`](../deploy/README.md). This page is the reference behind them.
+
 This guide is for IT admins who want to roll out Shadow AI Sentinel across an organization's
 Chrome, Edge or Firefox fleet, and to configure its policy centrally. It does not cover personal,
 single-browser installs — see the [README](../README.md#install) for that.
@@ -21,7 +25,7 @@ Two policies control this, both documented by Chromium and shared by Edge:
   ```
   abcdefghijklmnopabcdefghijklmnop;https://intranet.example.org/extensions/update.xml
   ```
-- **[`ExtensionSettings`](https://firefox-admin-docs.mozilla.org/reference/policies/extensionsettings/)**
+- **[`ExtensionSettings`](https://chromium.googlesource.com/chromium/src/+/HEAD/components/policy/resources/templates/policy_definitions/Extensions/ExtensionSettings.yaml)**
   — a per-extension (or `"*"` default) policy object with `installation_mode` (`allowed`,
   `blocked`, `force_installed`, `normal_installed`), `update_url`, `runtime_blocked_hosts`,
   `blocked_permissions`, etc. `ExtensionSettings` is honored by Chrome, Edge **and** Firefox, so a
@@ -129,28 +133,49 @@ layers exist:
 
 The extension declares a managed schema
 ([`public/managed_schema.json`](../public/managed_schema.json), shipped as `managed_schema.json`
-at the root of the Chromium build). Four keys are supported:
+at the root of the Chromium build). Five keys are supported:
 
 | Key | Type | Effect |
 |-----|------|--------|
 | `rules` | array of `{ "type", "action", "enabled" }` | Each entry **replaces the local rule of the same type**. Types you don't list stay user-configurable. |
 | `emailDomains` | array of strings | Replaces the local list (used by the `pro_email` rule). |
-| `fail_mode` | `"open"` \| `"warn"` \| `"closed"` | Replaces the local value. |
+| `fail_mode` | `"open"` \| `"warn"` \| `"closed"` | Replaces the local value. Governs everything that could not be scanned — see below. |
 | `allowlist` | array of strings | **Added** to the user's own allowlist (union); users can't remove admin entries. |
+| `lock_settings` | boolean | `true`: the user's own settings are **ignored**. Rules you did not list use the extension defaults, unmanaged `fail_mode`/`emailDomains` use their defaults, and only the managed allowlist applies. |
 
 Rule `type` values: `api_key`, `generic_secret`, `iban`, `card`, `internal_ip`, `pro_email`,
 `phone`. `action`: `block` or `redact`.
 
+**`fail_mode`** decides what happens to content the extension could not scan: a site whose page
+structure changed (adapter broken), text beyond the 2,000,000-character scan limit, an attachment
+too large or unreadable, an internal scan error.
+
+| Value | Behaviour |
+|-------|-----------|
+| `closed` | Blocked, with a dialog explaining why. Recommended for managed fleets |
+| `warn` (default) | Sent, with a visible warning |
+| `open` | Sent; the warning for truncated text and unscannable files is still shown, the broken-adapter banner is not |
+
+**Without `lock_settings`**, anything you do not manage stays in the user's hands: they can switch
+off a rule you did not list and add any value to their own allowlist. Set `"lock_settings": true`
+when the configuration must not be weakened locally.
+
 **Precedence**: managed overrides local **field by field** (and rule by rule). A key that is absent
 or `null` means "not managed": the local value applies, it is never implicitly cleared. An invalid
-key or rule entry is ignored (with a console warning in the extension) and the local value applies
-— the extension never blocks the user because of a malformed admin policy. Chromium also rejects
+key or rule entry is ignored and the local value applies — the extension never blocks the user
+because of a malformed admin policy. The ignored values are listed in a red banner on the options
+page and in its **Diagnostic** section, so a malformed policy is visible on the workstation. Chromium also rejects
 values that don't match the schema before the extension sees them (visible in `chrome://policy`);
 Firefox doesn't validate against the schema, so the extension re-validates every value itself.
 
 **What the user sees**: on the options page, a banner says some settings are managed by the
 organization; managed rules carry a *Géré* badge and their switches are disabled; the number of
-admin allowlist entries is shown under the allowlist.
+admin allowlist entries is shown under the allowlist. With `lock_settings`, every rule is
+locked and local editing is disabled.
+
+**Verifying a workstation**: options page → **Diagnostic**. It checks the detection engine, the
+local and managed policy, site access and the last adapter state, each with the action to take,
+and offers a copyable report that contains no typed text, allowlist value or domain name.
 
 **Live updates**: when the admin policy changes (policy refresh, `chrome://policy` → *Reload
 policies*), the extension recomputes the effective policy and pushes it to open AI tabs, without a
@@ -164,6 +189,7 @@ already delivered to the browser by the OS/admin policy.
 ```json
 {
   "fail_mode": "closed",
+  "lock_settings": true,
   "emailDomains": ["example.com"],
   "rules": [
     { "type": "api_key", "action": "block", "enabled": true },

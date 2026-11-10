@@ -1,0 +1,18 @@
+{
+  "policies": {
+    "ExtensionSettings": {
+      "shadow-ai-sentinel@pilot.sentinel": {
+        "installation_mode": "force_installed",
+        "install_url": "https://addons.mozilla.org/firefox/downloads/latest/REPLACE_WITH_AMO_SLUG/latest.xpi"
+      }
+    },
+    "3rdparty": {
+      "Extensions": {
+        "shadow-ai-sentinel@pilot.sentinel": {
+          "fail_mode": "closed",
+          "lock_settings": true
+        }
+      }
+    }
+  }
+}

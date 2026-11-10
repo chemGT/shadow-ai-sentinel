@@ -1,0 +1,15 @@
+{
+  "fail_mode": "closed",
+  "lock_settings": true,
+  "emailDomains": ["example.com"],
+  "rules": [
+    { "type": "api_key", "action": "block", "enabled": true },
+    { "type": "generic_secret", "action": "block", "enabled": true },
+    { "type": "iban", "action": "redact", "enabled": true },
+    { "type": "card", "action": "redact", "enabled": true },
+    { "type": "internal_ip", "action": "redact", "enabled": true },
+    { "type": "phone", "action": "redact", "enabled": true },
+    { "type": "pro_email", "action": "redact", "enabled": true }
+  ],
+  "allowlist": []
+}

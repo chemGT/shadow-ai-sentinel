@@ -12,9 +12,10 @@ function buildProEmailPattern(domains: string[]): RegExp | null {
   const domainPart = domains.map(escapeRegex).join('|');
   // Chaîne de sous-domaines optionnelle avant le domaine configuré (bypass B3) :
   // `jean@mail.acme.com` matche `acme.com`, mais `evilmacme.com` ne peut pas (le `.`
-  // précédent le domaine est littéral, exigé par le préfixe `(?:label\.)*`).
+  // précédent le domaine est littéral, exigé par le préfixe `(?:label\.){0,8}`). Le lookahead final
+  // refuse un domaine plus long : `bob@acme.com.evil.org` n'est PAS une adresse `acme.com`.
   return new RegExp(
-    `\\b([a-zA-Z0-9._%+-]{1,64}@(?:[a-zA-Z0-9-]+\\.)*(?:${domainPart}))\\b`,
+    `\\b([a-zA-Z0-9._%+-]{1,64}@(?:[a-zA-Z0-9-]{1,63}\\.){0,8}(?:${domainPart}))(?![a-zA-Z0-9-]|\\.[a-zA-Z0-9])`,
     'gi',
   );
 }

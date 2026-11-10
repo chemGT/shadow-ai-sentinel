@@ -6,8 +6,15 @@ import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createDefaultPolicy } from '../../../core/defaults.js';
 import { MAX_BINARY_FILE_BYTES, PPTX_MIME, XLSX_MIME } from '../../../core/binary-file.js';
+import { MAX_DETECTION_TOTAL_LENGTH } from '../../../core/detection/limits.js';
+import { MAX_TEXT_FILE_BYTES } from '../../../core/text-file.js';
 import type { Policy } from '../../../core/types.js';
-import { guardFileList, hasScannableInList, type FileGuardOptions } from './file-guard.js';
+import {
+  attachFileGuard,
+  guardFileList,
+  hasScannableInList,
+  type FileGuardOptions,
+} from './file-guard.js';
 
 // Stub minimal de l'API WebExtension : `reportDlpAction` en dépend.
 // `chrome.storage.local.get/set` sont Promise-only ici (cf. storage.ts) : pas de callback,
@@ -197,5 +204,82 @@ describe('guardFileList — XLSX/PPTX', () => {
     const result = await guardFileList([corrupt], options());
     expect(result.blocked).toBe(false);
     expect(result.allowed).toHaveLength(1);
+  });
+});
+
+describe('attachFileGuard — collage de fichiers (F1)', () => {
+  function pasteEvent(files: File[]): ClipboardEvent {
+    const event = new Event('paste', { bubbles: true, cancelable: true }) as ClipboardEvent;
+    Object.defineProperty(event, 'clipboardData', { value: { files } });
+    return event;
+  }
+
+  it('annule le collage de façon synchrone, avant la fin du dispatch', async () => {
+    const detach = attachFileGuard({ getPolicy: () => createDefaultPolicy(), host: 'claude.ai' });
+    const file = new File(['aws AKIAIOSFODNN7EXAMPLE'], 'creds.txt', { type: 'text/plain' });
+    const event = pasteEvent([file]);
+    let reachedSite = false;
+    const siteListener = () => {
+      reachedSite = true;
+    };
+    document.body.addEventListener('paste', siteListener);
+
+    document.body.dispatchEvent(event);
+
+    // Vérifié immédiatement après le dispatch : un preventDefault tardif (post-await) échouerait ici.
+    expect(event.defaultPrevented).toBe(true);
+    expect(reachedSite).toBe(false);
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    document.body.removeEventListener('paste', siteListener);
+    detach();
+  });
+
+  it('laisse passer un collage sans fichier analysable (image)', () => {
+    const detach = attachFileGuard({ getPolicy: () => createDefaultPolicy(), host: 'claude.ai' });
+    const event = pasteEvent([new File([new Uint8Array([1, 2, 3])], 'shot.png', { type: 'image/png' })]);
+    document.body.dispatchEvent(event);
+    expect(event.defaultPrevented).toBe(false);
+    detach();
+  });
+});
+
+describe('guardFileList — contenu non analysable et fail_mode (F4/F5)', () => {
+  const withFailMode = (fail_mode: 'open' | 'warn' | 'closed') =>
+    options({ getPolicy: () => ({ ...createDefaultPolicy(), fail_mode }) });
+
+  const oversizedPdf = () =>
+    new File([new Uint8Array(MAX_BINARY_FILE_BYTES + 1)], 'huge.pdf', { type: PDF_TYPE });
+  const oversizedText = () =>
+    new File([new Uint8Array(MAX_TEXT_FILE_BYTES + 1)], 'huge.log', { type: 'text/plain' });
+  const truncatedText = () =>
+    new File(['a '.repeat(MAX_DETECTION_TOTAL_LENGTH / 2 + 10)], 'long.txt', { type: 'text/plain' });
+
+  it.each([
+    ['binaire trop volumineux', oversizedPdf],
+    ['PDF corrompu', pdfCorrupt],
+    ['texte trop volumineux', oversizedText],
+    ['texte au-delà du plafond de scan', truncatedText],
+  ])('closed bloque : %s', async (_label, make) => {
+    const result = await guardFileList([make()], withFailMode('closed'));
+    expect(result.blocked).toBe(true);
+    expect(result.allowed).toHaveLength(0);
+  });
+
+  it.each([
+    ['binaire trop volumineux', oversizedPdf],
+    ['PDF corrompu', pdfCorrupt],
+    ['texte trop volumineux', oversizedText],
+    ['texte au-delà du plafond de scan', truncatedText],
+  ])('warn laisse passer (avec avertissement) : %s', async (_label, make) => {
+    const result = await guardFileList([make()], withFailMode('warn'));
+    expect(result.blocked).toBe(false);
+    expect(result.allowed).toHaveLength(1);
+  });
+
+  it('un texte trop volumineux n’est plus un passage silencieux : un toast est affiché', async () => {
+    await guardFileList([oversizedText()], withFailMode('warn'));
+    const toast = document.getElementById('shadow-ai-sentinel-file-toast');
+    expect(toast?.textContent ?? '').toContain('huge.log');
   });
 });

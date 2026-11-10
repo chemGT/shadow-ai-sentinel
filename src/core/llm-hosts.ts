@@ -20,9 +20,6 @@ export const LLM_TAB_URL_PATTERNS: readonly string[] = SUPPORTED_LLM_HOSTS.flatM
   (host) => [`*://${host}/*`, `*://*.${host}/*`],
 );
 
-/** @deprecated Préférer `resolveLlmHost` — conservé pour logs legacy. */
-export const PILOT_LLM_HOST: LlmHost = 'claude.ai';
-
 const HOST_MATCHERS: ReadonlyArray<{ host: LlmHost; matches: (hostname: string) => boolean }> =
   SUPPORTED_LLM_HOSTS.map((host) => ({
     host,

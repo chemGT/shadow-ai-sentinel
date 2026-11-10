@@ -8,12 +8,24 @@ import {
 } from '../../core/managed-policy.js';
 import type { Policy, Rule, RuleAction, RuleType } from '../../core/types.js';
 import {
+  formatDiagnosticsReport,
+  overallStatus,
+  runDiagnostics,
+  type DiagnosticCheck,
+} from '../../core/diagnostics.js';
+import { SUPPORTED_LLM_HOSTS } from '../../core/llm-hosts.js';
+import {
+  getAdapterHealth,
   getAllowlist,
+  getEffectivePolicy,
   getManagedConfig,
   getStoredPolicy,
+  getStoredPolicyErrors,
+  probeStorage,
   setAllowlist,
   setStoredPolicy,
 } from '../platform/storage.js';
+import { getBrowserFamily, getExtensionApi, getExtensionVersion } from '../platform/browser-api.js';
 import { sendMessage } from '../platform/runtime.js';
 
 const RULE_LABELS: Record<RuleType, string> = {
@@ -31,6 +43,9 @@ const allowlistEl = document.getElementById('allowlist') as HTMLTextAreaElement;
 const rulesTableBodyEl = document.getElementById('rulesTableBody') as HTMLTableSectionElement;
 const managedBannerEl = document.getElementById('managedBanner') as HTMLElement;
 const allowlistManagedHintEl = document.getElementById('allowlistManagedHint') as HTMLElement;
+const managedErrorsEl = document.getElementById('managedErrors') as HTMLElement;
+const diagSummaryEl = document.getElementById('diagSummary') as HTMLElement;
+const diagListEl = document.getElementById('diagList') as HTMLUListElement;
 
 let managedConfig: ManagedConfig = { allowlist: [], errors: [] };
 
@@ -178,11 +193,141 @@ async function updateRule(type: RuleType, patch: Partial<Pick<Rule, 'enabled' | 
 
 function renderManagedState(): void {
   managedBannerEl.hidden = !hasManagedSettings(managedConfig);
+  const locked = managedConfig.lockSettings === true;
   const count = managedConfig.allowlist.length;
-  allowlistManagedHintEl.hidden = count === 0;
-  allowlistManagedHintEl.textContent =
-    `+ ${count} valeur(s) ajoutée(s) par votre organisation, appliquée(s) en plus de cette liste.`;
+  allowlistManagedHintEl.hidden = count === 0 && !locked;
+  allowlistManagedHintEl.textContent = locked
+    ? `Réglages verrouillés par votre organisation : cette liste locale n’est pas appliquée (${count} valeur(s) gérée(s) seulement).`
+    : `+ ${count} valeur(s) ajoutée(s) par votre organisation, appliquée(s) en plus de cette liste.`;
+
+  // Poste verrouillé : l'édition locale n'aurait aucun effet, on la désactive.
+  allowlistEl.readOnly = locked;
+  policyJsonEl.readOnly = locked;
+  for (const id of ['saveAllowlist', 'importPolicy']) {
+    const button = document.getElementById(id) as HTMLButtonElement | null;
+    if (button) {
+      button.disabled = locked;
+    }
+  }
+
+  // Une valeur gérée invalide est ignorée (repli sur le réglage local) : il faut le dire ici,
+  // pas seulement en console — sinon l'admin croit sa policy appliquée.
+  managedErrorsEl.hidden = managedConfig.errors.length === 0;
+  managedErrorsEl.textContent =
+    `Policy de l’organisation partiellement ignorée (valeurs invalides) : ${managedConfig.errors.join(' ; ')}. ` +
+    'Le réglage local ou par défaut s’applique à la place. Prévenez votre équipe sécurité.';
 }
+
+const STATUS_LABELS: Record<DiagnosticCheck['status'], string> = {
+  ok: 'OK',
+  warn: 'À vérifier',
+  fail: 'Problème',
+};
+
+let lastDiagnostics: DiagnosticCheck[] = [];
+
+/** Sites pris en charge dont la permission d'hôte n'est pas accordée. */
+async function findMissingHostPermissions(): Promise<string[]> {
+  const api = getExtensionApi();
+  const missing: string[] = [];
+  for (const host of SUPPORTED_LLM_HOSTS) {
+    try {
+      const granted = await api.permissions.contains({ origins: [`*://${host}/*`] });
+      if (!granted) {
+        missing.push(host);
+      }
+    } catch {
+      missing.push(host);
+    }
+  }
+  return missing;
+}
+
+async function runDiagnosticsPanel(): Promise<void> {
+  const storageWorks = await probeStorage();
+  let managedReadable = true;
+  try {
+    await getExtensionApi().storage.managed.get(null);
+  } catch {
+    // Firefox rejette quand aucune policy n'est déployée : ce n'est pas une panne. Chromium,
+    // lui, renvoie `{}` : un rejet y signale un vrai problème de lecture.
+    managedReadable = getBrowserFamily() === 'firefox';
+  }
+  let backgroundResponds = false;
+  try {
+    const response = (await sendMessage({ type: 'GET_POLICY' })) as { policy?: Policy };
+    backgroundResponds = response?.policy !== undefined;
+  } catch {
+    backgroundResponds = false;
+  }
+
+  const safe = async <T>(read: () => Promise<T>, fallback: T): Promise<T> => {
+    try {
+      return await read();
+    } catch {
+      return fallback;
+    }
+  };
+
+  lastDiagnostics = runDiagnostics({
+    version: getExtensionVersion(),
+    browser: getBrowserFamily(),
+    storageWorks,
+    localPolicyErrors: await safe(getStoredPolicyErrors, []),
+    effectivePolicy: await safe(getEffectivePolicy, await getStoredPolicy()),
+    managed: await safe(getManagedConfig, managedConfig),
+    managedReadable,
+    localAllowlistCount: (await safe(getAllowlist, [])).length,
+    missingHostPermissions: await findMissingHostPermissions(),
+    backgroundResponds,
+    adapterHealth: await safe(getAdapterHealth, 'healthy'),
+  });
+
+  const overall = overallStatus(lastDiagnostics);
+  diagSummaryEl.textContent =
+    overall === 'ok'
+      ? 'Tout fonctionne.'
+      : overall === 'warn'
+        ? 'Protection active, avec des points à vérifier.'
+        : 'Problème détecté : la protection est incomplète.';
+
+  diagListEl.textContent = '';
+  for (const check of lastDiagnostics) {
+    const li = document.createElement('li');
+    li.className = check.status;
+    li.dataset.check = check.id;
+    const status = document.createElement('span');
+    status.className = 'diag-status';
+    status.textContent = STATUS_LABELS[check.status];
+    const label = document.createElement('strong');
+    label.textContent = `${check.label} — `;
+    const detail = document.createElement('span');
+    detail.textContent = check.detail;
+    li.append(status, label, detail);
+    if (check.fix) {
+      const fix = document.createElement('span');
+      fix.className = 'diag-fix';
+      fix.textContent = `→ ${check.fix}`;
+      li.appendChild(fix);
+    }
+    diagListEl.appendChild(li);
+  }
+}
+
+document.getElementById('runDiag')?.addEventListener('click', () => {
+  void runDiagnosticsPanel();
+});
+
+document.getElementById('copyDiag')?.addEventListener('click', async () => {
+  const report = formatDiagnosticsReport(lastDiagnostics);
+  try {
+    await navigator.clipboard.writeText(report);
+    showToast('ok', 'Rapport de diagnostic copié.');
+  } catch {
+    showToast('error', 'Copie impossible — sélectionnez le rapport dans la console.');
+    console.info(report);
+  }
+});
 
 async function loadForm(): Promise<void> {
   managedConfig = await getManagedConfig();
@@ -232,4 +377,4 @@ document.getElementById('exportPolicy')?.addEventListener('click', async () => {
   showToast('ok', 'Policy exportée depuis le stockage.');
 });
 
-void loadForm();
+void loadForm().finally(() => runDiagnosticsPanel());

@@ -40,26 +40,6 @@ export const DEFAULT_RULES: Rule[] = [
   { type: 'card', action: 'redact', enabled: true },
 ];
 
-/** Champs interdits dans tout payload télémétrie (validation API + client). */
-export const FORBIDDEN_TELEMETRY_KEYS = [
-  'text',
-  'snippet',
-  'match',
-  'matchedText',
-  'prompt',
-  'content',
-  'clipboard',
-  'value',
-  'raw',
-  'userEmail',
-  'userName',
-  'ip',
-  'userAgent',
-  'url',
-  'path',
-  'query',
-] as const;
-
 export const ALL_RULE_TYPES: RuleType[] = [
   'api_key',
   'iban',
@@ -70,4 +50,4 @@ export const ALL_RULE_TYPES: RuleType[] = [
   'card',
 ];
 
-export { LLM_TAB_URL_PATTERNS, PILOT_LLM_HOST, SUPPORTED_LLM_HOSTS } from './llm-hosts.js';
+export { LLM_TAB_URL_PATTERNS, SUPPORTED_LLM_HOSTS } from './llm-hosts.js';

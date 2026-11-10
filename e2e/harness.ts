@@ -55,6 +55,12 @@ async function extensionServiceWorker(context: BrowserContext) {
   return sw;
 }
 
+/** Identifiant de l'extension chargée (pour ouvrir ses pages : options, popup). */
+export async function extensionId(context: BrowserContext): Promise<string> {
+  const sw = await extensionServiceWorker(context);
+  return new URL(sw.url()).hostname;
+}
+
 /**
  * Acquitte la notice employé premier lancement (overlay plein écran RGPD),
  * sinon elle recouvre tous les composers et fausse les clics.
@@ -121,7 +127,7 @@ export async function gotoFixture(page: Page, host: string): Promise<void> {
   await page.goto(`https://${host}/`);
   const ready = await adapterReady;
   if (!ready) {
-    // Content script à document_idle : petite marge si le log n'est pas remonté.
+    // Petite marge si le log du content script n'est pas remonté.
     await page.waitForTimeout(2_000);
   }
 }
@@ -178,7 +184,7 @@ export async function redactToastVisible(page: Page): Promise<boolean> {
     .catch(() => false);
 }
 
-export const SECRET_API_KEY = 'voici ma clé sk-ant-api03-e2e-fixture-0123456789 pour le script';
+export const SECRET_API_KEY = 'voici ma clé sk-ant-api03-e2eFixture0123456789abcdEFGH pour le script';
 export const SECRET_AWS_KEY = 'AKIAABCDEFGHIJKLMNOP';
 export const IBAN_FR = 'mon RIB est FR7630006000011234567890189 merci';
 export const CLEAN_TEXT = 'bonjour, peux-tu résumer ce paragraphe anodin ?';

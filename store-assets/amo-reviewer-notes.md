@@ -11,8 +11,9 @@ tagged commit; the build is deterministic from the lockfile.
 
 ## Build instructions
 
-Tested environment: Ubuntu 24.04 (any Linux/macOS works), **Node.js 22 LTS** (22.22), **npm 10**
-(10.9), `zip`.
+Tested environment: Ubuntu 24.04 (any Linux/macOS/Windows works), **Node.js 22 LTS** (22.22), **npm 10**
+(10.9), `git`. No `zip` binary is needed: archives are written by `scripts/lib/zip.mjs` and are
+byte-reproducible (same commit, same SHA-256).
 
 ```bash
 unzip shadow-ai-sentinel-vX.Y.Z-source.zip

@@ -15,6 +15,19 @@ export type AdapterHealthMonitorOptions = {
   label: string;
 };
 
+export type AdapterHealthMonitor = {
+  stop: () => void;
+  /**
+   * À appeler quand l'utilisateur valide (Entrée) dans une zone de saisie que l'adaptateur ne
+   * reconnaît pas : les sélecteurs sont cassés EN COURS de session (le self-test de chargement
+   * ne le voit pas). Passe à `broken` (bannière / garde `closed`). Renvoie `true` si l'envoi
+   * en cours doit être bloqué (`fail_mode: closed`).
+   */
+  reportComposerMissing: () => boolean;
+  /** Le composer est de nouveau résolu : lève l'état `broken` (bannière, garde `closed`). */
+  reportComposerFound: () => void;
+};
+
 function isGenericSubmitTarget(target: EventTarget | null): boolean {
   if (!(target instanceof Element)) {
     return false;
@@ -32,11 +45,16 @@ function isGenericSubmitTarget(target: EventTarget | null): boolean {
  * une bannière est affichée (sauf `fail_mode: "open"`) et, en `fail_mode: "closed"`,
  * une interception générique (Entrée + clic submit + submit de formulaire) bloque
  * tout envoi tant que l'adaptateur n'est pas réparé (R1, remplace le fail-open muet).
+ *
+ * Le chronomètre ne démarre qu'une fois la page chargée (`load`) : le content script tourne dès
+ * `document_start`, bien avant que la SPA n'ait rendu son composer. L'état n'est pas figé après
+ * le self-test : `reportComposerMissing` / `reportComposerFound` le font évoluer en session.
  */
-export function startAdapterHealthMonitor(options: AdapterHealthMonitorOptions): () => void {
+export function startAdapterHealthMonitor(options: AdapterHealthMonitorOptions): AdapterHealthMonitor {
   const { dom, getFailMode, label } = options;
-  const startedAt = Date.now();
+  let startedAt = Date.now();
   let settled = false;
+  let broken = false;
   let observer: MutationObserver | null = null;
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
   let detachClosedGuard: (() => void) | null = null;
@@ -83,7 +101,34 @@ export function startAdapterHealthMonitor(options: AdapterHealthMonitorOptions):
     };
   }
 
-  function settle(broken: boolean): void {
+  function markBroken(): void {
+    if (broken) {
+      return;
+    }
+    broken = true;
+    void setAdapterHealth('broken');
+    console.warn(`[Shadow AI Sentinel] Adaptateur ${label} indisponible — sélecteurs obsolètes`);
+
+    const failMode = getFailMode();
+    if (shouldWarnOnBrokenAdapter(failMode)) {
+      showAdapterBrokenBanner();
+    }
+    if (shouldBlockOnBrokenAdapter(failMode) && detachClosedGuard === null) {
+      installClosedGuard();
+    }
+  }
+
+  function markHealthy(): void {
+    if (!broken) {
+      return;
+    }
+    broken = false;
+    void setAdapterHealth('healthy');
+    detachClosedGuard?.();
+    hideAdapterBrokenBanner();
+  }
+
+  function settle(isBroken: boolean): void {
     if (settled) {
       return;
     }
@@ -95,20 +140,10 @@ export function startAdapterHealthMonitor(options: AdapterHealthMonitorOptions):
       timeoutId = null;
     }
 
-    void setAdapterHealth(broken ? 'broken' : 'healthy');
-
-    if (!broken) {
-      return;
-    }
-
-    console.warn(`[Shadow AI Sentinel] Adaptateur ${label} indisponible — sélecteurs obsolètes`);
-
-    const failMode = getFailMode();
-    if (shouldWarnOnBrokenAdapter(failMode)) {
-      showAdapterBrokenBanner();
-    }
-    if (shouldBlockOnBrokenAdapter(failMode)) {
-      installClosedGuard();
+    if (isBroken) {
+      markBroken();
+    } else {
+      void setAdapterHealth('healthy');
     }
   }
 
@@ -124,19 +159,42 @@ export function startAdapterHealthMonitor(options: AdapterHealthMonitorOptions):
     }
   }
 
-  check();
-  if (!settled) {
-    observer = new MutationObserver(() => check());
-    observer.observe(document.documentElement, { childList: true, subtree: true });
-    timeoutId = setTimeout(() => check(), ADAPTER_HEALTH_TIMEOUT_MS);
+  function begin(): void {
+    startedAt = Date.now();
+    check();
+    if (!settled) {
+      observer = new MutationObserver(() => check());
+      observer.observe(document.documentElement, { childList: true, subtree: true });
+      timeoutId = setTimeout(() => check(), ADAPTER_HEALTH_TIMEOUT_MS);
+    }
   }
 
-  return () => {
-    observer?.disconnect();
-    if (timeoutId !== null) {
-      clearTimeout(timeoutId);
-    }
-    detachClosedGuard?.();
-    hideAdapterBrokenBanner();
+  const onLoad = (): void => begin();
+  if (document.readyState === 'complete') {
+    begin();
+  } else {
+    window.addEventListener('load', onLoad, { once: true });
+  }
+
+  return {
+    stop: () => {
+      window.removeEventListener('load', onLoad);
+      observer?.disconnect();
+      if (timeoutId !== null) {
+        clearTimeout(timeoutId);
+      }
+      detachClosedGuard?.();
+      hideAdapterBrokenBanner();
+    },
+    reportComposerMissing: () => {
+      settle(true);
+      markBroken();
+      return shouldBlockOnBrokenAdapter(getFailMode());
+    },
+    reportComposerFound: () => {
+      if (settled) {
+        markHealthy();
+      }
+    },
   };
 }

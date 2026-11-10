@@ -42,8 +42,9 @@ export interface Rule {
 }
 
 /**
- * Configuration DLP distribuée par l'API ou importée manuellement.
- * `emailDomains` : allowlist fournie à l'intégration client (emails pro).
+ * Configuration DLP locale (page d'options) ou importée manuellement.
+ * `emailDomains` : domaines de la règle `pro_email`. `tenantId` : hérité du format d'origine,
+ * conservé (toujours `''`) car les policies déjà stockées et l'exemple documenté le contiennent.
  */
 export interface Policy {
   version: string;
@@ -51,7 +52,6 @@ export interface Policy {
   emailDomains: string[];
   rules: Rule[];
   updatedAt: string;
-  departmentId?: string;
   /** Défaut si absent : `'warn'` (cf. `DEFAULT_FAIL_MODE`). */
   fail_mode?: FailMode;
 }

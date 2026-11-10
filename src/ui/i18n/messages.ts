@@ -1,5 +1,6 @@
 import type { FeedbackContextChoice, Locale, RuleType } from '../../core/types.js';
 import { REDACT_TOKENS } from '../../core/constants.js';
+import type { UnscannableReason } from '../../core/fail-mode.js';
 
 const RULE_LABELS: Record<Locale, Record<RuleType, string>> = {
   fr: {
@@ -148,6 +149,62 @@ export function blockUnsupportedFileFormatCopy(
     hint: 'Only text files can be masked automatically. File content is not sent to a Sentinel server.',
     closeLabel: 'Got it',
   };
+}
+
+/**
+ * Modale — contenu bloqué parce qu'il n'a pas pu être analysé (`fail_mode: "closed"`).
+ * Aucune donnée détectée n'est en cause : pas de lien « faux positif ».
+ */
+export function unscannableBlockCopy(
+  reason: UnscannableReason,
+  locale: Locale,
+  fileName?: string,
+): BlockModalCopy {
+  const safeName = (fileName ?? '').replace(/[<>]/g, '');
+  const fr: Record<UnscannableReason, string> = {
+    truncated: safeName
+      ? `« ${safeName} » est trop volumineux pour être analysé en entier`
+      : 'Message trop volumineux pour être analysé en entier',
+    'file-too-large': `« ${safeName} » est trop volumineux pour être analysé`,
+    'file-unreadable': `« ${safeName} » est illisible (corrompu ou protégé)`,
+    'scan-error': 'L’analyse a échoué de façon inattendue',
+  };
+  const en: Record<UnscannableReason, string> = {
+    truncated: safeName
+      ? `“${safeName}” is too large to be scanned in full`
+      : 'Message too large to be scanned in full',
+    'file-too-large': `“${safeName}” is too large to scan`,
+    'file-unreadable': `“${safeName}” could not be read (corrupted or protected)`,
+    'scan-error': 'The scan failed unexpectedly',
+  };
+
+  if (locale === 'fr') {
+    return {
+      title: fileName ? 'Fichier bloqué' : 'Envoi bloqué',
+      headline: fr[reason],
+      body:
+        'La politique de votre organisation bloque tout contenu qui n’a pas pu être vérifié. ' +
+        'Réduisez ou découpez le contenu, ou contactez votre équipe sécurité.',
+      hint: 'Shadow AI Sentinel analyse le contenu uniquement dans votre navigateur. Rien n’est stocké ni transmis.',
+      closeLabel: "J'ai compris",
+    };
+  }
+  return {
+    title: fileName ? 'File blocked' : 'Message blocked',
+    headline: en[reason],
+    body:
+      'Your organization’s policy blocks content that could not be verified. ' +
+      'Shorten or split the content, or contact your security team.',
+    hint: 'Shadow AI Sentinel scans content only in your browser. Nothing is stored or transmitted.',
+    closeLabel: 'Got it',
+  };
+}
+
+/** Toast — l'analyse a échoué (exception) et l'envoi a été laissé passer (`fail_mode` ≠ closed). */
+export function scanErrorNotice(locale: Locale): string {
+  return locale === 'fr'
+    ? 'Analyse DLP impossible (erreur interne) : contenu envoyé sans vérification.'
+    : 'DLP scan failed (internal error): content sent without verification.';
 }
 
 /** Toast — le texte dépassait le plafond de scan : la fin n'a pas été analysée. */

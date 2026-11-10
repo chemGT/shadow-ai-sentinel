@@ -11,8 +11,40 @@ import type { RawMatch } from './types.js';
  * Les espaces Unicode (NBSP, espace fine) et les invisibles (BOM, zero-width) sont repliés en
  * amont par `normalize.ts` : la classe `[ -]` reste ASCII. Le point n'est volontairement PAS
  * séparateur (numéros de version `4111.1111…` → faux positifs, cf. bypass C2).
+ * Les lookarounds refusent un chiffre adjacent (même après un séparateur) : un identifiant plus
+ * long (`4111-1111-1111-1111-0000`) n'est pas une carte.
  */
-const CARD_PATTERN = /\b(?:\d[ -]?){12,18}\d\b/g;
+const CARD_PATTERN = /(?<!\d[ -]?)\b(?:\d[ -]?){12,18}\d\b(?![ -]?\d)/g;
+
+/**
+ * Préfixe émetteur (IIN) et longueur cohérents avec un réseau de cartes. Luhn seul laisse passer
+ * 1 nombre de 16 chiffres sur 10 (numéros de commande, horodatages en microsecondes — qui
+ * commencent par 1) : aucune carte ne commence par 0, 1, 7, 8 ou 9.
+ */
+export function hasCardIssuerPrefix(digits: string): boolean {
+  const len = digits.length;
+  const p2 = Number(digits.slice(0, 2));
+  const p4 = Number(digits.slice(0, 4));
+  if (digits[0] === '4') {
+    return len === 13 || len === 16 || len === 19; // Visa
+  }
+  if ((p2 >= 51 && p2 <= 55) || (p4 >= 2221 && p4 <= 2720)) {
+    return len === 16; // Mastercard
+  }
+  if (p2 === 34 || p2 === 37) {
+    return len === 15; // American Express
+  }
+  if ((p4 >= 3000 && p4 <= 3059) || p2 === 36 || p2 === 38 || p2 === 39) {
+    return len >= 14; // Diners Club
+  }
+  if (p4 >= 3528 && p4 <= 3589) {
+    return len >= 16; // JCB
+  }
+  if (digits[0] === '6' || p2 === 50 || (p2 >= 56 && p2 <= 59)) {
+    return len >= 16 || p2 === 50 || p2 >= 56; // Discover, UnionPay, Maestro (12–19)
+  }
+  return false;
+}
 
 /** Algorithme de Luhn (mod 10). */
 export function isValidCardChecksum(value: string): boolean {
@@ -34,7 +66,7 @@ export function isValidCardChecksum(value: string): boolean {
     sum += digit;
     doubleDigit = !doubleDigit;
   }
-  return sum % 10 === 0;
+  return sum % 10 === 0 && hasCardIssuerPrefix(digits);
 }
 
 export function findCardMatches(text: string): RawMatch[] {

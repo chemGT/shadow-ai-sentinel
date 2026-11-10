@@ -71,6 +71,23 @@ export function showBlockAlert(ruleType: RuleType, copyOverride?: BlockModalCopy
   );
 }
 
+/** Modale de blocage sans donnée détectée (contenu non analysable) — pas de lien faux positif. */
+export function showPolicyBlockAlert(copy: BlockModalCopy): void {
+  ensureHost();
+  reactRoot?.render(
+    <SentinelAlert
+      title={copy.title}
+      headline={copy.headline}
+      message={copy.body}
+      hint={copy.hint}
+      closeLabel={copy.closeLabel}
+      onClose={() => {
+        reactRoot?.render(null);
+      }}
+    />,
+  );
+}
+
 export function hideAlert(): void {
   reactRoot?.render(null);
 }

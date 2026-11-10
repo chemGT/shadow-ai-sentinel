@@ -57,11 +57,11 @@ Logs, configs and customer data pasted into public LLMs: a seatbelt, not surveil
 
 | Rule | Examples | Validation | Default |
 |------|----------|------------|---------|
-| `api_key` | AWS `AKIA…`/`ASIA…`, OpenAI `sk-…`, Anthropic `sk-ant-…`, Stripe `sk_live_…`, GitHub `ghp_…`/`github_pat_…`, GitLab `glpat-…`, Slack `xox…`, Azure storage connection strings | Fixed prefixes, bounded lengths | Block |
-| `generic_secret` | `Bearer …`, `Basic …`, JWTs | Bounded patterns | Block |
-| `iban` | `FR76 3000 6000 0112 3456 7890 189`, `DE89-3704-…` | ISO 13616 mod-97 | Redact |
-| `card` | Visa/Mastercard/Amex, contiguous or grouped | Luhn | Redact |
-| `phone` | French national and `+33` formats, E.164 | Format | Redact |
+| `api_key` | AWS `AKIA…`/`ASIA…`, OpenAI/Anthropic/DeepSeek `sk-…`, Stripe `sk_live_…`/`whsec_…`, GitHub `ghp_…`/`gho_…`/`ghs_…`/`github_pat_…`, GitLab `glpat-…`, Slack `xox…`/`xapp-…`/webhook URLs, Google `AIza…`, npm, Hugging Face, SendGrid, Twilio, DigitalOcean, PEM private keys, Azure storage connection strings | Fixed prefixes, bounded lengths | Block |
+| `generic_secret` | `Bearer …`, `Basic …`, JWTs, URLs with credentials (`postgres://user:pass@host`), `password=…` / `client_secret: …` assignments | Bounded patterns, Basic must decode to `user:pass`, assigned value must mix letters and digits | Block |
+| `iban` | `FR76 3000 6000 0112 3456 7890 189`, `DE89-3704-…`, `FR76.3000.…` | ISO 13616 mod-97 | Redact |
+| `card` | Visa/Mastercard/Amex/Discover/JCB/Diners, contiguous or grouped | Luhn + issuer prefix and length | Redact |
+| `phone` | French national and `+33` formats, E.164 contiguous or grouped (`+1 415 555 2671`) | Format | Redact |
 | `internal_ip` | RFC 1918 addresses (`10.x`, `172.16–31.x`, `192.168.x`) | Range check | Redact |
 | `pro_email` | Addresses on domains **you** configure | Exact domain | Off (needs a domain) |
 
@@ -85,8 +85,10 @@ full-width characters folded to ASCII. Redaction still applies to exactly what y
 
 Claude · ChatGPT · Gemini · Mistral Le Chat · DeepSeek · Perplexity · Grok · Microsoft Copilot
 
-If a site changes its DOM and the adapter can no longer find the message box, the extension says so
-(popup warning + configurable `fail_mode`: `open`, `warn` or `closed`) instead of failing silently.
+When something cannot be scanned — a site changed its page structure, a message exceeds the scan
+limit, an attachment is too large or unreadable — the extension says so instead of failing
+silently, and `fail_mode` decides the outcome: `closed` blocks, `warn` (default) sends with a
+visible warning, `open` sends.
 
 ## How it works
 
@@ -123,8 +125,12 @@ Tagged releases also ship ready-made archives on the
 `-chromium.zip` and load the folder unpacked; the Firefox `.xpi` is unsigned until the AMO listing
 is live, so release Firefox only accepts it as a temporary add-on.
 
-Rolling this out across a fleet via Chrome/Edge/Firefox enterprise policy, with rules pushed
-centrally (`chrome.storage.managed`)? See the [managed deployment guide](docs/deployment.md).
+**Check your install:** open the extension's options page → **Diagnostic**. Every line should
+read `OK`; anything else comes with the action to take.
+
+**Fleet rollout** (Intune, Group Policy, macOS profile, Linux, Firefox `policies.json`), with
+rules pushed centrally: use the [deployment kit](deploy/README.md) — one command per OS to
+install, check and uninstall — and the [policy reference](docs/deployment.md).
 
 ## What it does **not** do
 

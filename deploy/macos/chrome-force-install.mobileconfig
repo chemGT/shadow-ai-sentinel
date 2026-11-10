@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Shadow AI Sentinel: force-install on Google Chrome (macOS configuration profile).
+  Before deploying through your MDM:
+    1. replace REPLACE_WITH_32_LETTER_EXTENSION_ID (Chrome Web Store listing URL);
+    2. generate two new UUIDs (uuidgen) for the PayloadUUID values;
+    3. for Microsoft Edge, copy this file and change the inner PayloadType to com.microsoft.Edge.
+  Removing the profile removes the policy. The extension's managed configuration
+  (fail_mode, rules...) goes in a separate payload for the preference domain
+  com.google.Chrome.extensions.<id>; see docs/deployment.md.
+-->
+<plist version="1.0">
+<dict>
+  <key>PayloadContent</key>
+  <array>
+    <dict>
+      <key>PayloadType</key>
+      <string>com.google.Chrome</string>
+      <key>PayloadVersion</key>
+      <integer>1</integer>
+      <key>PayloadIdentifier</key>
+      <string>io.github.chemgt.shadow-ai-sentinel.chrome</string>
+      <key>PayloadUUID</key>
+      <string>00000000-0000-0000-0000-000000000001</string>
+      <key>PayloadDisplayName</key>
+      <string>Shadow AI Sentinel: Chrome force-install</string>
+      <key>ExtensionInstallForcelist</key>
+      <array>
+        <string>REPLACE_WITH_32_LETTER_EXTENSION_ID;https://clients2.google.com/service/update2/crx</string>
+      </array>
+    </dict>
+  </array>
+  <key>PayloadType</key>
+  <string>Configuration</string>
+  <key>PayloadVersion</key>
+  <integer>1</integer>
+  <key>PayloadIdentifier</key>
+  <string>io.github.chemgt.shadow-ai-sentinel</string>
+  <key>PayloadUUID</key>
+  <string>00000000-0000-0000-0000-000000000002</string>
+  <key>PayloadDisplayName</key>
+  <string>Shadow AI Sentinel</string>
+  <key>PayloadScope</key>
+  <string>System</string>
+</dict>
+</plist>

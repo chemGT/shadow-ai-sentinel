@@ -6,13 +6,17 @@ import type { RawMatch } from './types.js';
  * précédé d'un espace ou d'un début de chaîne (`+` et espace sont tous deux non-`\w`), si bien
  * qu'un `\b` de tête empêchait tout numéro au format international `+33…` d'être reconnu — et le
  * motif E.164 ci-dessous l'exclut explicitement. Le lookbehind négatif conserve le refus des
- * numéros collés à un mot/chiffre (`x0612345678`) tout en couvrant `+33…`.
+ * numéros collés à un mot/chiffre (`x0612345678`) tout en couvrant `+33…`. Le refus de `.`, `/`,
+ * `-` avant et d'un chiffre après écarte les dates (`2024-01-01 2024-12-31`).
  */
 const FR_PHONE_PATTERN =
-  /(?<![\w+])(?:(?:\+33|0033)[\s.-]?[1-9](?:[\s.-]?\d{2}){4}|0[1-9](?:[\s.-]?\d{2}){4})\b/g;
+  /(?<![\w+./-])(?:(?:\+33|0033)[\s.-]?[1-9](?:[\s.-]?\d{2}){4}|0[1-9](?:[\s.-]?\d{2}){4})\b(?![./-]?\d)/g;
 
-/** E.164 international (hors +33 déjà couvert). */
-const E164_PATTERN = /\+[1-9]\d{7,14}\b/g;
+/**
+ * E.164 international (hors +33 déjà couvert), contigu ou groupé par espaces/points/tirets
+ * (`+1 415 555 2671`, `+44 20 7946 0958`). Le `+` initial est obligatoire.
+ */
+const E164_PATTERN = /(?<![\w+])\+[1-9](?:[ .-]?\d){7,14}\b(?![ .-]?\d)/g;
 
 function normalizePhoneDigits(value: string): string {
   return value.replace(/[\s.-]/g, '');
@@ -59,7 +63,7 @@ export function findPhoneMatches(text: string): RawMatch[] {
   let e164 = E164_PATTERN.exec(text);
   while (e164 !== null) {
     const value = e164[0];
-    if (!value.startsWith('+33') && isValidE164(value)) {
+    if (!normalizePhoneDigits(value).startsWith('+33') && isValidE164(value)) {
       matches.push({
         ruleType: 'phone',
         start: e164.index,

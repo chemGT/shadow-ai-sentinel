@@ -4,8 +4,15 @@ import {
   evaluateGuard,
 } from '../../content/analyze.js';
 import { reportDlpAction, reportTruncation } from '../../content/reporting.js';
-import { showBlockAlert } from '../../content/ui-host.js';
-import { redactNotice, resolveLocale, truncationNotice } from '../../../ui/i18n/messages.js';
+import { showBlockAlert, showPolicyBlockAlert } from '../../content/ui-host.js';
+import {
+  redactNotice,
+  resolveLocale,
+  scanErrorNotice,
+  truncationNotice,
+  unscannableBlockCopy,
+} from '../../../ui/i18n/messages.js';
+import { shouldBlockUnscannable } from '../../../core/fail-mode.js';
 import { startAdapterHealthMonitor } from './adapter-health-monitor.js';
 import type { SiteDom } from './dom-factory.js';
 import { attachFileGuard } from './file-guard.js';
@@ -84,6 +91,52 @@ function showTruncationToast(): void {
   }, 6000);
 }
 
+function showScanErrorToast(): void {
+  showTruncationToast();
+  if (toastHost) {
+    toastHost.textContent = scanErrorNotice(resolveLocale());
+  }
+}
+
+/**
+ * Garde-fou autour de `runGuard` : une exception pendant l'analyse (extraction du texte,
+ * moteur, policy) ne doit pas se traduire par un envoi silencieux. `fail_mode: closed` bloque
+ * l'envoi ; sinon l'envoi passe avec un avertissement visible. On ne journalise que le nom de
+ * l'erreur, jamais son message (il pourrait reprendre du contenu saisi).
+ */
+function runGuardSafely(
+  dom: SiteDom,
+  host: LlmHost,
+  input: HTMLElement,
+  event: Event,
+  getPolicy: () => Policy,
+  getAllowlist?: () => readonly string[],
+): boolean {
+  try {
+    return runGuard(dom, host, input, event, getPolicy, getAllowlist);
+  } catch (error: unknown) {
+    console.error(
+      '[Shadow AI Sentinel] Échec de l’analyse avant envoi',
+      error instanceof Error ? error.name : 'erreur',
+    );
+    let failMode: Policy['fail_mode'];
+    try {
+      failMode = getPolicy().fail_mode;
+    } catch {
+      failMode = undefined;
+    }
+    if (shouldBlockUnscannable(failMode)) {
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      showPolicyBlockAlert(unscannableBlockCopy('scan-error', resolveLocale()));
+      return false;
+    }
+    showScanErrorToast();
+    return true;
+  }
+}
+
 function runGuard(
   dom: SiteDom,
   host: LlmHost,
@@ -93,11 +146,29 @@ function runGuard(
   getAllowlist?: () => readonly string[],
 ): boolean {
   const text = dom.extractTextFromInput(input);
-  const decision = evaluateGuard(text, getPolicy(), getAllowlist?.());
+  const policy = getPolicy();
+  const decision = evaluateGuard(text, policy, getAllowlist?.());
+
+  // Texte au-delà du plafond de scan : la fin n'a pas été analysée. `fail_mode: closed` bloque
+  // l'envoi (sauf si une donnée sensible a déjà été trouvée : la modale habituelle prime).
+  const blockTruncated =
+    decision.truncated === true &&
+    decision.kind !== 'block' &&
+    shouldBlockUnscannable(policy.fail_mode);
 
   if (decision.truncated) {
-    showTruncationToast();
     void reportTruncation(host);
+    if (!blockTruncated) {
+      showTruncationToast();
+    }
+  }
+
+  if (blockTruncated) {
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+    showPolicyBlockAlert(unscannableBlockCopy('truncated', resolveLocale()));
+    return false;
   }
 
   if (decision.kind === 'allow') {
@@ -125,8 +196,27 @@ function runGuard(
   return false;
 }
 
+/** Zone de saisie de texte multi-ligne (là où Entrée envoie un message sur un site de chat). */
+function isEditableTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) {
+    return false;
+  }
+  return (
+    target instanceof HTMLTextAreaElement ||
+    target.isContentEditable ||
+    target.getAttribute('contenteditable') === 'true' ||
+    target.getAttribute('role') === 'textbox'
+  );
+}
+
 export function attachGuardAdapter(options: GuardAdapterOptions): () => void {
   const { dom, host, getPolicy, label, getAllowlist } = options;
+
+  const health = startAdapterHealthMonitor({
+    dom,
+    label,
+    getFailMode: () => getPolicy().fail_mode ?? 'warn',
+  });
 
   function onKeyDown(event: KeyboardEvent): void {
     if (event.key !== 'Enter' || event.shiftKey || event.ctrlKey || event.metaKey || event.altKey) {
@@ -138,15 +228,24 @@ export function attachGuardAdapter(options: GuardAdapterOptions): () => void {
 
     const input = dom.findComposerInput();
     if (!input) {
+      // Entrée dans une zone de saisie que l'adaptateur ne reconnaît pas : les sélecteurs ont
+      // cassé en cours de session. On le signale (bannière) et, en `fail_mode: closed`, on
+      // bloque cet envoi — avant, il partait sans analyse et sans avertissement.
+      if (isEditableTarget(event.target) && health.reportComposerMissing()) {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+      }
       return;
     }
+    health.reportComposerFound();
 
     const target = event.target;
     if (!(target instanceof Node) || !dom.isNodeInsideComposer(target, input)) {
       return;
     }
 
-    runGuard(dom, host, input, event, getPolicy, getAllowlist);
+    runGuardSafely(dom, host, input, event, getPolicy, getAllowlist);
   }
 
   function onClick(event: MouseEvent): void {
@@ -159,7 +258,7 @@ export function attachGuardAdapter(options: GuardAdapterOptions): () => void {
       return;
     }
 
-    runGuard(dom, host, input, event, getPolicy, getAllowlist);
+    runGuardSafely(dom, host, input, event, getPolicy, getAllowlist);
   }
 
   document.addEventListener('keydown', onKeyDown, true);
@@ -171,11 +270,6 @@ export function attachGuardAdapter(options: GuardAdapterOptions): () => void {
     getAllowlist: options.getAllowlist,
   });
 
-  const detachHealthMonitor = startAdapterHealthMonitor({
-    dom,
-    label,
-    getFailMode: () => getPolicy().fail_mode ?? 'warn',
-  });
 
   console.info(`[Shadow AI Sentinel] Adaptateur ${label} actif (texte + fichiers texte)`);
 
@@ -183,6 +277,6 @@ export function attachGuardAdapter(options: GuardAdapterOptions): () => void {
     document.removeEventListener('keydown', onKeyDown, true);
     document.removeEventListener('click', onClick, true);
     detachFile();
-    detachHealthMonitor();
+    health.stop();
   };
 }

@@ -9,6 +9,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Pasted files were not actually blocked**: the paste was cancelled after the asynchronous scan, i.e. after the site had already received the file. The paste is now cancelled synchronously, the files are scanned, and only allowed (or redacted) files are handed back to the site
+- **Azure storage connection strings**: the match now covers `AccountKey=…` (it stopped at `AccountName=…;`, so a *redact* rule left the key itself in the message). A standalone `AccountKey=…` and `SharedAccessSignature=…` are detected too
+- **Tab freeze on match-dense text**: merging matches was quadratic (about 23 s for 120,000 matches, e.g. a large pasted log or export); it is now a single linear pass
+- **Partial policies no longer switch detectors off silently**: a stored or imported policy that omits a rule type (e.g. `"rules": []`) is completed with that rule's default instead of treating it as disabled. To disable a rule, state it explicitly (`"enabled": false`)
+- A text attachment over 5 MB (or unreadable) was let through with no notice at all; it now always shows a warning, and is blocked under `fail_mode: closed`
+- **No more silent fail-open on internal errors**: the page guard is attached immediately with the default rules and the real policy takes over once loaded, so a storage or service-worker failure no longer leaves the page unprotected; an exception during a scan follows `fail_mode` (`closed` blocks, otherwise the content is sent with a visible warning); a failure to attach shows the “protection inactive” banner. Error logs carry the error name only, never its message
+- **Site redesigns no longer fail silently mid-session**: pressing Enter in a text box the adapter no longer recognizes now flips the adapter to “broken” (banner, and blocked under `fail_mode: closed`) instead of sending unscanned; a send button the site-specific selectors no longer match is still recognized when it sits in the composer and looks like a send button (`type="submit"` or a send/envoyer/submit label). The broken state is lifted automatically when the composer is found again
+- An invalid managed-policy value is still ignored (the local setting applies), but it is now shown in a red banner on the options page and in the diagnostics instead of only in the console; a locked workstation shows local editing as disabled
+
+### Changed
+- **`fail_mode` now governs everything that could not be scanned**, not only a broken site adapter: text beyond the 2 M-character scan limit, attachments too large to scan, unreadable (corrupt/encrypted) attachments. `closed` blocks them with an explanatory dialog; `warn`/`open` let them through with a visible notice, as before
+- **Fewer false positives**: `sk-` followed by hyphenated lowercase words (CSS classes, slugs) is no longer an API key; `Bearer`/`Basic` followed by an ordinary word is ignored (`Basic` must decode to `user:password`); card numbers must carry a real issuer prefix and length in addition to Luhn (order numbers and microsecond timestamps no longer match) and must not be part of a longer number; dates are no longer read as French phone numbers; `name@your-domain.com.other.org` is no longer a work email
+- Coverage now measures `src/extension/**` and `src/ui/**` as well as `src/core/**` (67 % lines overall, 96 % on the detection core); thresholds raised to the measured floor, with a stricter one for the core
+- The page guard is injected at `document_start` (was `document_idle`), closing the window where a message could be sent before the extension was listening
+- `npm run package` no longer needs a `zip` binary (works on stock Windows) and produces **byte-reproducible** archives: two builds of the same commit give the same SHA-256, so `SHA256SUMS.txt` can be verified independently
+- Docs brought in line with the code: `docs/platform-compatibility.md` (8 sites, current interception and failure behaviour), `docs/deployment.md` (`lock_settings`, what `fail_mode` governs, corrected `ExtensionSettings` link), `SECURITY.md` (XLSX/PPTX are scanned), README install sections (diagnostics, deployment kit)
+
+### Added
+- **More secret formats detected**: GitHub `gho_`/`ghu_`/`ghs_`/`ghr_`, Stripe `whsec_`, Slack `xapp-` tokens and incoming-webhook URLs, Google `AIza…` API keys, npm, Hugging Face, SendGrid, Twilio and DigitalOcean tokens, PEM private keys (whole block), URLs with embedded credentials (`postgres://user:pass@host`), `password=…` / `client_secret: …` / `aws_secret_access_key = …` assignments (only the value is redacted), IBANs grouped with dots, grouped international phone numbers (`+1 415 555 2671`), `Bearer` tokens longer than 512 characters
+- Labeled detection corpus (`src/core/detection/corpus.ts`, 65 should-detect and 41 should-not entries, known gaps flagged) run as a regression test, plus scan-time bounds on adversarial inputs
+- **Managed `lock_settings`** (boolean): when `true`, the user's own settings are ignored — rules the admin did not list fall back to the extension defaults (not to what the user chose), and only the managed allowlist applies. Without it a user could switch off any unlisted rule or allowlist any value
+- **Diagnostics panel** on the options page (the “doctor”): detection-engine self-test, storage, local policy validity, managed-policy status, `fail_mode`, disabled rules, per-site host access, background process, last adapter state — each problem with the action to take, and a *Copy report* button. Runs locally; the report contains no typed text, allowlist value or domain name
+- **Deployment kit** (`deploy/`): Windows PowerShell script (install / status / uninstall, idempotent, registry backup for rollback) and Intune detection script, Linux policy script (same three actions), macOS configuration-profile template, Firefox `policies.json` template, example managed configurations, and a runbook with Intune, Group Policy and troubleshooting tables. The Linux script and all JSON templates are validated by tests; the Windows scripts and the macOS profile could not be run here and are flagged as untested in the runbook
+
+### Security
+- Dev dependency `happy-dom` updated past GHSA-834v-8h66-3h79 (test environment only; the shipped extension was not affected). `npm audit`: 0 vulnerabilities
+
 ## [1.1.0] — 2026-10-20
 
 ### Added

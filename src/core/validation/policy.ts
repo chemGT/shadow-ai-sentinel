@@ -1,4 +1,4 @@
-import { ALL_RULE_TYPES, FAIL_MODES } from '../constants.js';
+import { ALL_RULE_TYPES, DEFAULT_RULES, FAIL_MODES } from '../constants.js';
 import type { FailMode, Policy, Rule, RuleAction, RuleType } from '../types.js';
 
 export type PolicyValidationResult =
@@ -46,6 +46,17 @@ export function parseRule(raw: unknown, index: number): Rule | string {
   };
 }
 
+/**
+ * Une entrée par type de règle. Un type absent est complété par sa valeur par défaut : le moteur
+ * traite « règle absente » comme « désactivée », si bien qu'une policy partielle (`rules: []`,
+ * import d'un fichier antérieur à l'ajout d'un détecteur) coupait la détection sans rien dire.
+ * Pour désactiver une règle, il faut l'écrire : `"enabled": false`. Doublons : dernière occurrence.
+ */
+export function completeRules(rules: readonly Rule[]): Rule[] {
+  const byType = new Map(rules.map((r) => [r.type, r]));
+  return DEFAULT_RULES.map((def) => ({ ...(byType.get(def.type) ?? def) }));
+}
+
 /** Valide et normalise une policy (import JSON ou réponse API). */
 export function validatePolicy(input: unknown): PolicyValidationResult {
   const errors: string[] = [];
@@ -76,19 +87,16 @@ export function validatePolicy(input: unknown): PolicyValidationResult {
     return { ok: false, errors };
   }
 
-  const rules: Rule[] = [];
+  const parsedRules: Rule[] = [];
   for (let i = 0; i < (raw.rules as unknown[]).length; i += 1) {
     const parsed = parseRule((raw.rules as unknown[])[i], i);
     if (typeof parsed === 'string') {
       errors.push(parsed);
     } else {
-      rules.push(parsed);
+      parsedRules.push(parsed);
     }
   }
-
-  if (raw.departmentId !== undefined && typeof raw.departmentId !== 'string') {
-    errors.push('departmentId doit être une string si présent');
-  }
+  const rules = completeRules(parsedRules);
 
   if (raw.fail_mode !== undefined && !isFailMode(raw.fail_mode)) {
     errors.push(`fail_mode invalide (attendu: ${FAIL_MODES.join(', ')})`);
@@ -117,9 +125,6 @@ export function validatePolicy(input: unknown): PolicyValidationResult {
       emailDomains,
       rules,
       updatedAt: raw.updatedAt as string,
-      ...(raw.departmentId !== undefined
-        ? { departmentId: raw.departmentId as string }
-        : {}),
       ...(raw.fail_mode !== undefined ? { fail_mode: raw.fail_mode as FailMode } : {}),
     },
   };

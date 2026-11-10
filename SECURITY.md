@@ -39,7 +39,7 @@ These are known and documented, not vulnerabilities — but ideas to address the
 regular issues:
 
 - encoded secrets (base64, hex, URL-encoding), reversed or deliberately split values;
-- file formats that are not scanned (images, XLSX/PPTX, archives, image-only PDFs);
+- file formats that are not scanned (images, RTF/ODF, archives, image-only PDFs);
 - requests sent outside the page's message box (direct API calls, other applications);
 - the card-number-with-dots format (`4111.1111.1111.1111`), excluded on purpose to avoid false
   positives on version numbers.
