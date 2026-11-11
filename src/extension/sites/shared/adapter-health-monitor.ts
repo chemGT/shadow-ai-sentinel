@@ -9,6 +9,9 @@ import { hideAdapterBrokenBanner, showAdapterBrokenBanner } from '../../content/
 import { setAdapterHealth } from '../../platform/storage.js';
 import type { SiteDom } from './dom-factory.js';
 
+/** Délai entre deux sondes de récupération tant que l'adaptateur est `broken`. */
+const RECOVERY_POLL_MS = 500;
+
 export type AdapterHealthMonitorOptions = {
   dom: SiteDom;
   getFailMode: () => FailMode;
@@ -58,6 +61,8 @@ export function startAdapterHealthMonitor(options: AdapterHealthMonitorOptions):
   let observer: MutationObserver | null = null;
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
   let detachClosedGuard: (() => void) | null = null;
+  let recoveryObserver: MutationObserver | null = null;
+  let recoveryTimer: ReturnType<typeof setTimeout> | null = null;
 
   function onGenericKeyDown(event: KeyboardEvent): void {
     if (
@@ -101,11 +106,46 @@ export function startAdapterHealthMonitor(options: AdapterHealthMonitorOptions):
     };
   }
 
+  /**
+   * Tant que l'adaptateur est `broken`, surveille l'apparition du composer (navigation SPA vers
+   * une page de chat, rendu tardif) pour lever la bannière et le blocage `closed` tout seul. Avant,
+   * l'état ne se levait qu'au prochain Entrée dans le composer : une page sans zone de saisie
+   * (réglages, liste des conversations) laissait « protection inactive » affiché, à tort, après
+   * être revenu sur un chat. Sondage limité à un passage toutes les `RECOVERY_POLL_MS`.
+   */
+  function startRecoveryWatch(): void {
+    if (recoveryObserver !== null) {
+      return;
+    }
+    recoveryObserver = new MutationObserver(() => {
+      if (recoveryTimer !== null) {
+        return;
+      }
+      recoveryTimer = setTimeout(() => {
+        recoveryTimer = null;
+        if (broken && dom.findComposerInput() !== null) {
+          markHealthy();
+        }
+      }, RECOVERY_POLL_MS);
+    });
+    recoveryObserver.observe(document.documentElement, { childList: true, subtree: true });
+  }
+
+  function stopRecoveryWatch(): void {
+    recoveryObserver?.disconnect();
+    recoveryObserver = null;
+    if (recoveryTimer !== null) {
+      clearTimeout(recoveryTimer);
+      recoveryTimer = null;
+    }
+  }
+
   function markBroken(): void {
     if (broken) {
       return;
     }
     broken = true;
+    startRecoveryWatch();
     void setAdapterHealth('broken');
     console.warn(`[Shadow AI Sentinel] Adaptateur ${label} indisponible — sélecteurs obsolètes`);
 
@@ -123,6 +163,7 @@ export function startAdapterHealthMonitor(options: AdapterHealthMonitorOptions):
       return;
     }
     broken = false;
+    stopRecoveryWatch();
     void setAdapterHealth('healthy');
     detachClosedGuard?.();
     hideAdapterBrokenBanner();
@@ -183,6 +224,7 @@ export function startAdapterHealthMonitor(options: AdapterHealthMonitorOptions):
       if (timeoutId !== null) {
         clearTimeout(timeoutId);
       }
+      stopRecoveryWatch();
       detachClosedGuard?.();
       hideAdapterBrokenBanner();
     },

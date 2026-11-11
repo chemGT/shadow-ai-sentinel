@@ -101,4 +101,28 @@ describe('adapter-health-monitor', () => {
     expect(monitor.reportComposerMissing()).toBe(false);
     expect(showBanner).toHaveBeenCalledTimes(1);
   });
+
+  it('page sans composer au chargement, composer qui apparaît plus tard (navigation SPA) : bannière levée seule', async () => {
+    start('closed');
+    vi.advanceTimersByTime(ADAPTER_HEALTH_TIMEOUT_MS + 1);
+    expect(showBanner).toHaveBeenCalledTimes(1);
+    expect(enterIsBlocked()).toBe(true);
+
+    composer = document.createElement('div');
+    document.body.appendChild(composer); // mutation DOM : déclenche la sonde de récupération
+    await vi.advanceTimersByTimeAsync(1000);
+
+    expect(setHealth).toHaveBeenLastCalledWith('healthy');
+    expect(hideBanner).toHaveBeenCalled();
+    expect(enterIsBlocked()).toBe(false);
+  });
+
+  it('composer toujours absent : la sonde ne lève rien', async () => {
+    start('warn');
+    vi.advanceTimersByTime(ADAPTER_HEALTH_TIMEOUT_MS + 1);
+    document.body.appendChild(document.createElement('p'));
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(setHealth).toHaveBeenLastCalledWith('broken');
+    expect(hideBanner).not.toHaveBeenCalled();
+  });
 });
