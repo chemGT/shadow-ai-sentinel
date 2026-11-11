@@ -41,6 +41,8 @@ export type DiagnosticsInput = {
   backgroundResponds: boolean;
   /** Dernier état connu du self-test d'adaptateur (dernier site visité). */
   adapterHealth: 'healthy' | 'broken';
+  /** Langue des libellés et détails ; `fr` si absent. */
+  locale?: 'fr' | 'en';
 };
 
 /** Échantillons FACTICES, un par règle, assemblés à l'exécution. */
@@ -81,6 +83,8 @@ export function runDiagnostics(input: DiagnosticsInput): DiagnosticCheck[] {
   const add = (check: DiagnosticCheck): void => {
     checks.push(check);
   };
+  // `fr` par défaut : les consommateurs existants (tests, rapports) ne changent pas.
+  const tr = (fr: string, en: string): string => (input.locale === 'en' ? en : fr);
 
   add({
     id: 'version',
@@ -90,100 +94,164 @@ export function runDiagnostics(input: DiagnosticsInput): DiagnosticCheck[] {
   });
 
   const failingRules = runEngineSelfTest();
+  const engineLabel = tr('Moteur de détection', 'Detection engine');
   add(
     failingRules.length === 0
       ? {
           id: 'engine-self-test',
           status: 'ok',
-          label: 'Moteur de détection',
-          detail: `${ALL_RULE_TYPES.length}/${ALL_RULE_TYPES.length} détecteurs reconnaissent leur échantillon de test.`,
+          label: engineLabel,
+          detail: tr(
+            `${ALL_RULE_TYPES.length}/${ALL_RULE_TYPES.length} détecteurs reconnaissent leur échantillon de test.`,
+            `${ALL_RULE_TYPES.length}/${ALL_RULE_TYPES.length} detectors recognize their test sample.`,
+          ),
         }
       : {
           id: 'engine-self-test',
           status: 'fail',
-          label: 'Moteur de détection',
-          detail: `Détecteurs en échec : ${failingRules.join(', ')}.`,
-          fix: 'Réinstallez ou mettez à jour l’extension ; si le problème persiste, ouvrez un ticket avec ce rapport.',
+          label: engineLabel,
+          detail: tr(
+            `Détecteurs en échec : ${failingRules.join(', ')}.`,
+            `Failing detectors: ${failingRules.join(', ')}.`,
+          ),
+          fix: tr(
+            'Réinstallez ou mettez à jour l’extension ; si le problème persiste, ouvrez un ticket avec ce rapport.',
+            'Reinstall or update the extension; if the problem persists, open an issue with this report.',
+          ),
         },
   );
 
+  const storageLabel = tr('Stockage local', 'Local storage');
   add(
     input.storageWorks
-      ? { id: 'storage', status: 'ok', label: 'Stockage local', detail: 'Lecture et écriture OK.' }
+      ? {
+          id: 'storage',
+          status: 'ok',
+          label: storageLabel,
+          detail: tr('Lecture et écriture OK.', 'Read and write OK.'),
+        }
       : {
           id: 'storage',
           status: 'fail',
-          label: 'Stockage local',
-          detail: 'Lecture ou écriture impossible : les réglages ne sont pas enregistrés, les règles par défaut s’appliquent.',
-          fix: 'Vérifiez que le profil du navigateur n’est pas en lecture seule ou plein, puis rechargez l’extension.',
+          label: storageLabel,
+          detail: tr(
+            'Lecture ou écriture impossible : les réglages ne sont pas enregistrés, les règles par défaut s’appliquent.',
+            'Cannot read or write: settings are not saved, the default rules apply.',
+          ),
+          fix: tr(
+            'Vérifiez que le profil du navigateur n’est pas en lecture seule ou plein, puis rechargez l’extension.',
+            'Check that the browser profile is neither read-only nor full, then reload the extension.',
+          ),
         },
   );
 
+  const localPolicyLabel = tr('Policy locale', 'Local policy');
   add(
     input.localPolicyErrors.length === 0
-      ? { id: 'local-policy', status: 'ok', label: 'Policy locale', detail: 'Valide.' }
+      ? { id: 'local-policy', status: 'ok', label: localPolicyLabel, detail: tr('Valide.', 'Valid.') }
       : {
           id: 'local-policy',
           status: 'fail',
-          label: 'Policy locale',
-          detail: `Invalide (${input.localPolicyErrors.length} erreur(s)) : les règles par défaut s’appliquent à sa place.`,
-          fix: 'Section « Avancé » : corrigez le JSON puis « Importer en local », ou modifiez une règle pour réécrire une policy valide.',
+          label: localPolicyLabel,
+          detail: tr(
+            `Invalide (${input.localPolicyErrors.length} erreur(s)) : les règles par défaut s’appliquent à sa place.`,
+            `Invalid (${input.localPolicyErrors.length} error(s)): the default rules apply instead.`,
+          ),
+          fix: tr(
+            'Section « Avancé » : corrigez le JSON puis « Importer en local », ou modifiez une règle pour réécrire une policy valide.',
+            'Advanced section: fix the JSON then “Import locally”, or change a rule to rewrite a valid policy.',
+          ),
         },
   );
 
+  const managedLabel = tr('Policy gérée (organisation)', 'Managed policy (organization)');
   if (!input.managedReadable) {
     add({
       id: 'managed-policy',
       status: 'warn',
-      label: 'Policy gérée (organisation)',
-      detail: 'Stockage géré illisible.',
-      fix: 'Vérifiez la policy navigateur (chrome://policy, edge://policy ou about:policies) puis rechargez-la.',
+      label: managedLabel,
+      detail: tr('Stockage géré illisible.', 'Managed storage unreadable.'),
+      fix: tr(
+        'Vérifiez la policy navigateur (chrome://policy, edge://policy ou about:policies) puis rechargez-la.',
+        'Check the browser policy (chrome://policy, edge://policy or about:policies), then reload it.',
+      ),
     });
   } else if (input.managed.errors.length > 0) {
     add({
       id: 'managed-policy',
       status: 'fail',
-      label: 'Policy gérée (organisation)',
-      detail: `${input.managed.errors.length} valeur(s) ignorée(s) car invalide(s) : ${input.managed.errors.join(' ; ')}. Le réglage local (ou par défaut) s’applique à la place.`,
-      fix: 'Corrigez la policy déployée (voir docs/deployment.md, section « Managed policy ») puis rechargez les policies du navigateur.',
+      label: managedLabel,
+      detail: tr(
+        `${input.managed.errors.length} valeur(s) ignorée(s) car invalide(s) : ${input.managed.errors.join(' ; ')}. Le réglage local (ou par défaut) s’applique à la place.`,
+        `${input.managed.errors.length} value(s) ignored as invalid: ${input.managed.errors.join('; ')}. The local (or default) setting applies instead.`,
+      ),
+      fix: tr(
+        'Corrigez la policy déployée (voir docs/deployment.md, section « Managed policy ») puis rechargez les policies du navigateur.',
+        'Fix the deployed policy (see docs/deployment.md, “Managed policy” section), then reload the browser policies.',
+      ),
     });
   } else {
     const managedKeys = [
-      input.managed.rules !== undefined ? `${input.managed.rules.length} règle(s)` : '',
+      input.managed.rules !== undefined
+        ? tr(`${input.managed.rules.length} règle(s)`, `${input.managed.rules.length} rule(s)`)
+        : '',
       input.managed.fail_mode !== undefined ? 'fail_mode' : '',
       input.managed.emailDomains !== undefined ? 'emailDomains' : '',
-      input.managed.allowlist.length > 0 ? `${input.managed.allowlist.length} valeur(s) d’allowlist` : '',
-      input.managed.lockSettings === true ? 'verrou des réglages locaux' : '',
+      input.managed.allowlist.length > 0
+        ? tr(
+            `${input.managed.allowlist.length} valeur(s) d’allowlist`,
+            `${input.managed.allowlist.length} allowlist value(s)`,
+          )
+        : '',
+      input.managed.lockSettings === true
+        ? tr('verrou des réglages locaux', 'local settings lock')
+        : '',
     ].filter((v) => v.length > 0);
     add({
       id: 'managed-policy',
       status: 'ok',
-      label: 'Policy gérée (organisation)',
+      label: managedLabel,
       detail:
         managedKeys.length > 0
-          ? `Appliquée : ${managedKeys.join(', ')}.`
-          : 'Aucune policy déployée : réglages locaux uniquement.',
+          ? tr(`Appliquée : ${managedKeys.join(', ')}.`, `Applied: ${managedKeys.join(', ')}.`)
+          : tr(
+              'Aucune policy déployée : réglages locaux uniquement.',
+              'No policy deployed: local settings only.',
+            ),
     });
   }
 
   const failMode = input.effectivePolicy.fail_mode ?? 'warn';
+  const failModeLabel = tr('Comportement en cas d’échec (fail_mode)', 'Behavior on failure (fail_mode)');
   add(
     failMode === 'open'
       ? {
           id: 'fail-mode',
           status: 'warn',
-          label: 'Comportement en cas d’échec (fail_mode)',
-          detail: 'open : un contenu non analysable (site modifié, texte trop long, fichier illisible) est envoyé.',
-          fix: 'Passez à « warn » ou « closed » (policy gérée, ou section « Avancé »).',
+          label: failModeLabel,
+          detail: tr(
+            'open : un contenu non analysable (site modifié, texte trop long, fichier illisible) est envoyé.',
+            'open: content that cannot be scanned (changed site, text too long, unreadable file) is sent.',
+          ),
+          fix: tr(
+            'Passez à « warn » ou « closed » (policy gérée, ou section « Avancé »).',
+            'Switch to “warn” or “closed” (managed policy, or the Advanced section).',
+          ),
         }
       : {
           id: 'fail-mode',
           status: 'ok',
-          label: 'Comportement en cas d’échec (fail_mode)',
+          label: failModeLabel,
           detail:
             failMode === 'closed'
-              ? 'closed : tout contenu non analysable est bloqué.'
-              : 'warn : un contenu non analysable est envoyé avec un avertissement visible.',
+              ? tr(
+                  'closed : tout contenu non analysable est bloqué.',
+                  'closed: any content that cannot be scanned is blocked.',
+                )
+              : tr(
+                  'warn : un contenu non analysable est envoyé avec un avertissement visible.',
+                  'warn: content that cannot be scanned is sent with a visible warning.',
+                ),
         },
   );
 
@@ -193,71 +261,108 @@ export function runDiagnostics(input: DiagnosticsInput): DiagnosticCheck[] {
   const proEmailNeedsDomain =
     disabled.includes('pro_email') && input.effectivePolicy.emailDomains.length === 0;
   const reallyDisabled = disabled.filter((t) => !(t === 'pro_email' && proEmailNeedsDomain));
+  const rulesLabel = tr('Règles actives', 'Active rules');
   add(
     reallyDisabled.length === 0
       ? {
           id: 'rules',
           status: 'ok',
-          label: 'Règles actives',
+          label: rulesLabel,
           detail: proEmailNeedsDomain
-            ? 'Toutes actives, sauf pro_email (aucun domaine configuré — normal hors entreprise).'
-            : 'Toutes actives.',
+            ? tr(
+                'Toutes actives, sauf pro_email (aucun domaine configuré — normal hors entreprise).',
+                'All active, except pro_email (no domain configured — normal outside a company).',
+              )
+            : tr('Toutes actives.', 'All active.'),
         }
       : {
           id: 'rules',
           status: 'warn',
-          label: 'Règles actives',
-          detail: `Désactivées : ${reallyDisabled.join(', ')}.`,
-          fix: 'Réactivez-les dans « Règles de détection » si ce n’est pas voulu.',
+          label: rulesLabel,
+          detail: tr(
+            `Désactivées : ${reallyDisabled.join(', ')}.`,
+            `Disabled: ${reallyDisabled.join(', ')}.`,
+          ),
+          fix: tr(
+            'Réactivez-les dans « Règles de détection » si ce n’est pas voulu.',
+            'Re-enable them under “Detection rules” if this is not intended.',
+          ),
         },
   );
 
+  const hostsLabel = tr('Accès aux sites protégés', 'Access to protected sites');
   add(
     input.missingHostPermissions.length === 0
       ? {
           id: 'host-permissions',
           status: 'ok',
-          label: 'Accès aux sites protégés',
-          detail: 'Accordé pour tous les sites pris en charge.',
+          label: hostsLabel,
+          detail: tr(
+            'Accordé pour tous les sites pris en charge.',
+            'Granted for all supported sites.',
+          ),
         }
       : {
           id: 'host-permissions',
           status: 'fail',
-          label: 'Accès aux sites protégés',
-          detail: `Non accordé pour : ${input.missingHostPermissions.join(', ')}. L’extension n’y est pas injectée : aucune protection sur ces sites.`,
+          label: hostsLabel,
+          detail: tr(
+            `Non accordé pour : ${input.missingHostPermissions.join(', ')}. L’extension n’y est pas injectée : aucune protection sur ces sites.`,
+            `Not granted for: ${input.missingHostPermissions.join(', ')}. The extension is not injected there: no protection on these sites.`,
+          ),
           fix:
             input.browser === 'firefox'
-              ? 'about:addons → Shadow AI Sentinel → Permissions : activez l’accès à ces sites.'
-              : 'Page des extensions → Shadow AI Sentinel → Détails → « Accès au site » : autorisez ces sites.',
+              ? tr(
+                  'about:addons → Shadow AI Sentinel → Permissions : activez l’accès à ces sites.',
+                  'about:addons → Shadow AI Sentinel → Permissions: enable access to these sites.',
+                )
+              : tr(
+                  'Page des extensions → Shadow AI Sentinel → Détails → « Accès au site » : autorisez ces sites.',
+                  'Extensions page → Shadow AI Sentinel → Details → “Site access”: allow these sites.',
+                ),
         },
   );
 
+  const backgroundLabel = tr('Processus d’arrière-plan', 'Background process');
   add(
     input.backgroundResponds
-      ? { id: 'background', status: 'ok', label: 'Processus d’arrière-plan', detail: 'Répond.' }
+      ? { id: 'background', status: 'ok', label: backgroundLabel, detail: tr('Répond.', 'Responding.') }
       : {
           id: 'background',
           status: 'warn',
-          label: 'Processus d’arrière-plan',
-          detail: 'Pas de réponse. Les pages lisent alors la policy directement depuis le stockage : la protection reste active.',
-          fix: 'Rechargez l’extension depuis la page des extensions si cela persiste.',
+          label: backgroundLabel,
+          detail: tr(
+            'Pas de réponse. Les pages lisent alors la policy directement depuis le stockage : la protection reste active.',
+            'No response. Pages then read the policy directly from storage: protection stays active.',
+          ),
+          fix: tr(
+            'Rechargez l’extension depuis la page des extensions si cela persiste.',
+            'Reload the extension from the extensions page if this persists.',
+          ),
         },
   );
 
+  const adapterLabel = tr('Dernier site visité', 'Last visited site');
   add(
     input.adapterHealth === 'healthy'
       ? {
           id: 'adapter-health',
           status: 'ok',
-          label: 'Dernier site visité',
-          detail: 'Zone de saisie reconnue.',
+          label: adapterLabel,
+          detail: tr('Zone de saisie reconnue.', 'Input box recognized.'),
         }
       : {
           id: 'adapter-health',
           status: 'fail',
-          label: 'Dernier site visité',
-          detail: 'Zone de saisie non reconnue : le site a changé, la protection y est inactive.',
-          fix: 'Mettez l’extension à jour. Si elle est à jour, signalez le site (modèle de ticket « site-broken »).',
+          label: adapterLabel,
+          detail: tr(
+            'Zone de saisie non reconnue : le site a changé, la protection y est inactive.',
+            'Input box not recognized: the site changed, protection is inactive there.',
+          ),
+          fix: tr(
+            'Mettez l’extension à jour. Si elle est à jour, signalez le site (modèle de ticket « site-broken »).',
+            'Update the extension. If it is up to date, report the site (“site-broken” issue template).',
+          ),
         },
   );
 
@@ -265,8 +370,11 @@ export function runDiagnostics(input: DiagnosticsInput): DiagnosticCheck[] {
     add({
       id: 'allowlist',
       status: 'ok',
-      label: 'Allowlist locale',
-      detail: `${input.localAllowlistCount} valeur(s) exemptée(s) de détection.`,
+      label: tr('Allowlist locale', 'Local allowlist'),
+      detail: tr(
+        `${input.localAllowlistCount} valeur(s) exemptée(s) de détection.`,
+        `${input.localAllowlistCount} value(s) exempt from detection.`,
+      ),
     });
   }
 

@@ -27,16 +27,13 @@ import {
 } from '../platform/storage.js';
 import { getBrowserFamily, getExtensionApi, getExtensionVersion } from '../platform/browser-api.js';
 import { sendMessage } from '../platform/runtime.js';
+import { resolveLocale } from '../../ui/i18n/messages.js';
+import { applyStaticTranslations, optionsMessages } from './messages.js';
 
-const RULE_LABELS: Record<RuleType, string> = {
-  api_key: 'Clé API',
-  iban: 'IBAN',
-  internal_ip: 'IP interne',
-  pro_email: 'Email professionnel',
-  phone: 'Téléphone',
-  generic_secret: 'Secret générique',
-  card: 'Carte bancaire',
-};
+const locale = resolveLocale();
+const m = optionsMessages(locale);
+applyStaticTranslations(document, m);
+const RULE_LABELS: Record<RuleType, string> = m.ruleLabels;
 
 const policyJsonEl = document.getElementById('policyJson') as HTMLTextAreaElement;
 const allowlistEl = document.getElementById('allowlist') as HTMLTextAreaElement;
@@ -94,7 +91,7 @@ function makeSwitch(rule: Rule, managed: boolean): HTMLButtonElement {
   btn.setAttribute('role', 'switch');
   btn.setAttribute('aria-checked', String(rule.enabled));
   btn.disabled = managed;
-  btn.setAttribute('aria-label', `Activer la règle ${RULE_LABELS[rule.type]}`);
+  btn.setAttribute('aria-label', m.enableRule(RULE_LABELS[rule.type]));
   btn.addEventListener('click', () => {
     void updateRule(rule.type, { enabled: !rule.enabled });
   });
@@ -147,8 +144,8 @@ function renderRulesTable(localPolicy: Policy): void {
     if (managed) {
       const badge = document.createElement('span');
       badge.className = 'managed-badge';
-      badge.textContent = 'Géré';
-      badge.title = 'Règle imposée par la policy de votre organisation';
+      badge.textContent = m.managedBadge;
+      badge.title = m.managedBadgeTitle;
       labelTd.appendChild(badge);
     }
     tr.appendChild(labelTd);
@@ -185,9 +182,9 @@ async function updateRule(type: RuleType, patch: Partial<Pick<Rule, 'enabled' | 
 
     renderRulesTable(nextPolicy);
     policyJsonEl.value = JSON.stringify(nextPolicy, null, 2);
-    showToast('ok', `Règle « ${RULE_LABELS[type]} » mise à jour.`);
+    showToast('ok', m.ruleUpdated(RULE_LABELS[type]));
   } catch (error) {
-    showToast('error', error instanceof Error ? error.message : 'Mise à jour de la règle échouée.');
+    showToast('error', error instanceof Error ? error.message : m.ruleUpdateFailed);
   }
 }
 
@@ -196,9 +193,7 @@ function renderManagedState(): void {
   const locked = managedConfig.lockSettings === true;
   const count = managedConfig.allowlist.length;
   allowlistManagedHintEl.hidden = count === 0 && !locked;
-  allowlistManagedHintEl.textContent = locked
-    ? `Réglages verrouillés par votre organisation : cette liste locale n’est pas appliquée (${count} valeur(s) gérée(s) seulement).`
-    : `+ ${count} valeur(s) ajoutée(s) par votre organisation, appliquée(s) en plus de cette liste.`;
+  allowlistManagedHintEl.textContent = locked ? m.allowlistLocked(count) : m.allowlistExtra(count);
 
   // Poste verrouillé : l'édition locale n'aurait aucun effet, on la désactive.
   allowlistEl.readOnly = locked;
@@ -213,16 +208,10 @@ function renderManagedState(): void {
   // Une valeur gérée invalide est ignorée (repli sur le réglage local) : il faut le dire ici,
   // pas seulement en console — sinon l'admin croit sa policy appliquée.
   managedErrorsEl.hidden = managedConfig.errors.length === 0;
-  managedErrorsEl.textContent =
-    `Policy de l’organisation partiellement ignorée (valeurs invalides) : ${managedConfig.errors.join(' ; ')}. ` +
-    'Le réglage local ou par défaut s’applique à la place. Prévenez votre équipe sécurité.';
+  managedErrorsEl.textContent = m.managedErrors(managedConfig.errors);
 }
 
-const STATUS_LABELS: Record<DiagnosticCheck['status'], string> = {
-  ok: 'OK',
-  warn: 'À vérifier',
-  fail: 'Problème',
-};
+const STATUS_LABELS: Record<DiagnosticCheck['status'], string> = m.statusLabels;
 
 let lastDiagnostics: DiagnosticCheck[] = [];
 
@@ -281,15 +270,11 @@ async function runDiagnosticsPanel(): Promise<void> {
     missingHostPermissions: await findMissingHostPermissions(),
     backgroundResponds,
     adapterHealth: await safe(getAdapterHealth, 'healthy'),
+    locale,
   });
 
   const overall = overallStatus(lastDiagnostics);
-  diagSummaryEl.textContent =
-    overall === 'ok'
-      ? 'Tout fonctionne.'
-      : overall === 'warn'
-        ? 'Protection active, avec des points à vérifier.'
-        : 'Problème détecté : la protection est incomplète.';
+  diagSummaryEl.textContent = m.diagOverall[overall];
 
   diagListEl.textContent = '';
   for (const check of lastDiagnostics) {
@@ -322,9 +307,9 @@ document.getElementById('copyDiag')?.addEventListener('click', async () => {
   const report = formatDiagnosticsReport(lastDiagnostics);
   try {
     await navigator.clipboard.writeText(report);
-    showToast('ok', 'Rapport de diagnostic copié.');
+    showToast('ok', m.reportCopied);
   } catch {
-    showToast('error', 'Copie impossible — sélectionnez le rapport dans la console.');
+    showToast('error', m.reportCopyFailed);
     console.info(report);
   }
 });
@@ -345,7 +330,7 @@ document.getElementById('saveAllowlist')?.addEventListener('click', async () => 
   await setAllowlist(values);
   const stored = await getAllowlist();
   allowlistEl.value = stored.join('\n');
-  showToast('ok', `Allowlist enregistrée (${stored.length} valeur(s)).`);
+  showToast('ok', m.allowlistSaved(stored.length));
 });
 
 document.getElementById('importPolicy')?.addEventListener('click', async () => {
@@ -353,13 +338,13 @@ document.getElementById('importPolicy')?.addEventListener('click', async () => {
   try {
     parsed = JSON.parse(policyJsonEl.value) as unknown;
   } catch {
-    showToast('error', 'JSON invalide — vérifiez la syntaxe (virgules, guillemets, accolades).');
+    showToast('error', m.invalidJson);
     return;
   }
 
   const validated = validatePolicy(parsed);
   if (!validated.ok) {
-    showToast('error', `Policy invalide : ${validated.errors.join(' · ')}`);
+    showToast('error', m.invalidPolicy(validated.errors));
     return;
   }
 
@@ -367,14 +352,14 @@ document.getElementById('importPolicy')?.addEventListener('click', async () => {
   await sendMessage({ type: 'POLICY_UPDATED', payload: validated.policy });
   policyJsonEl.value = JSON.stringify(validated.policy, null, 2);
   renderRulesTable(validated.policy);
-  showToast('ok', 'Policy importée en local.');
+  showToast('ok', m.policyImported);
 });
 
 document.getElementById('exportPolicy')?.addEventListener('click', async () => {
   const policy = await getStoredPolicy();
   policyJsonEl.value = JSON.stringify(policy, null, 2);
   renderRulesTable(policy);
-  showToast('ok', 'Policy exportée depuis le stockage.');
+  showToast('ok', m.policyExported);
 });
 
 void loadForm().finally(() => runDiagnosticsPanel());

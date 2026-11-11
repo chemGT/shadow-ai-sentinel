@@ -135,8 +135,8 @@ Firefox reads it at startup only. Check in `about:policies`.
 | Policy missing from `chrome://policy` | Policy not refreshed, or written for the other browser | **Reload policies**; run the `Status` / `status` command |
 | Linux: `already sets ExtensionInstallForcelist` | Another JSON file in `policies/managed` owns that list; Chrome does not merge lists across files | Add the entry to that file, then re-run `status` |
 | Options page: red banner "Policy de l'organisation partiellement ignorée" | A managed value is invalid (wrong type, unknown rule, bad `fail_mode`) | Fix the value named in the banner, redeploy, reload policies |
-| Diagnostic: "Accès aux sites protégés" fails | Site access not granted (Firefox lets users revoke it) | Grant access in the extension's permissions page |
-| Diagnostic: "Dernier site visité" fails; banner "Protection inactive" on a site | The site changed its page structure | Update the extension; if already current, open a `site-broken` issue |
+| Diagnostic: "Access to protected sites" (FR: "Accès aux sites protégés") fails | Site access not granted (Firefox lets users revoke it) | Grant access in the extension's permissions page |
+| Diagnostic: "Last visited site" (FR: "Dernier site visité") fails; banner "Protection inactive" on a site | The site changed its page structure | Update the extension; if already current, open a `site-broken` issue |
 | All sends blocked on one site | `fail_mode: closed` and the site adapter is broken | Update the extension, or temporarily deploy `fail_mode: warn` |
 | Users can still change rules | `lock_settings` absent | Add `"lock_settings": true` to the managed configuration |
 | Settings changed but pages behave as before | Firefox reads `policies.json` at startup only | Restart Firefox |

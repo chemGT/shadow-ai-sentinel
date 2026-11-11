@@ -314,62 +314,62 @@
   </head>
   <body>
     <h1>Shadow AI Sentinel</h1>
-    <p class="hint">Configuration locale — règles DLP et allowlist. Rien ne quitte votre navigateur.</p>
-    <p id="managedBanner" class="managed-banner" role="note" hidden>
+    <p class="hint" data-i18n="hint">Configuration locale — règles DLP et allowlist. Rien ne quitte votre navigateur.</p>
+    <p id="managedBanner" class="managed-banner" role="note" data-i18n="managedBanner" hidden>
       Certains réglages sont gérés par votre organisation (policy navigateur). Ils sont appliqués en
       priorité et ne sont pas modifiables ici.
     </p>
     <p id="managedErrors" class="managed-errors" role="alert" hidden></p>
 
     <fieldset>
-      <legend>Allowlist</legend>
-      <p class="hint" style="margin: 0 0 12px">
+      <legend data-i18n="allowlistLegend">Allowlist</legend>
+      <p class="hint" style="margin: 0 0 12px" data-i18n="allowlistHint">
         Une valeur par ligne. Ces valeurs exactes ne déclencheront pas la policy
         (anti faux-positifs).
       </p>
       <label>
-        Valeurs autorisées
+        <span data-i18n="allowlistLabel">Valeurs autorisées</span>
         <textarea id="allowlist" spellcheck="false" placeholder="exemple@entreprise.com&#10;192.168.1.1"></textarea>
       </label>
       <p id="allowlistManagedHint" class="hint" style="margin: 0 0 12px" hidden></p>
       <div class="actions">
-        <button type="button" id="saveAllowlist">Enregistrer l’allowlist</button>
+        <button type="button" id="saveAllowlist" data-i18n="saveAllowlist">Enregistrer l’allowlist</button>
       </div>
     </fieldset>
 
     <fieldset>
-      <legend>Règles de détection</legend>
-      <p class="hint" style="margin: 0 0 12px">
+      <legend data-i18n="rulesLegend">Règles de détection</legend>
+      <p class="hint" style="margin: 0 0 12px" data-i18n="rulesHint">
         Activez ou désactivez chaque type de donnée sensible et choisissez l’action
         appliquée quand une correspondance est détectée.
       </p>
       <table class="rules-table">
         <thead>
           <tr>
-            <th scope="col">Règle</th>
-            <th scope="col">Activée</th>
-            <th scope="col">Action</th>
+            <th scope="col" data-i18n="colRule">Règle</th>
+            <th scope="col" data-i18n="colEnabled">Activée</th>
+            <th scope="col" data-i18n="colAction">Action</th>
           </tr>
         </thead>
         <tbody id="rulesTableBody"></tbody>
       </table>
 
       <details class="advanced">
-        <summary>Avancé</summary>
+        <summary data-i18n="advanced">Avancé</summary>
         <label>
-          Contenu (import / édition manuelle)
+          <span data-i18n="policyLabel">Contenu (import / édition manuelle)</span>
           <textarea id="policyJson" spellcheck="false"></textarea>
         </label>
         <div class="actions">
-          <button type="button" id="importPolicy">Importer en local</button>
-          <button type="button" id="exportPolicy" class="secondary">Exporter depuis le stockage</button>
+          <button type="button" id="importPolicy" data-i18n="importPolicy">Importer en local</button>
+          <button type="button" id="exportPolicy" class="secondary" data-i18n="exportPolicy">Exporter depuis le stockage</button>
         </div>
       </details>
     </fieldset>
 
     <fieldset>
-      <legend>Diagnostic</legend>
-      <p class="hint" style="margin: 0 0 12px">
+      <legend data-i18n="diagLegend">Diagnostic</legend>
+      <p class="hint" style="margin: 0 0 12px" data-i18n="diagHint">
         Vérifie localement que la protection fonctionne : moteur, réglages, policy de l’organisation,
         accès aux sites. Aucune donnée n’est envoyée ; le rapport ne contient ni texte saisi, ni
         valeur d’allowlist, ni nom de domaine.
@@ -377,15 +377,15 @@
       <p id="diagSummary" class="diag-summary" role="status"></p>
       <ul id="diagList" class="diag-list"></ul>
       <div class="actions">
-        <button type="button" id="runDiag" class="secondary">Relancer le diagnostic</button>
-        <button type="button" id="copyDiag" class="secondary">Copier le rapport</button>
+        <button type="button" id="runDiag" class="secondary" data-i18n="runDiag">Relancer le diagnostic</button>
+        <button type="button" id="copyDiag" class="secondary" data-i18n="copyDiag">Copier le rapport</button>
       </div>
     </fieldset>
 
     <div id="toast" role="status" aria-live="polite">
       <span class="toast-icon" aria-hidden="true"></span>
       <span class="toast-message"></span>
-      <button type="button" class="toast-dismiss" aria-label="Fermer la notification">&times;</button>
+      <button type="button" class="toast-dismiss" data-i18n-aria-label aria-label="Fermer la notification">&times;</button>
     </div>
 
     <script type="module" src="./main.ts"></script>
