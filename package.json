@@ -1,6 +1,6 @@
 {
   "name": "shadow-ai-sentinel",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Open-source prompt redactor: a local browser DLP that blocks or redacts secrets and personal data before they reach ChatGPT, Claude, Gemini and other AI chatbots.",
   "type": "module",
   "scripts": {
