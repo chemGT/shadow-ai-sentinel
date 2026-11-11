@@ -69,7 +69,9 @@ export type FeedbackContextChoice = 'code' | 'prose' | 'json' | 'url' | 'other';
 
 export type MessageType =
   | 'GET_POLICY'
-  | 'POLICY_UPDATED';
+  | 'POLICY_UPDATED'
+  /** Extraction du texte d'un PDF par l'arrière-plan (repli Firefox, cf. `binary-extract.ts`). */
+  | 'EXTRACT_PDF_TEXT';
 
 export interface ExtensionMessage<T = unknown> {
   type: MessageType;

@@ -23,6 +23,7 @@ Hard constraints:
 | `npm test` | Vitest unit tests |
 | `npx tsc --noEmit` | Typecheck — must be empty |
 | `npm run test:e2e` | Build + Playwright on the real extension, fixtures of the 8 sites |
+| `FIREFOX_BIN=… npm run test:e2e:firefox` | Smoke test in a real Firefox (`e2e/firefox-smoke.mjs`, BiDi). Run it for any change to file handling, startup or the build chain: Chromium e2e does not see Firefox's Xray compartments |
 | `npm run build` / `npm run build:firefox` | Chromium → `dist/`, Firefox → `dist-firefox/` |
 
 ## Architecture
@@ -42,6 +43,9 @@ Hard constraints:
 - `deploy/`: fleet rollout scripts and templates; `src/test/deploy-artifacts.test.ts` validates them.
 - Options page **Diagnostic** = `core/diagnostics.ts` (pure; report must never contain content,
   allowlist values or domain names).
+- Firefox content scripts see page objects through Xray: never build on a page-owned buffer or
+  pass extension objects to page constructors. Read files with `readFileBytes`
+  (`core/binary-file.ts`); pdf.js runs in the background page there (`EXTRACT_PDF_TEXT`).
 - Known bypasses are tests: `src/core/detection/evasion-corpus.test.ts` (`[BYPASS CONNU]` = asserted
   gap; fixing one means flipping the test and updating `docs/security/bypasses-2026-09.md`).
 

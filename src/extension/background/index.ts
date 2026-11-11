@@ -48,6 +48,18 @@ onMessage(async (message: ExtensionMessage) => {
       await broadcastPolicyUpdate(cachedPolicy);
       return { ok: true };
     }
+    case 'EXTRACT_PDF_TEXT': {
+      // Repli Firefox (cf. `binary-extract.ts`) : pdf.js ne peut pas tourner dans le content
+      // script. Le texte extrait repart vers l'onglet demandeur ; rien n'est stocké ni journalisé.
+      if (typeof message.payload !== 'string') {
+        return { error: 'payload invalide' };
+      }
+      const [{ extractPdfTextFromBytes }, { base64ToBytes }] = await Promise.all([
+        import('../sites/shared/binary-extract.js'),
+        import('../../core/binary-file.js'),
+      ]);
+      return { text: await extractPdfTextFromBytes(base64ToBytes(message.payload)) };
+    }
     default:
       return { ok: false, reason: 'Unhandled message type' };
   }

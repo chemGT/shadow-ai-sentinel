@@ -40,6 +40,20 @@ Microsoft 365, AI Studio…). Ajouter un hôte = `manifest*.json` (`host_permiss
     fichier, faute de pouvoir le réécrire
   - autres formats (images, archives, RTF/ODF) : non analysés
 
+## Firefox
+
+Vérifié par `npm run test:e2e:firefox` (vrai Firefox piloté en BiDi, mêmes fixtures) : installation,
+options, popup, diagnostic, garde d'envoi sur les 8 sites, caviardage, pièces jointes.
+
+Particularité : le content script voit les objets de la page à travers des enveloppes Xray.
+- Les octets d'un fichier sont recopiés dans le contexte de l'extension (`readFileBytes`) avant
+  toute extraction.
+- pdf.js ne peut pas créer ses flux dans le content script : l'extraction PDF y échoue puis est
+  refaite par la page d'arrière-plan (message interne `EXTRACT_PDF_TEXT`, aucun réseau, rien de
+  stocké). Sous Chromium, l'extraction reste dans le content script.
+- Non testable automatiquement : le collage d'un fichier (Firefox retire les fichiers d'un
+  `ClipboardEvent` construit par script). Recette manuelle.
+
 ## Quand un site change
 
 | Situation | Détection | Effet selon `fail_mode` |
