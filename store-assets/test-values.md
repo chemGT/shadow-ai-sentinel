@@ -31,17 +31,12 @@ detection regexes so you can trigger each rule for the store screenshots.
 
 ## Capture recipe (target: 1280×800)
 
-Take raw screenshots at any size, drop them in `store-assets/screenshots/raw/`,
-then run `node scripts/resize-screenshots.mjs` to normalise them to 1280×800.
-Name the raw files by their scene number so the order is predictable:
-
-1. `01-block-modal.png` — on chatgpt.com, paste the Block-modal prompt above → capture the block warning.
-2. `02-redact.png` — on claude.ai, paste a secret and let it be masked inline.
-3. `03-popup.png` — click the extension icon: "Open source" badge, blocked/redacted counters, source link.
-4. `04-options-rules.png` — Options page: rules table (Block/Redact per type).
-5. `05-options-allowlist.png` — Options page: allowlist textarea.
+Take raw screenshots at their native size (no upscaling), name them in kebab-case, drop them in
+`store-assets/screenshots/raw/`, add a scene in `scripts/compose-screenshots.mjs`, then run
+`npm i --no-save sharp && node scripts/compose-screenshots.mjs` → `store-assets/screenshots/NN-*.png`.
+Set English as the browser's first language so the dialog and the options page are in English.
 
 Tips for clean shots:
-- Use a fresh chat with no personal history visible.
-- Zoom the browser to ~110–125% so UI text is crisp when downscaled.
-- Light or dark, but keep it consistent across the five shots.
+- Use a fresh chat with no personal history visible; no account name, email or open tabs.
+- Use only the fake values above.
+- Keep the same theme (light or dark) across the set.

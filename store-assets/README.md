@@ -21,20 +21,31 @@ Firefox Add-ons (AMO), plus the public privacy page.
 - [x] Privacy policy (truthful: zero network)
 - [x] Store-ready packages: `npm run package` (or the GitHub Release) → `release/` with the Chromium zip, the Firefox `.xpi`, the source zip for AMO and `SHA256SUMS.txt`
 - [x] Firefox data-collection consent declared (`data_collection_permissions: none`, required for new AMO submissions); `web-ext lint` → 0 errors
-- [x] Screenshots 01 (block modal) and 02 (block on Claude), 1280×800
+- [x] 4 English screenshots at 1280×800 (see below), 2 demo GIFs (`assets/`, README only — the Chrome Web Store takes PNG/JPEG only)
 
-## ⬜ Remaining screenshots (optional, needs the extension loaded in a browser)
-CWS requires at least 1 (done), ideally 3–5, at **1280×800** or **640×400** (PNG/JPEG).
+## Screenshots (English, 1280×800)
+| File | Scene |
+|------|-------|
+| `screenshots/01-block-modal.png` | API key pasted → "Send blocked" dialog |
+| `screenshots/02-redact-iban.png` | IBAN → `[REDACTED_IBAN]` |
+| `screenshots/03-redact-gemini.png` | Phone + work email redacted on Gemini |
+| `screenshots/04-first-launch.png` | First-run notice |
 
-3. **Redact in action** — a secret masked inline.
-4. **Popup** — blocked/redacted counters, link to source code.
-5. **Options page** — rules table (Block/Redact per type), allowlist.
+They are generated from the native-size captures in `screenshots/raw/` (never upscaled):
+`npm i --no-save sharp && node scripts/compose-screenshots.mjs`. To add or change a scene, edit
+`SCENES` in `scripts/compose-screenshots.mjs`. `raw/gemini-before|after.png` are frames 30 and 69
+of `assets/demo-redact-gemini.gif`.
+
+Not captured yet (optional, up to 5 are allowed): **popup** (blocked/redacted counters, source
+link) and **options page** (rules table, allowlist; now available in English).
+`04-first-launch.png` has its "I understand" button cut off at the bottom: re-capture the notice
+fully if you want a cleaner shot.
 
 Store icon (CWS marketing): 128×128 → use `icons/icon-128.png`.
 Small promo tile (optional): 440×280.
 
-To capture: `npm run build` → load `dist/` via `chrome://extensions` (dev mode) →
-open a supported AI site → trigger detection → screenshot.
+To capture: `npm run build` → load `dist/` via `chrome://extensions` (dev mode), set English as the
+browser's first language → open a supported AI site → trigger detection → screenshot.
 
 ## ⬜ Submission (maintainer accounts)
 1. Publish the GitHub Release (`CONTRIBUTING.md` → Releasing) and download its assets.

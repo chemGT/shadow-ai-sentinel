@@ -21,6 +21,13 @@ Open source · 100 % local · zero telemetry
 
 <img src="store-assets/screenshots/01-block-modal.png" alt="Block modal on an AI chat" width="720">
 
+<table>
+<tr>
+<td width="50%" align="center"><img src="assets/demo-block-claude.gif" alt="Demo: an API key is blocked before it is sent on Claude" width="100%"><br><sub><b>Block</b> — a secret never leaves the browser</sub></td>
+<td width="50%" align="center"><img src="assets/demo-redact-gemini.gif" alt="Demo: a phone number and a work email are redacted on Gemini" width="100%"><br><sub><b>Redact</b> — personal data is masked in place</sub></td>
+</tr>
+</table>
+
 </div>
 
 <br>
