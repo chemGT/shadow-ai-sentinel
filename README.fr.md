@@ -28,7 +28,7 @@ bloque le message.
 | `generic_secret` | `Bearer …`, `Basic …`, JWT, URL avec identifiants (`postgres://user:pass@hôte`), affectations `password=…` / `client_secret: …` | Motifs bornés, Basic doit décoder en `user:pass`, valeur affectée mêlant lettres et chiffres | Bloquer |
 | `iban` | `FR76 3000 6000 0112 3456 7890 189`, `DE89-3704-…`, `FR76.3000.…` | mod-97 (ISO 13616) | Caviarder |
 | `card` | Visa / Mastercard / Amex / Discover / JCB / Diners | Luhn + préfixe émetteur et longueur | Caviarder |
-| `phone` | Formats FR nationaux et `+33`, E.164 contigu ou groupé (`+1 415 555 2671`) | Format | Caviarder |
+| `phone` | FR nationaux et `+33` ; international `+`/`00` (groupé, parenthèses : `+1 (415) 555-2671`) ; US/Canada national (`415-555-2671`) ; UK national avec espaces | Format | Caviarder |
 | `internal_ip` | Adresses RFC 1918 | Plages | Caviarder |
 | `pro_email` | Adresses sur les domaines que **vous** configurez | Domaine exact | Désactivé |
 

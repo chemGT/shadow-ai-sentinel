@@ -56,7 +56,9 @@ Pattern : `/\b([A-Z]{2}\d{2}[A-Z0-9]{11,30})\b/gi`
 - `[\s.-]?` borné à 0 ou 1
 - Alternation en tête (`\+33|0033`), les deux branches sont linéaires
 
-`E164_PATTERN` : `/\+[1-9]\d{7,14}\b/g` — simple, borné.
+`INTL_PATTERN` : `/(?<![\w+]|\d[ .-])(?:\+|00)[1-9](?:[ .()-]{0,2}\d){7,15}(?![ .-]?\d)/g` — une seule répétition `{7,15}` d'un groupe dont le séparateur est borné à `{0,2}` et suivi d'un chiffre obligatoire (pas d'ambiguïté, pas de quantificateur non borné imbriqué). La cohérence des parenthèses est vérifiée ensuite par une boucle linéaire, pas par regex.
+
+`NANP_PATTERN` / `UK_PATTERN` : groupes de chiffres de longueur fixe (`\d{3}`, `\d{4}`, `\d{3,4}`), séparateurs optionnels uniques, lookarounds de largeur fixe. Entrées adversariales (1 M de `+1 `, `00 `, `(1`, `415-555-`, zéros) scannées en bien moins d'une seconde.
 
 **Verdict : SAFE**
 

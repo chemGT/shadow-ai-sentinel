@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Foreign phone numbers**: international numbers with a `+` or `00` prefix, with parentheses and trunk zero (`+1 (415) 555-2671`, `+44 (0)20 7946 0958`, `0049 30 12345678`), North American numbers without country code (`(415) 555-2671`, `415-555-2671`, `1-415-555-2671`; area code and exchange must start with 2–9 and not be `N11`, separators must match) and UK national numbers written with spaces (`07911 123456`, `020 7946 0958`). Known gaps, asserted in the corpus: contiguous 10-digit numbers (`4155552671`), `00` numbers with no separator, national formats of other countries (e.g. German `030 12345678`) — use the `+` form
+- Labeled corpus: 16 new should-detect and 7 new should-not entries for phone numbers (zero-padded IDs, `N11` codes, mixed separators, dates, unbalanced parentheses)
+
 ## [1.2.1] — 2026-11-11
 
 ### Fixed

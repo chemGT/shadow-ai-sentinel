@@ -58,7 +58,9 @@ Pattern: `/\b([A-Z]{2}\d{2}[A-Z0-9]{11,30})\b/gi`
 - `[\s.-]?` bounded to 0 or 1
 - Alternation at the head (`\+33|0033`), both branches are linear
 
-`E164_PATTERN`: `/\+[1-9]\d{7,14}\b/g` — simple, bounded.
+`INTL_PATTERN`: `/(?<![\w+]|\d[ .-])(?:\+|00)[1-9](?:[ .()-]{0,2}\d){7,15}(?![ .-]?\d)/g` — one `{7,15}` repetition of a group whose separator is itself bounded to `{0,2}` and followed by a mandatory digit (no ambiguity, no nested unbounded quantifier). Parenthesis consistency is checked afterwards by a linear loop, not by regex.
+
+`NANP_PATTERN` / `UK_PATTERN`: fixed-length digit groups (`\d{3}`, `\d{4}`, `\d{3,4}`), single optional separators, fixed-width lookarounds. Adversarial inputs (1 M of `+1 `, `00 `, `(1`, `415-555-`, zeros) scan in well under a second.
 
 **Verdict: SAFE**
 
